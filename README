@@ -11,6 +11,7 @@ The intent of this project is to provide a baseline Quake 3 which may be used
 for further development and baseq3 fun. 
 Some of the major features currently implemented are:
 
+  * iOS Support
   * SDL backend
   * OpenAL sound API support (multiple speaker support and better sound
     quality)
@@ -56,6 +57,15 @@ For Mac OS X, building a Universal Binary
   3. Run './make-macosx-ub.sh'
   4. Copy the resulting ioquake3.app in /build/release-darwin-ub to your
      /Applications/ioquake3 folder.
+
+For iOS (Apple Developers),
+  1. Install the most recent version of XCode with most recent iOS SDK.
+  2. Open the Quake3 XCode project in code/ios.
+  3. Select device or simulator and run.
+
+For iOS (non-Apple Developers with a jailbroken device),
+  1. Install JailCoder.
+  2. Then follow normal iOS build instructions
 
 Installation, for *nix
   1. Set the COPYDIR variable in the shell to be where you installed Quake 3
@@ -732,6 +742,11 @@ Maintainers
   Tony J. White <tjw@tjw.org>
   Zachary J. Slater <zachary@ioquake.org>
   Zack Middleton <zturtleman@gmail.com>
+
+iOS Portions
+  Seth Kingsley <sethk@meowfishies.com>	// original iOS port
+  Alexander Pick <ap@pbt-media.com> // original iOS control system
+  Marcus Collins <mecwerks@gmail.com> // merge from quake3-ios into ioq3-ios and improvements
 
 Significant contributions from
   Ryan C. Gordon <icculus@icculus.org>
