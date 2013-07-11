@@ -53,14 +53,30 @@ char *Sys_DefaultHomePath(void)
 {
 	char *p;
 
+#ifdef IOS
+	if (*homePath)
+		return homePath;
+	
+	if ((p = getenv("HOME")) != NULL) {
+		Q_strncpyz(homePath, p, sizeof(homePath));
+
+		Q_strcat(homePath, sizeof(homePath), "/Documents");
+
+		if (mkdir(homePath, 0777)) {
+			if (errno != EEXIST)
+				Sys_Error("Unable to create directory \"%s\", error is %s(%d)\n", homePath, strerror(errno), errno);
+		}
+		return homePath;
+	}
+	return ""; // assume current dir
+#else
 	if( !*homePath && com_homepath != NULL )
 	{
 		if( ( p = getenv( "HOME" ) ) != NULL )
 		{
 			Com_sprintf(homePath, sizeof(homePath), "%s%c", p, PATH_SEP);
 #ifdef MACOS_X
-			Q_strcat(homePath, sizeof(homePath),
-				"Library/Application Support/");
+			Q_strcat(homePath, sizeof(homePath), "Library/Application Support/");
 
 			if(com_homepath->string[0])
 				Q_strcat(homePath, sizeof(homePath), com_homepath->string);
@@ -76,7 +92,30 @@ char *Sys_DefaultHomePath(void)
 	}
 
 	return homePath;
+#endif
 }
+
+/*
+=================
+Sys_StripAppBundle
+ 
+Discovers if passed dir is suffixed with the directory structure of an iOS
+.app bundle. If it is, the .app directory structure is stripped off the end and
+the result is returned. If not, dir is returned untouched.
+=================
+*/
+#ifdef IOS
+char *Sys_StripAppBundle( char *dir )
+{
+	static char cwd[MAX_OSPATH];
+	
+	Q_strncpyz(cwd, dir, sizeof(cwd));
+	if(!strstr(Sys_Basename(cwd), ".app"))
+		return dir;
+	Q_strncpyz(cwd, Sys_Dirname(cwd), sizeof(cwd));
+	return cwd;
+}
+#endif
 
 /*
 ================
@@ -160,6 +199,7 @@ char *Sys_GetClipboardData(void)
 
 #define MEM_THRESHOLD 96*1024*1024
 
+
 /*
 ==================
 Sys_LowPhysicalMemory
@@ -167,10 +207,12 @@ Sys_LowPhysicalMemory
 TODO
 ==================
 */
+#ifndef IOS
 qboolean Sys_LowPhysicalMemory( void )
 {
 	return qfalse;
 }
+#endif
 
 /*
 ==================

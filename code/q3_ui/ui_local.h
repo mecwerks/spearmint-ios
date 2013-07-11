@@ -161,6 +161,9 @@ typedef struct _tag_menuframework
 	qboolean	wrapAround;
 	qboolean	fullscreen;
 	qboolean	showlogo;
+	// iOS touch menu
+	uiMenuCommand_t	id;
+	void (*touchDraw) (void);
 } menuframework_s;
 
 typedef struct
@@ -318,6 +321,7 @@ extern void MainMenu_Cache( void );
 extern void UI_MainMenu(void);
 extern void UI_RegisterCvars( void );
 extern void UI_UpdateCvars( void );
+extern void Main_MenuTouch( int callback, int event );
 
 //
 // ui_credits.c
@@ -329,11 +333,13 @@ extern void UI_CreditMenu( void );
 //
 extern void InGame_Cache( void );
 extern void UI_InGameMenu(void);
+extern void InGame_EventTouch( int callback, int event );
 
 //
 // ui_confirm.c
 //
 extern void ConfirmMenu_Cache( void );
+extern void ConfirmMenu_TouchEvent( int callback );
 extern void UI_ConfirmMenu( const char *question, void (*draw)( void ), void (*action)( qboolean result ) );
 extern void UI_ConfirmMenu_Style( const char *question, int style, void (*draw)( void ), void (*action)( qboolean result ) );
 extern void UI_Message( const char **lines );
@@ -584,6 +590,7 @@ extern void			UI_AdjustFrom640( float *x, float *y, float *w, float *h );
 extern void			UI_DrawTextBox (int x, int y, int width, int lines);
 extern qboolean		UI_IsFullscreen( void );
 extern void			UI_SetActiveMenu( uiMenuCommand_t menu );
+extern void			UI_SelectAndPress( uiMenuCommand_t menu, int callback );
 extern void			UI_PushMenu ( menuframework_s *menu );
 extern void			UI_PopMenu (void);
 extern void			UI_ForceMenuOff (void);
@@ -601,6 +608,8 @@ void UI_SPLevelMenu_Cache( void );
 void UI_SPLevelMenu( void );
 void UI_SPLevelMenu_f( void );
 void UI_SPLevelMenu_ReInit( void );
+void UI_SPLevelMenu_Event( int callback, int notification );
+
 
 //
 // ui_spArena.c
@@ -618,6 +627,7 @@ void UI_SPPostgameMenu_f( void );
 //
 void UI_SPSkillMenu( const char *arenaInfo );
 void UI_SPSkillMenu_Cache( void );
+void UI_SPSkillMenu_Event( int callback, int notification );
 
 //
 // ui_syscalls.c
@@ -685,6 +695,7 @@ void			trap_SetCDKey( char *buf );
 qboolean               trap_VerifyCDKey( const char *key, const char *chksum);
 
 void			trap_SetPbClStatus( int status );
+void			trap_DrawTouchArea( float x, float y, float w, float h, int menu, int callback );
 
 //
 // ui_addbots.c

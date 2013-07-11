@@ -101,12 +101,12 @@ static void InGame_QuitAction( qboolean result ) {
 InGame_Event
 =================
 */
-void InGame_Event( void *ptr, int notification ) {
+void InGame_EventTouch( int callback, int notification ) {
 	if( notification != QM_ACTIVATED ) {
 		return;
 	}
 
-	switch( ((menucommon_s*)ptr)->id ) {
+	switch( callback ) {
 	case ID_TEAM:
 		UI_TeamMainMenu();
 		break;
@@ -149,6 +149,18 @@ void InGame_Event( void *ptr, int notification ) {
 	}
 }
 
+void InGame_Event( void *ptr, int notification ) {
+	InGame_EventTouch(((menucommon_s*)ptr)->id, notification);
+}
+
+void InGameMenu_DrawTouch ( void ) {
+	trap_DrawTouchArea( 240, 65, 46, 30, UIMENU_INGAME, ID_TEAM);
+	trap_DrawTouchArea( 238, 98, 62, 30, UIMENU_INGAME, ID_SETUP);
+	trap_DrawTouchArea( 232, 138, 68, 30, UIMENU_INGAME, ID_ADDBOTS);
+	trap_DrawTouchArea( 234, 180, 65, 25, UIMENU_INGAME, ID_RESTART);
+	trap_DrawTouchArea( 234, 205, 65, 20, UIMENU_INGAME, ID_RESUME);
+	trap_DrawTouchArea( 234, 245, 62, 20, UIMENU_INGAME, ID_LEAVEARENA);
+}
 
 /*
 =================
@@ -167,6 +179,9 @@ void InGame_MenuInit( void ) {
 
 	s_ingame.menu.wrapAround = qtrue;
 	s_ingame.menu.fullscreen = qfalse;
+	// iOS touch menu
+	s_ingame.menu.id = UIMENU_INGAME;
+	s_ingame.menu.touchDraw = InGameMenu_DrawTouch;
 
 	s_ingame.frame.generic.type			= MTYPE_BITMAP;
 	s_ingame.frame.generic.flags		= QMF_INACTIVE;

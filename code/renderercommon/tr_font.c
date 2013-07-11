@@ -401,6 +401,7 @@ void RE_RegisterFont(const char *fontName, int pointSize, fontInfo_t *font) {
 			font->glyphs[i].glyph = RE_RegisterShaderNoMip(font->glyphs[i].shaderName);
 		}
 		Com_Memcpy(&registeredFont[registeredFontCount++], font, sizeof(fontInfo_t));
+		ri.FS_FreeFile(faceData);
 		return;
 	}
 
@@ -503,7 +504,8 @@ void RE_RegisterFont(const char *fontName, int pointSize, fontInfo_t *font) {
 			xOut = 0;
 			yOut = 0;
 			ri.Free(imageBuff);
-			i++;
+			if(i == GLYPH_END)
+				i++;
 		} else {
 			Com_Memcpy(&font->glyphs[i], glyph, sizeof(glyphInfo_t));
 			i++;

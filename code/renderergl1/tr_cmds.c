@@ -276,8 +276,11 @@ for each RE_EndFrame
 */
 void RE_BeginFrame( stereoFrame_t stereoFrame ) {
 	drawBufferCommand_t	*cmd = NULL;
-	colorMaskCommand_t *colcmd = NULL;
 
+#ifndef IOS
+	colorMaskCommand_t *colcmd = NULL;
+#endif
+	
 	if ( !tr.registered ) {
 		return;
 	}
@@ -285,6 +288,10 @@ void RE_BeginFrame( stereoFrame_t stereoFrame ) {
 
 	tr.frameCount++;
 	tr.frameSceneNum = 0;
+
+#ifdef IOS
+	GLimp_AcquireGL();
+#endif // IOS
 
 	//
 	// do overdraw measurement
@@ -352,7 +359,7 @@ void RE_BeginFrame( stereoFrame_t stereoFrame ) {
 		if ((err = qglGetError()) != GL_NO_ERROR)
 			ri.Error(ERR_FATAL, "RE_BeginFrame() - glGetError() failed (0x%x)!", err);
 	}
-
+#ifndef IOS
 	if (glConfig.stereoEnabled) {
 		if( !(cmd = R_GetCommandBuffer(sizeof(*cmd))) )
 			return;
@@ -368,7 +375,9 @@ void RE_BeginFrame( stereoFrame_t stereoFrame ) {
 		}
 	}
 	else
+#endif
 	{
+#ifndef IOS
 		if(r_anaglyphMode->integer)
 		{
 			if(r_anaglyphMode->modified)
@@ -411,7 +420,8 @@ void RE_BeginFrame( stereoFrame_t stereoFrame ) {
 			R_SetColorMode(colcmd->rgba, stereoFrame, r_anaglyphMode->integer);
 			colcmd->commandId = RC_COLORMASK;
 		}
-		else
+		else			
+#endif
 		{
 			if(stereoFrame != STEREO_CENTER)
 				ri.Error( ERR_FATAL, "RE_BeginFrame: Stereo is disabled, but stereoFrame was %i", stereoFrame );

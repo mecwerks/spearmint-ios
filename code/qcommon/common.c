@@ -38,8 +38,15 @@ int demo_protocols[] =
 
 #define MIN_DEDICATED_COMHUNKMEGS 1
 #define MIN_COMHUNKMEGS		56
+
+#if defined(IOS)
+#define DEF_COMHUNKMEGS		56
+#define DEF_COMZONEMEGS		16
+#else
 #define DEF_COMHUNKMEGS 	128
 #define DEF_COMZONEMEGS		24
+#endif
+
 #define DEF_COMHUNKMEGS_S	XSTRING(DEF_COMHUNKMEGS)
 #define DEF_COMZONEMEGS_S	XSTRING(DEF_COMZONEMEGS)
 
@@ -2773,6 +2780,7 @@ void Com_Init( char *commandLine ) {
 
 	if( Sys_WritePIDFile( ) ) {
 #ifndef DEDICATED
+#ifndef IOS
 		const char *message = "The last time " CLIENT_WINDOW_TITLE " ran, "
 			"it didn't exit properly. This may be due to inappropriate video "
 			"settings. Would you like to start with \"safe\" video settings?";
@@ -2780,6 +2788,7 @@ void Com_Init( char *commandLine ) {
 		if( Sys_Dialog( DT_YES_NO, message, "Abnormal Exit" ) == DR_YES ) {
 			Cvar_Set( "com_abnormalExit", "1" );
 		}
+#endif
 #endif
 	}
 

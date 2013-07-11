@@ -905,7 +905,12 @@ RB_SurfaceFace
 */
 static void RB_SurfaceFace( srfSurfaceFace_t *surf ) {
 	int			i;
-	unsigned	*indices, *tessIndexes;
+	unsigned	*indices;
+#ifdef IOS
+	glIndex_t	*tessIndexes;
+#else
+	unsigned	*tessIndexes;
+#endif
 	float		*v;
 	float		*normal;
 	int			ndx;

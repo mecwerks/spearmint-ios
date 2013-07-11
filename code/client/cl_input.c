@@ -334,6 +334,18 @@ void CL_KeyMove( usercmd_t *cmd ) {
 	forward = 0;
 	side = 0;
 	up = 0;
+	
+#ifdef IOS
+	side += cl_joyscale_y[0] * 5 * CL_KeyState (&in_moveright);
+	side -= cl_joyscale_y[1] * 5 * CL_KeyState (&in_moveleft);
+	
+	
+	up = movespeed * CL_KeyState (&in_up);
+	up -= movespeed * CL_KeyState (&in_down);
+	
+	forward += cl_joyscale_x[0] * 5 * CL_KeyState (&in_forward);
+	forward -= cl_joyscale_x[1] * 5 * CL_KeyState (&in_back);
+#else
 	if ( in_strafe.active ) {
 		side += movespeed * CL_KeyState (&in_right);
 		side -= movespeed * CL_KeyState (&in_left);
@@ -348,7 +360,8 @@ void CL_KeyMove( usercmd_t *cmd ) {
 
 	forward += movespeed * CL_KeyState (&in_forward);
 	forward -= movespeed * CL_KeyState (&in_back);
-
+#endif
+	
 	cmd->forwardmove = ClampChar( forward );
 	cmd->rightmove = ClampChar( side );
 	cmd->upmove = ClampChar( up );
@@ -382,6 +395,19 @@ void CL_JoystickEvent( int axis, int value, int time ) {
 		Com_Error( ERR_DROP, "CL_JoystickEvent: bad axis %i", axis );
 	}
 	cl.joystickAxis[axis] = value;
+}
+
+/*
+=================
+CL_AccelEvent
+ 
+iOS Accelerometer event
+=================
+*/
+void CL_AccelEvent( int pitch, int roll, int yaw ) {
+//	cls.accelAngles[PITCH] = pitch;
+//	cls.accelAngles[ROLL] = roll;
+//	cls.accelAngles[YAW] = yaw;
 }
 
 /*
@@ -563,7 +589,44 @@ void CL_FinishMove( usercmd_t *cmd ) {
 	}
 }
 
+#ifdef IOS
+/*
+=================
+IOS_FlushButtons
+=================
+*/
+void IOS_FlushButtons ( void ) {
+	memset( &clsi, 0, sizeof(screenInput_t) );
+	clsi.clean = qtrue;
+}
 
+/*
+=================
+IOS_DrawTouchArea
+=================
+*/
+void IOS_DrawTouchArea ( float x, float y, float w, float h, int menu, int callback ) {
+	int i;
+	
+	if ( menu != clsi.lastMenu ) {
+		IOS_FlushButtons();
+		clsi.lastMenu = menu;
+	}
+	
+	for (i = 0; i < MAX_BUTTONS; i++) {
+		if (clsi.buttons[i].active) continue;
+		if (clsi.clean) clsi.clean = qfalse;
+		clsi.buttons[i].x = y;
+		clsi.buttons[i].y = x;
+		clsi.buttons[i].w = h;
+		clsi.buttons[i].h = w;
+		clsi.buttons[i].menu = menu;
+		clsi.buttons[i].callback = callback;
+		clsi.buttons[i].active = qtrue;
+		return;
+	}
+}
+#endif
 /*
 =================
 CL_CreateCmd

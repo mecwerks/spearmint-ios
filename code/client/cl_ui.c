@@ -24,6 +24,10 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 #include "../botlib/botlib.h"
 
+#ifdef IOS
+#include "../renderercommon/tr_common.h"
+#endif
+
 extern	botlib_export_t	*botlib_export;
 
 vm_t *uivm;
@@ -798,13 +802,31 @@ intptr_t CL_UISystemCalls( intptr_t *args ) {
 		return FS_Seek( args[1], args[2], args[3] );
 	
 	case UI_R_REGISTERMODEL:
+#ifdef IOS
+		GLimp_AcquireGL();
 		return re.RegisterModel( VMA(1) );
-
+		GLimp_ReleaseGL();
+#else
+		return re.RegisterModel( VMA(1) );
+#endif // IOS
+			
 	case UI_R_REGISTERSKIN:
+#ifdef IOS
+		GLimp_AcquireGL();
 		return re.RegisterSkin( VMA(1) );
-
+		GLimp_ReleaseGL();
+#else
+		return re.RegisterSkin( VMA(1) );
+#endif // IOS
+			
 	case UI_R_REGISTERSHADERNOMIP:
+#ifdef IOS
+		GLimp_AcquireGL();
 		return re.RegisterShaderNoMip( VMA(1) );
+		GLimp_ReleaseGL();
+#else
+		return re.RegisterShaderNoMip( VMA(1) );
+#endif
 
 	case UI_R_CLEARSCENE:
 		re.ClearScene();
@@ -1061,6 +1083,12 @@ intptr_t CL_UISystemCalls( intptr_t *args ) {
 
 	case UI_VERIFY_CDKEY:
 		return CL_CDKeyValidate(VMA(1), VMA(2));
+	
+	case UI_DRAW_TOUCH_AREA:
+#ifdef IOS
+		IOS_DrawTouchArea(VMF(1), VMF(2), VMF(3), VMF(4), args[5], args[6]);
+#endif
+		return 0;
 		
 	default:
 		Com_Error( ERR_DROP, "Bad UI system trap: %ld", (long int) args[0] );
@@ -1098,6 +1126,9 @@ void CL_InitUI( void ) {
 	vmInterpret_t		interpret;
 
 	// load the dll or bytecode
+#ifdef IOS
+	interpret = VMI_BYTECODE;
+#else
 	interpret = Cvar_VariableValue("vm_ui");
 	if(cl_connectedToPureServer)
 	{
@@ -1105,7 +1136,8 @@ void CL_InitUI( void ) {
 		if(interpret != VMI_COMPILED && interpret != VMI_BYTECODE)
 			interpret = VMI_COMPILED;
 	}
-
+#endif
+	
 	uivm = VM_Create( "ui", CL_UISystemCalls, interpret );
 	if ( !uivm ) {
 		Com_Error( ERR_FATAL, "VM_Create on UI failed" );

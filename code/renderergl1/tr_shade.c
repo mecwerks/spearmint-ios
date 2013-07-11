@@ -593,7 +593,11 @@ static void ProjectDlightTexture_scalar( void ) {
 	byte	clipBits[SHADER_MAX_VERTEXES];
 	float	texCoordsArray[SHADER_MAX_VERTEXES][2];
 	byte	colorArray[SHADER_MAX_VERTEXES][4];
+#ifdef IOS
+	glIndex_t	hitIndexes[SHADER_MAX_INDEXES];
+#else
 	unsigned	hitIndexes[SHADER_MAX_INDEXES];
+#endif
 	int		numIndexes;
 	float	scale;
 	float	radius;

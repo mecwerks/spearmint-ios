@@ -346,7 +346,7 @@ typedef struct {
 	char		updateInfoString[MAX_INFO_STRING];
 
 	netadr_t	authorizeServer;
-
+	
 	// rendering info
 	glconfig_t	glconfig;
 	qhandle_t	charSetShader;
@@ -358,6 +358,31 @@ extern	clientStatic_t		cls;
 
 extern	char		cl_oldGame[MAX_QPATH];
 extern	qboolean	cl_oldGameSet;
+
+#ifdef IOS
+
+#define MAX_BUTTONS 20
+
+typedef struct {
+	qboolean active;
+	qboolean pressed;
+	qboolean initialized;
+	float x, y, h, w;
+	int callback;
+	int menu;
+} buttons_t;
+
+typedef struct {
+	int lastMenu;
+	qboolean clean;
+	buttons_t buttons[MAX_BUTTONS];
+} screenInput_t;
+
+extern	screenInput_t		clsi;
+
+int cl_joyscale_x[2];
+int cl_joyscale_y[2];
+#endif
 
 //=============================================================================
 
@@ -506,6 +531,11 @@ void CL_VerifyCode( void );
 float CL_KeyState (kbutton_t *key);
 int Key_StringToKeynum( char *str );
 char *Key_KeynumToString (int keynum);
+
+#ifdef IOS
+void IOS_DrawTouchArea(float x, float y, float w, float h, int menu, int callback);
+void IOS_FlushButtons( void );
+#endif
 
 //
 // cl_parse.c

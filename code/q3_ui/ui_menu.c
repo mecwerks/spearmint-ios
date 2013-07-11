@@ -91,43 +91,47 @@ Main_MenuEvent
 =================
 */
 void Main_MenuEvent (void* ptr, int event) {
+	Main_MenuTouch(((menucommon_s*)ptr)->id, event);
+}
+
+void Main_MenuTouch ( int callback, int event ) {
 	if( event != QM_ACTIVATED ) {
 		return;
 	}
+	
+	switch( callback ) {
+		case ID_SINGLEPLAYER:
+			UI_SPLevelMenu();
+			break;
+			
+		case ID_MULTIPLAYER:
+			UI_ArenaServersMenu();
+			break;
+			
+		case ID_SETUP:
+			UI_SetupMenu();
+			break;
+			
+		case ID_DEMOS:
+			UI_DemosMenu();
+			break;
+			 
+		case ID_CINEMATICS:
+			UI_CinematicsMenu();
+			break;
+			
+		case ID_MODS:
+			UI_ModsMenu();
+			break;
 
-	switch( ((menucommon_s*)ptr)->id ) {
-	case ID_SINGLEPLAYER:
-		UI_SPLevelMenu();
-		break;
+		case ID_TEAMARENA:
+			trap_Cvar_Set( "fs_game", "missionpack");
+			trap_Cmd_ExecuteText( EXEC_APPEND, "vid_restart;" );
+			break;
 
-	case ID_MULTIPLAYER:
-		UI_ArenaServersMenu();
-		break;
-
-	case ID_SETUP:
-		UI_SetupMenu();
-		break;
-
-	case ID_DEMOS:
-		UI_DemosMenu();
-		break;
-
-	case ID_CINEMATICS:
-		UI_CinematicsMenu();
-		break;
-
-	case ID_MODS:
-		UI_ModsMenu();
-		break;
-
-	case ID_TEAMARENA:
-		trap_Cvar_Set( "fs_game", BASETA);
-		trap_Cmd_ExecuteText( EXEC_APPEND, "vid_restart;" );
-		break;
-
-	case ID_EXIT:
-		UI_ConfirmMenu( "EXIT GAME?", 0, MainMenu_ExitAction );
-		break;
+		case ID_EXIT:
+			UI_ConfirmMenu( "EXIT GAME?", 0, MainMenu_ExitAction );
+			break;
 	}
 }
 
@@ -256,6 +260,21 @@ static qboolean UI_TeamArenaExists( void ) {
 	return qfalse;
 }
 
+void MainMenu_TouchDraw ( void ) {
+	// MEC: Menu_DrawTouchItem is not yet finished
+	//	Menu_DrawTouchItem( &s_main.singleplayer );
+	//	Menu_DrawTouchItem( &s_main.multiplayer );
+	//	Menu_DrawTouchItem( &s_main.setup );
+	//	Menu_DrawTouchItem( &s_main.cinematics );
+	//	Menu_DrawTouchItem( &s_main.mods );
+	//	Menu_DrawTouchItem( &s_main.exit );
+	trap_DrawTouchArea(286, 100, 180, 50, UIMENU_MAIN, ID_SINGLEPLAYER);
+	trap_DrawTouchArea(290, 168, 180, 50, UIMENU_MAIN, ID_MULTIPLAYER);
+	trap_DrawTouchArea(325, 239, 100, 50, UIMENU_MAIN, ID_SETUP);
+	trap_DrawTouchArea(80, 90, 160, 50, UIMENU_MAIN, ID_CINEMATICS);
+	trap_DrawTouchArea(100, 148, 90, 50, UIMENU_MAIN, ID_MODS);
+	trap_DrawTouchArea(100, 230, 76, 50, UIMENU_MAIN, ID_EXIT);
+}
 
 /*
 ===============
@@ -278,8 +297,8 @@ void UI_MainMenu( void ) {
 
 		trap_GetCDKey( key, sizeof(key) );
 		if( trap_VerifyCDKey( key, NULL ) == qfalse ) {
-			UI_CDKeyMenu();
-			return;
+//			UI_CDKeyMenu();
+//			return;
 		}
 	}
 	
@@ -309,6 +328,9 @@ void UI_MainMenu( void ) {
 	s_main.menu.fullscreen = qtrue;
 	s_main.menu.wrapAround = qtrue;
 	s_main.menu.showlogo = qtrue;
+	// iOS touch menu
+	s_main.menu.id = UIMENU_MAIN;
+	s_main.menu.touchDraw = MainMenu_TouchDraw;
 
 	y = 134;
 	s_main.singleplayer.generic.type		= MTYPE_PTEXT;

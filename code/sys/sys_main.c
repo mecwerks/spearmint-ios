@@ -32,12 +32,14 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #include <errno.h>
 
 #ifndef DEDICATED
+#ifndef IOS
 #ifdef USE_LOCAL_HEADERS
 #	include "SDL.h"
 #	include "SDL_cpuinfo.h"
 #else
 #	include <SDL.h>
 #	include <SDL_cpuinfo.h>
+#endif
 #endif
 #endif
 
@@ -201,12 +203,14 @@ Sys_Exit
 Single exit point (regular exit or in case of error)
 =================
 */
-static __attribute__ ((noreturn)) void Sys_Exit( int exitCode )
+__attribute__ ((noreturn)) void Sys_Exit( int exitCode )
 {
 	CON_Shutdown( );
 
 #ifndef DEDICATED
+#ifndef IOS
 	SDL_Quit( );
+#endif
 #endif
 
 	if( exitCode < 2 )
@@ -243,6 +247,7 @@ cpuFeatures_t Sys_GetProcessorFeatures( void )
 	cpuFeatures_t features = 0;
 
 #ifndef DEDICATED
+#ifndef IOS
 	if( SDL_HasRDTSC( ) )    features |= CF_RDTSC;
 	if( SDL_HasMMX( ) )      features |= CF_MMX;
 	if( SDL_HasMMXExt( ) )   features |= CF_MMX_EXT;
@@ -251,6 +256,7 @@ cpuFeatures_t Sys_GetProcessorFeatures( void )
 	if( SDL_HasSSE( ) )      features |= CF_SSE;
 	if( SDL_HasSSE2( ) )     features |= CF_SSE2;
 	if( SDL_HasAltiVec( ) )  features |= CF_ALTIVEC;
+#endif
 #endif
 
 	return features;
@@ -353,6 +359,7 @@ void Sys_Print( const char *msg )
 Sys_Error
 =================
 */
+#ifndef IOS
 void Sys_Error( const char *error, ... )
 {
 	va_list argptr;
@@ -366,6 +373,7 @@ void Sys_Error( const char *error, ... )
 
 	Sys_Exit( 3 );
 }
+#endif
 
 #if 0
 /*
@@ -410,6 +418,7 @@ Sys_UnloadDll
 */
 void Sys_UnloadDll( void *dllHandle )
 {
+#ifndef IOS
 	if( !dllHandle )
 	{
 		Com_Printf("Sys_UnloadDll(NULL)\n");
@@ -417,6 +426,7 @@ void Sys_UnloadDll( void *dllHandle )
 	}
 
 	Sys_UnloadLibrary(dllHandle);
+#endif
 }
 
 /*
@@ -430,6 +440,38 @@ from executable path, then fs_basepath.
 
 void *Sys_LoadDll(const char *name, qboolean useSystemLib)
 {
+#ifdef IOS
+	char *game = Cvar_VariableString("fs_game");
+#ifdef IOS_STATIC
+	extern int baseq3_ui_vmMain(int, ...), baseq3_qagame_vmMain(int, ...), baseq3_cgame_vmMain(int, ...);
+	extern void baseq3_ui_dllEntry(int (*)(int, ...)), baseq3_qagame_dllEntry(int (*)(int, ...)), baseq3_cgame_dllEntry(int (*)(int, ...));
+	static const struct
+	{
+		const char *game;
+		const char *name;
+		void (*dllEntry)(int (*)(int, ...));
+		int (*entryPoint)(int, ...);
+	} dllDescriptions[] =
+	{
+		{"", "ui", baseq3_ui_dllEntry, baseq3_ui_vmMain},
+		{"", "qagame", baseq3_qagame_dllEntry, baseq3_qagame_vmMain},
+		{"", "cgame", baseq3_cgame_dllEntry, baseq3_cgame_vmMain},
+	};
+	int i;
+	
+	for (i = 0; i < sizeof(dllDescriptions) / sizeof(dllDescriptions[0]); ++i)
+	{
+		if (!strcmp(game, dllDescriptions[i].game) && !strcmp(name, dllDescriptions[i].name))
+		{
+			*entryPoint = dllDescriptions[i].entryPoint;
+			dllDescriptions[i].dllEntry(systemcalls);
+			return (void *)0xdeadc0de;
+		}
+	}
+#endif
+	Com_Printf("Sys_LoadDll(%s) could not find appropriate entry point for game %s\n", name, game);
+	return NULL;
+#else
 	void *dllhandle;
 	
 	if(useSystemLib)
@@ -468,6 +510,7 @@ void *Sys_LoadDll(const char *name, qboolean useSystemLib)
 	}
 	
 	return dllhandle;
+#endif // !IOS
 }
 
 /*
@@ -481,6 +524,7 @@ void *Sys_LoadGameDll(const char *name,
 	intptr_t (QDECL **entryPoint)(int, ...),
 	intptr_t (*systemcalls)(intptr_t, ...))
 {
+#ifndef IOS
 	void *libHandle;
 	void (*dllEntry)(intptr_t (*syscallptr)(intptr_t, ...));
 
@@ -510,6 +554,9 @@ void *Sys_LoadGameDll(const char *name,
 	dllEntry( systemcalls );
 
 	return libHandle;
+#else
+	return NULL;
+#endif
 }
 
 /*
@@ -536,7 +583,7 @@ void Sys_ParseArgs( int argc, char **argv )
 }
 
 #ifndef DEFAULT_BASEDIR
-#	ifdef MACOS_X
+#	if defined(MACOS_X)
 #		define DEFAULT_BASEDIR Sys_StripAppBundle(Sys_BinaryPath())
 #	else
 #		define DEFAULT_BASEDIR Sys_BinaryPath()
@@ -579,12 +626,16 @@ void Sys_SigHandler( int signal )
 main
 =================
 */
+#ifdef IOS
+void Sys_Startup( int argc, char **argv )
+#else
 int main( int argc, char **argv )
+#endif // IOS
 {
 	int   i;
 	char  commandLine[ MAX_STRING_CHARS ] = { 0 };
 
-#ifndef DEDICATED
+#if !defined(DEDICATED) && !defined(IOS)
 	// SDL version check
 
 	// Compile time
@@ -646,12 +697,13 @@ int main( int argc, char **argv )
 	signal( SIGTERM, Sys_SigHandler );
 	signal( SIGINT, Sys_SigHandler );
 
+#ifndef IOS // Need to add IN_Frame to IOS loop
 	while( 1 )
 	{
 		IN_Frame( );
 		Com_Frame( );
 	}
-
 	return 0;
+#endif
 }
 

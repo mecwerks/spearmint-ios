@@ -796,13 +796,16 @@ typedef enum {
 	SE_CHAR,		// evValue is an ascii char
 	SE_MOUSE,		// evValue and evValue2 are relative signed x / y moves
 	SE_JOYSTICK_AXIS,	// evValue is an axis number and evValue2 is the current state (-127 to 127)
+#if IOS
+	SE_ACCEL,	// iOS accelerometer
+#endif // IOS
 	SE_CONSOLE		// evPtr is a char*
 } sysEventType_t;
 
 typedef struct {
 	int				evTime;
 	sysEventType_t	evType;
-	int				evValue, evValue2;
+	int				evValue, evValue2, evValue3;
 	int				evPtrLength;	// bytes of data pointed to by evPtr, for journaling
 	void			*evPtr;			// this must be manually freed if not NULL
 } sysEvent_t;
@@ -949,6 +952,7 @@ void Com_TouchMemory( void );
 
 // commandLine should not include the executable name (argv[0])
 void Com_Init( char *commandLine );
+void IN_Frame( void );
 void Com_Frame( void );
 void Com_Shutdown( void );
 

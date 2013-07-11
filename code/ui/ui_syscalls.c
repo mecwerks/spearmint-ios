@@ -402,3 +402,7 @@ qboolean trap_VerifyCDKey( const char *key, const char *chksum) {
 void trap_SetPbClStatus( int status ) {
 	syscall( UI_SET_PBCLSTATUS, status );
 }
+
+void trap_DrawTouchArea( float x, float y, float w, float h, int menu, int callback ){
+	syscall( UI_DRAW_TOUCH_AREA, x, y, w, h, menu, callback );
+}
