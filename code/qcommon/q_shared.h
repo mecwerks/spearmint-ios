@@ -26,30 +26,44 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 // q_shared.h -- included first by ALL program modules.
 // A user mod should never modify this file
 
+// mecwerks: it is good to have a different base directory for iOS so
+// that when you load the qvms from "foobar-ios" you know that you are
+// loading iOS optimized qvms. This allows you to add optimizations for
+// JUST the ios version of your game. Currently a touch menu system is
+// used for "baseq3-ios", and anything else will use a generic control
+// system.
+
+// running your iOS 
 #ifdef STANDALONE
-  #define PRODUCT_NAME			"iofoo3"
-  #define BASEGAME			"foobar"
-  #define CLIENT_WINDOW_TITLE     	"changeme"
-  #define CLIENT_WINDOW_MIN_TITLE 	"changeme2"
-  #define HOMEPATH_NAME_UNIX		".foo"
-  #define HOMEPATH_NAME_WIN		"FooBar"
-  #define HOMEPATH_NAME_MACOSX		HOMEPATH_NAME_WIN
-  #define GAMENAME_FOR_MASTER		"foobar"	// must NOT contain whitespace
-//  #define LEGACY_PROTOCOL	// You probably don't need this for your standalone game
+# ifdef IOS
+#	define PRODUCT_NAME				"iofoo3-ios"
+#	define BASEGAME					"foobar-ios"
+# else
+#	define PRODUCT_NAME				"iofoo3"
+#	define BASEGAME					"foobar"
+# endif
+# define CLIENT_WINDOW_TITLE     	"changeme"
+# define CLIENT_WINDOW_MIN_TITLE 	"changeme2"
+# define HOMEPATH_NAME_UNIX			".foo"
+# define HOMEPATH_NAME_WIN			"FooBar"
+# define HOMEPATH_NAME_MACOSX		HOMEPATH_NAME_WIN
+# define GAMENAME_FOR_MASTER		"foobar"	// must NOT contain whitespace
+//# define LEGACY_PROTOCOL			// You probably don't need this for your standalone game
 #else
 # ifdef IOS
-#	define PRODUCT_NAME			"ioq3-ios"
+#	define PRODUCT_NAME				"ioq3-ios"
+#	define BASEGAME					"baseq3-ios"
 # else
-#	define PRODUCT_NAME			"ioq3"
+#	define PRODUCT_NAME				"ioq3"
+#	define BASEGAME					"baseq3"
 # endif
-  #define BASEGAME			"baseq3"
-  #define CLIENT_WINDOW_TITLE     	"ioquake3"
-  #define CLIENT_WINDOW_MIN_TITLE 	"ioq3"
-  #define HOMEPATH_NAME_UNIX		".q3a"
-  #define HOMEPATH_NAME_WIN		"Quake3"
-  #define HOMEPATH_NAME_MACOSX		HOMEPATH_NAME_WIN
-  #define GAMENAME_FOR_MASTER		"Quake3Arena"
-  #define LEGACY_PROTOCOL
+# define CLIENT_WINDOW_TITLE     	"ioquake3"
+# define CLIENT_WINDOW_MIN_TITLE 	"ioq3"
+# define HOMEPATH_NAME_UNIX			".q3a"
+# define HOMEPATH_NAME_WIN			"Quake3"
+# define HOMEPATH_NAME_MACOSX		HOMEPATH_NAME_WIN
+# define GAMENAME_FOR_MASTER		"Quake3Arena"
+# define LEGACY_PROTOCOL
 #endif
 
 // Heartbeat for dpmaster protocol. You shouldn't change this unless you know what you're doing

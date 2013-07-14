@@ -60,7 +60,7 @@ char *Sys_DefaultHomePath(void)
 	if ((p = getenv("HOME")) != NULL) {
 		Q_strncpyz(homePath, p, sizeof(homePath));
 
-		Q_strcat(homePath, sizeof(homePath), "/Documents");
+		Q_strcat(homePath, sizeof(homePath), "/Library");
 
 		if (mkdir(homePath, 0777)) {
 			if (errno != EEXIST)
@@ -95,6 +95,7 @@ char *Sys_DefaultHomePath(void)
 #endif
 }
 
+#ifdef IOS
 /*
 =================
 Sys_StripAppBundle
@@ -104,7 +105,6 @@ Discovers if passed dir is suffixed with the directory structure of an iOS
 the result is returned. If not, dir is returned untouched.
 =================
 */
-#ifdef IOS
 char *Sys_StripAppBundle( char *dir )
 {
 	static char cwd[MAX_OSPATH];

@@ -46,6 +46,9 @@ unsigned int CON_LogRead( char *out, unsigned int outSize );
 
 #ifdef MACOS_X
 char *Sys_StripAppBundle( char *pwd );
+#ifdef IOS
+char *Sys_DefaultLibraryPath(void);
+#endif
 #endif
 
 void Sys_GLimpSafeInit( void );

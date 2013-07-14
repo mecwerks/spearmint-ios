@@ -77,7 +77,7 @@ static const long long kDemoPakFileSize = 46853694;
 - (BOOL)_checkForGameData
 {
 	NSString *gamesFolder = [self _gamesFolder];
-	NSArray *knownGames = [NSArray arrayWithObjects:@"baseq3", @"demoq3", nil];
+	NSArray *knownGames = [NSArray arrayWithObjects:@"demoq3", nil];
 	NSFileManager *fileManager = [NSFileManager defaultManager];
 	BOOL isDir;
 	BOOL foundGame = NO;
@@ -212,8 +212,7 @@ static const long long kDemoPakFileSize = 46853694;
 
 - (void)applicationDidFinishLaunching:(id)unused
 {
-	if ([self _checkForGameData])
-		[self performSelector:@selector(_quakeMain) withObject:nil afterDelay:0.0];
+	[self performSelector:@selector(_quakeMain) withObject:nil afterDelay:0.0];
 }
 
 - (void)_deviceOrientationChanged:(NSNotification *)notification

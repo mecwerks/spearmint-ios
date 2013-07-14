@@ -663,7 +663,7 @@ fileHandle_t FS_SV_FOpenFileWrite( const char *filename ) {
 	if ( !fs_searchpaths ) {
 		Com_Error( ERR_FATAL, "Filesystem call made without initialization" );
 	}
-
+	
 	ospath = FS_BuildOSPath( fs_homepath->string, filename, "" );
 	ospath[strlen(ospath)-1] = '\0';
 
@@ -2769,6 +2769,9 @@ qboolean FS_Which(const char *filename, void *searchPath)
 		if(search->pack)
 		{
 			Com_Printf("File \"%s\" found in \"%s\"\n", filename, search->pack->pakFilename);
+			if ( Q_strncmp(search->pack->pakFilename, IOS_PAKFILE_PREFIX, 4) ) {
+				Cvar_Get("vm_ios", "1", CVAR_TEMP);
+			}
 			return qtrue;
 		}
 		else if(search->dir)

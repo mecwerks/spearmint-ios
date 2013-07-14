@@ -83,17 +83,11 @@ static void MainMenu_ExitAction( qboolean result ) {
 	UI_CreditMenu();
 }
 
-
-
 /*
 =================
 Main_MenuEvent
 =================
 */
-void Main_MenuEvent (void* ptr, int event) {
-	Main_MenuTouch(((menucommon_s*)ptr)->id, event);
-}
-
 void Main_MenuTouch ( int callback, int event ) {
 	if( event != QM_ACTIVATED ) {
 		return;
@@ -135,6 +129,9 @@ void Main_MenuTouch ( int callback, int event ) {
 	}
 }
 
+void Main_MenuEvent (void* ptr, int event) {
+	Main_MenuTouch(((menucommon_s*)ptr)->id, event);
+}
 
 /*
 ===============
@@ -292,13 +289,13 @@ void UI_MainMenu( void ) {
 
 	trap_Cvar_Set( "sv_killserver", "1" );
 
-	if( !uis.demoversion && !ui_cdkeychecked.integer ) {
+	if( !uis.demoversion && !uis.ios && !ui_cdkeychecked.integer ) {
 		char	key[17];
 
 		trap_GetCDKey( key, sizeof(key) );
 		if( trap_VerifyCDKey( key, NULL ) == qfalse ) {
-//			UI_CDKeyMenu();
-//			return;
+			UI_CDKeyMenu();
+			return;
 		}
 	}
 	
@@ -365,42 +362,44 @@ void UI_MainMenu( void ) {
 	s_main.setup.color						= color_red;
 	s_main.setup.style						= style;
 
-	y += MAIN_MENU_VERTICAL_SPACING;
-	s_main.demos.generic.type				= MTYPE_PTEXT;
-	s_main.demos.generic.flags				= QMF_CENTER_JUSTIFY|QMF_PULSEIFFOCUS;
-	s_main.demos.generic.x					= 320;
-	s_main.demos.generic.y					= y;
-	s_main.demos.generic.id					= ID_DEMOS;
-	s_main.demos.generic.callback			= Main_MenuEvent; 
-	s_main.demos.string						= "DEMOS";
-	s_main.demos.color						= color_red;
-	s_main.demos.style						= style;
-
-	y += MAIN_MENU_VERTICAL_SPACING;
-	s_main.cinematics.generic.type			= MTYPE_PTEXT;
-	s_main.cinematics.generic.flags			= QMF_CENTER_JUSTIFY|QMF_PULSEIFFOCUS;
-	s_main.cinematics.generic.x				= 320;
-	s_main.cinematics.generic.y				= y;
-	s_main.cinematics.generic.id			= ID_CINEMATICS;
-	s_main.cinematics.generic.callback		= Main_MenuEvent; 
-	s_main.cinematics.string				= "CINEMATICS";
-	s_main.cinematics.color					= color_red;
-	s_main.cinematics.style					= style;
-
-	if ( !uis.demoversion && UI_TeamArenaExists() ) {
-		teamArena = qtrue;
+	if ( !uis.ios ) {
 		y += MAIN_MENU_VERTICAL_SPACING;
-		s_main.teamArena.generic.type			= MTYPE_PTEXT;
-		s_main.teamArena.generic.flags			= QMF_CENTER_JUSTIFY|QMF_PULSEIFFOCUS;
-		s_main.teamArena.generic.x				= 320;
-		s_main.teamArena.generic.y				= y;
-		s_main.teamArena.generic.id				= ID_TEAMARENA;
-		s_main.teamArena.generic.callback		= Main_MenuEvent; 
-		s_main.teamArena.string					= "TEAM ARENA";
-		s_main.teamArena.color					= color_red;
-		s_main.teamArena.style					= style;
+		s_main.demos.generic.type				= MTYPE_PTEXT;
+		s_main.demos.generic.flags				= QMF_CENTER_JUSTIFY|QMF_PULSEIFFOCUS;
+		s_main.demos.generic.x					= 320;
+		s_main.demos.generic.y					= y;
+		s_main.demos.generic.id					= ID_DEMOS;
+		s_main.demos.generic.callback			= Main_MenuEvent;
+		s_main.demos.string						= "DEMOS";
+		s_main.demos.color						= color_red;
+		s_main.demos.style						= style;
+		
+		y += MAIN_MENU_VERTICAL_SPACING;
+		s_main.cinematics.generic.type			= MTYPE_PTEXT;
+		s_main.cinematics.generic.flags			= QMF_CENTER_JUSTIFY|QMF_PULSEIFFOCUS;
+		s_main.cinematics.generic.x				= 320;
+		s_main.cinematics.generic.y				= y;
+		s_main.cinematics.generic.id			= ID_CINEMATICS;
+		s_main.cinematics.generic.callback		= Main_MenuEvent;
+		s_main.cinematics.string				= "CINEMATICS";
+		s_main.cinematics.color					= color_red;
+		s_main.cinematics.style					= style;
+		
+		if ( !uis.demoversion && UI_TeamArenaExists() ) {
+			teamArena = qtrue;
+			y += MAIN_MENU_VERTICAL_SPACING;
+			s_main.teamArena.generic.type			= MTYPE_PTEXT;
+			s_main.teamArena.generic.flags			= QMF_CENTER_JUSTIFY|QMF_PULSEIFFOCUS;
+			s_main.teamArena.generic.x				= 320;
+			s_main.teamArena.generic.y				= y;
+			s_main.teamArena.generic.id				= ID_TEAMARENA;
+			s_main.teamArena.generic.callback		= Main_MenuEvent;
+			s_main.teamArena.string					= "TEAM ARENA";
+			s_main.teamArena.color					= color_red;
+			s_main.teamArena.style					= style;
+		}
 	}
-
+	
 	if ( !uis.demoversion ) {
 		y += MAIN_MENU_VERTICAL_SPACING;
 		s_main.mods.generic.type			= MTYPE_PTEXT;
@@ -428,14 +427,17 @@ void UI_MainMenu( void ) {
 	Menu_AddItem( &s_main.menu,	&s_main.singleplayer );
 	Menu_AddItem( &s_main.menu,	&s_main.multiplayer );
 	Menu_AddItem( &s_main.menu,	&s_main.setup );
-	Menu_AddItem( &s_main.menu,	&s_main.demos );
-	Menu_AddItem( &s_main.menu,	&s_main.cinematics );
-	if (teamArena) {
-		Menu_AddItem( &s_main.menu,	&s_main.teamArena );
+
+	if ( !uis.ios ) {
+		Menu_AddItem( &s_main.menu,	&s_main.demos );
+		Menu_AddItem( &s_main.menu,	&s_main.cinematics );
+		if (teamArena)
+			Menu_AddItem( &s_main.menu,	&s_main.teamArena );
 	}
-	if ( !uis.demoversion ) {
+	
+	if ( !uis.demoversion )
 		Menu_AddItem( &s_main.menu,	&s_main.mods );
-	}
+	
 	Menu_AddItem( &s_main.menu,	&s_main.exit );             
 
 	trap_Key_SetCatcher( KEYCATCH_UI );

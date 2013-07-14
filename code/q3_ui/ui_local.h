@@ -562,6 +562,7 @@ typedef struct {
 	float				bias;
 	qboolean			demoversion;
 	qboolean			firstdraw;
+	qboolean			ios;
 } uiStatic_t;
 
 extern void			UI_Init( void );

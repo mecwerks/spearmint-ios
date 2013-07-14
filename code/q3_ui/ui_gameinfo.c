@@ -811,5 +811,6 @@ void UI_InitGameinfo( void ) {
 	UI_LoadArenas();
 	UI_LoadBots();
 
+	uis.ios = trap_Cvar_VariableValue("vm_ios");
 	uis.demoversion = qfalse;
 }

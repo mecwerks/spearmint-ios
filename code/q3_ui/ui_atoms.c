@@ -1073,9 +1073,7 @@ qboolean UI_ConsoleCommand( int realTime ) {
 	}
 
 	if ( Q_stricmp (cmd, "ui_cdkey") == 0 ) {
-#ifndef IOS
 		UI_CDKeyMenu_f();
-#endif
 		return qtrue;
 	}
 

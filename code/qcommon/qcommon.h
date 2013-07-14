@@ -594,6 +594,8 @@ issues.
 #define NUM_ID_PAKS		9
 #define NUM_TA_PAKS		4
 
+#define IOS_PAKFILE_PREFIX	"ios_"
+
 #define	MAX_FILE_HANDLES	64
 
 #ifdef DEDICATED

@@ -389,6 +389,7 @@ vmHeader_t *VM_LoadQVM( vm_t *vm, qboolean alloc, qboolean unpure)
 	}
 
 	// show where the qvm was loaded from
+	// mecwerks: also set to running on ios if loading from an IOS pakfile
 	FS_Which(filename, vm->searchPath);
 
 	if( LittleLong( header.h->vmMagic ) == VM_MAGIC_VER2 ) {
