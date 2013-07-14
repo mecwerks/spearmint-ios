@@ -14,6 +14,7 @@ qboolean Sys_LowPhysicalMemory(void) {
 }
 
 void Sys_Error(const char *error, ...) {
+	extern void Sys_Exit(int ex) __attribute__ ((noreturn));
 	NSString *errorString;
 	va_list ap;
 
@@ -28,6 +29,8 @@ void Sys_Error(const char *error, ...) {
 #else
 	[(Q3Application *)[Q3Application sharedApplication] presentErrorMessage:errorString];
 #endif // IOS_USE_THREADS
+	
+	Sys_Exit(3);
 }
 
 void Sys_Warn( const char *warning, ...) {

@@ -2769,9 +2769,11 @@ qboolean FS_Which(const char *filename, void *searchPath)
 		if(search->pack)
 		{
 			Com_Printf("File \"%s\" found in \"%s\"\n", filename, search->pack->pakFilename);
-			if ( Q_strncmp(search->pack->pakFilename, IOS_PAKFILE_PREFIX, 4) ) {
+#ifdef IOS
+			if ( Q_strncmp(search->pack->pakFilename, IOS_PAKFILE_PREFIX, 6) == 0 ) {
 				Cvar_Get("vm_ios", "1", CVAR_TEMP);
 			}
+#endif
 			return qtrue;
 		}
 		else if(search->dir)

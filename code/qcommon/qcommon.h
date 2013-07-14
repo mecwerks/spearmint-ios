@@ -594,7 +594,7 @@ issues.
 #define NUM_ID_PAKS		9
 #define NUM_TA_PAKS		4
 
-#define IOS_PAKFILE_PREFIX	"ios_"
+#define IOS_PAKFILE_PREFIX	"q3ios_"
 
 #define	MAX_FILE_HANDLES	64
 
@@ -798,9 +798,7 @@ typedef enum {
 	SE_CHAR,		// evValue is an ascii char
 	SE_MOUSE,		// evValue and evValue2 are relative signed x / y moves
 	SE_JOYSTICK_AXIS,	// evValue is an axis number and evValue2 is the current state (-127 to 127)
-#if IOS
-	SE_ACCEL,	// iOS accelerometer
-#endif // IOS
+	SE_ACCEL,		// iOS accelerometer
 	SE_CONSOLE		// evPtr is a char*
 } sysEventType_t;
 

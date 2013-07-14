@@ -38,9 +38,6 @@ endif
 ifndef BUILD_MISSIONPACK
   BUILD_MISSIONPACK=
 endif
-ifndef BUILD_IOS_BASEGAME
-  BUILD_IOS_BASEGAME=
-endif
 ifndef BUILD_RENDERER_OPENGL2
   BUILD_RENDERER_OPENGL2=
 endif
@@ -111,19 +108,11 @@ SERVERBIN=ioq3ded
 endif
 
 ifndef BASEGAME
-  ifdef BUILD_IOS_BASEGAME
-    BASEGAME=baseq3-ios
-  else
-    BASEGAME=baseq3
-  endif
+BASEGAME=baseq3
 endif
 
 ifndef BASEGAME_CFLAGS
-  ifdef BUILD_IOS_BASEGAME
-    BASEGAME_CFLAGS=-DIOS
-  else
-    BASEGAME_CFLAGS=
-  endif
+BASEGAME_CFLAGS=
 endif
 
 ifndef MISSIONPACK

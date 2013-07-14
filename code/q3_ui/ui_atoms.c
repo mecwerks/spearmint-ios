@@ -123,7 +123,8 @@ void UI_PushMenu( menuframework_s *menu )
 		}
 	}
 
-	if ( menu->touchDraw )
+	// only draw touch menus on iOS
+	if ( uis.ios && menu->touchDraw )
 		menu->touchDraw();
 
 	uis.firstdraw = qtrue;
