@@ -405,9 +405,11 @@ iOS Accelerometer event
 =================
 */
 void CL_AccelEvent( int pitch, int roll, int yaw ) {
-//	cls.accelAngles[PITCH] = pitch;
-//	cls.accelAngles[ROLL] = roll;
-//	cls.accelAngles[YAW] = yaw;
+#if 0 // mecwerks: i need to reimplement this as a control option
+	cls.accelAngles[PITCH] = pitch;
+	cls.accelAngles[ROLL] = roll;
+	cls.accelAngles[YAW] = yaw;
+#endif
 }
 
 /*
