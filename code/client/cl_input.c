@@ -600,7 +600,6 @@ IOS_FlushButtons
 void IOS_FlushButtons ( void ) {
 	memset( &clsi, 0, sizeof(screenInput_t) );
 	clsi.clean = qtrue;
-	Com_Printf("Cleared touch buttons\n");
 }
 
 /*
@@ -612,7 +611,7 @@ void IOS_DrawTouchArea ( float x, float y, float w, float h, int menu, int callb
 	int i;
 	qboolean buttonFound = qfalse;
 	
-	Com_Printf("Button: %f %f %f %f\n", y, x, w, h);
+//	Com_Printf("Button: %f %f %f %f\n", y, x, w, h);
 
 	for (i = 0; i < MAX_BUTTONS; i++) {
 		if ( !clsi.buttons[i].active ) {

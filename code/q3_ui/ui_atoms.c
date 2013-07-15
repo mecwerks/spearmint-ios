@@ -865,16 +865,16 @@ void UI_SelectAndPress( uiMenuCommand_t menu, int callback ) {
 			Main_MenuTouch( callback, QM_ACTIVATED );
 			return;
 		case UIMENU_SPLEVEL:
-			//UI_SPLevelMenu_Event ( callback, QM_ACTIVATED );
+			UI_SPLevelMenu_Event ( callback, QM_ACTIVATED );
 			break;
 		case UIMENU_SPSKILL:
-			//UI_SPSkillMenu_Event( callback, QM_ACTIVATED );
+			UI_SPSkillMenu_Event( callback, QM_ACTIVATED );
 			break;
 		case UIMENU_INGAME:
-			//InGame_EventTouch( callback, QM_ACTIVATED );
+			InGame_EventTouch( callback, QM_ACTIVATED );
 			return;
 		case UIMENU_CONFIRM:
-			//ConfirmMenu_TouchEvent( callback );
+			ConfirmMenu_TouchEvent( callback );
 			return;
 		case UIMENU_NONE:
 		case UIMENU_NEED_CD:

@@ -139,9 +139,14 @@
 	{
 		if (clsi.buttons[i].active && !clsi.buttons[i].initialized)
 		{
-//			Com_Printf("x:%f, y:%f, w:%f, h:%f\n", clsi.buttons[i].x, clsi.buttons[i].y, clsi.buttons[i].w, clsi.buttons[i].h);
-			buttonArea[i] = CGRectMake(clsi.buttons[i].x, self.frame.size.height - clsi.buttons[i].y,
-									   clsi.buttons[i].w, clsi.buttons[i].h);
+			if (clsi.buttons[i].menu == UIMENU_MAIN) {
+				// the right way
+				buttonArea[i] = CGRectMake(clsi.buttons[i].x, self.frame.size.height - clsi.buttons[i].y,
+										   clsi.buttons[i].w, clsi.buttons[i].h);
+			} else {
+				buttonArea[i] = CGRectMake(clsi.buttons[i].x, clsi.buttons[i].y,
+										   clsi.buttons[i].w, clsi.buttons[i].h);
+			}
 			clsi.buttons[i].initialized = TRUE;
 		}
 	}
