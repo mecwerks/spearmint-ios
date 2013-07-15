@@ -371,7 +371,6 @@ typedef struct {
 } buttons_t;
 
 typedef struct {
-	int lastMenu;
 	qboolean clean;
 	buttons_t buttons[MAX_BUTTONS];
 } screenInput_t;

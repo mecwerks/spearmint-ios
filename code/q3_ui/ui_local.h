@@ -260,6 +260,7 @@ typedef struct
 
 extern void			Menu_Cache( void );
 extern void			Menu_Focus( menucommon_s *m );
+extern void			Menu_DrawTouchItem( void *item );
 extern void			Menu_AddItem( menuframework_s *menu, void *item );
 extern void			Menu_AdjustCursor( menuframework_s *menu, int dir );
 extern void			Menu_Draw( menuframework_s *menu );
@@ -697,6 +698,7 @@ qboolean               trap_VerifyCDKey( const char *key, const char *chksum);
 
 void			trap_SetPbClStatus( int status );
 void			trap_DrawTouchArea( float x, float y, float w, float h, int menu, int callback );
+void			trap_ClearTouchButtons( void );
 
 //
 // ui_addbots.c

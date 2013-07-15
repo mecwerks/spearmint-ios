@@ -1845,6 +1845,7 @@
 					USE_CURL,
 					USE_OPENAL,
 				);
+				GCC_VERSION = "";
 				INFOPLIST_FILE = "$(SRCROOT)/Info.plist";
 				IPHONEOS_DEPLOYMENT_TARGET = 6.0;
 				LIBRARY_SEARCH_PATHS = (
@@ -1875,6 +1876,7 @@
 					USE_CURL,
 					USE_OPENAL,
 				);
+				GCC_VERSION = "";
 				INFOPLIST_FILE = "$(SRCROOT)/Info.plist";
 				IPHONEOS_DEPLOYMENT_TARGET = 6.0;
 				LIBRARY_SEARCH_PATHS = (
@@ -1981,6 +1983,7 @@
 					USE_CURL,
 					USE_OPENAL,
 				);
+				GCC_VERSION = "";
 				INFOPLIST_FILE = "$(SRCROOT)/Info.plist";
 				IPHONEOS_DEPLOYMENT_TARGET = 6.0;
 				LIBRARY_SEARCH_PATHS = (

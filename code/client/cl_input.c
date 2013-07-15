@@ -600,6 +600,7 @@ IOS_FlushButtons
 void IOS_FlushButtons ( void ) {
 	memset( &clsi, 0, sizeof(screenInput_t) );
 	clsi.clean = qtrue;
+	Com_Printf("Cleared touch buttons\n");
 }
 
 /*
@@ -609,26 +610,30 @@ IOS_DrawTouchArea
 */
 void IOS_DrawTouchArea ( float x, float y, float w, float h, int menu, int callback ) {
 	int i;
+	qboolean buttonFound = qfalse;
 	
-	if ( menu != clsi.lastMenu ) {
-		IOS_FlushButtons();
-		clsi.lastMenu = menu;
-	}
-	
+	Com_Printf("Button: %f %f %f %f\n", y, x, w, h);
+
 	for (i = 0; i < MAX_BUTTONS; i++) {
-		if (clsi.buttons[i].active) continue;
-		if (clsi.clean) clsi.clean = qfalse;
-		clsi.buttons[i].x = y;
-		clsi.buttons[i].y = x;
-		clsi.buttons[i].w = h;
-		clsi.buttons[i].h = w;
-		clsi.buttons[i].menu = menu;
-		clsi.buttons[i].callback = callback;
-		clsi.buttons[i].active = qtrue;
-		return;
+		if ( !clsi.buttons[i].active ) {
+			if (clsi.clean) clsi.clean = qfalse;
+			clsi.buttons[i].x = y;
+			clsi.buttons[i].y = x;
+			clsi.buttons[i].w = h;
+			clsi.buttons[i].h = w;
+			clsi.buttons[i].menu = menu;
+			clsi.buttons[i].callback = callback;
+			clsi.buttons[i].active = qtrue;
+			buttonFound = qtrue;
+			break;
+		}
 	}
+	
+	if ( !buttonFound )
+		Com_Printf("IOS_DrawTouchArea: Max buttons reached\n");
 }
 #endif
+
 /*
 =================
 CL_CreateCmd

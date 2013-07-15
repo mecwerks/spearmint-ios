@@ -42,7 +42,8 @@ MAIN MENU
 #define ID_EXIT					17
 
 #define MAIN_BANNER_MODEL				"models/mapobjects/banner/banner5.md3"
-#define MAIN_MENU_VERTICAL_SPACING		34
+
+static int MAIN_MENU_VERTICAL_SPACING = 0;
 
 
 typedef struct {
@@ -258,19 +259,11 @@ static qboolean UI_TeamArenaExists( void ) {
 }
 
 void MainMenu_TouchDraw ( void ) {
-	// MEC: Menu_DrawTouchItem is not yet finished
-	//	Menu_DrawTouchItem( &s_main.singleplayer );
-	//	Menu_DrawTouchItem( &s_main.multiplayer );
-	//	Menu_DrawTouchItem( &s_main.setup );
-	//	Menu_DrawTouchItem( &s_main.cinematics );
-	//	Menu_DrawTouchItem( &s_main.mods );
-	//	Menu_DrawTouchItem( &s_main.exit );
-	trap_DrawTouchArea(286, 100, 180, 50, UIMENU_MAIN, ID_SINGLEPLAYER);
-	trap_DrawTouchArea(290, 168, 180, 50, UIMENU_MAIN, ID_MULTIPLAYER);
-	trap_DrawTouchArea(325, 239, 100, 50, UIMENU_MAIN, ID_SETUP);
-	trap_DrawTouchArea(80, 90, 160, 50, UIMENU_MAIN, ID_CINEMATICS);
-	trap_DrawTouchArea(100, 148, 90, 50, UIMENU_MAIN, ID_MODS);
-	trap_DrawTouchArea(100, 230, 76, 50, UIMENU_MAIN, ID_EXIT);
+	Menu_DrawTouchItem( &s_main.singleplayer );
+	Menu_DrawTouchItem( &s_main.multiplayer );
+	Menu_DrawTouchItem( &s_main.setup );
+	Menu_DrawTouchItem( &s_main.mods );
+	Menu_DrawTouchItem( &s_main.exit );
 }
 
 /*
@@ -286,17 +279,23 @@ void UI_MainMenu( void ) {
 	int		y;
 	qboolean teamArena = qfalse;
 	int		style = UI_CENTER | UI_DROPSHADOW;
-
+	
 	trap_Cvar_Set( "sv_killserver", "1" );
 
-	if( !uis.demoversion && !uis.ios && !ui_cdkeychecked.integer ) {
-		char	key[17];
-
-		trap_GetCDKey( key, sizeof(key) );
-		if( trap_VerifyCDKey( key, NULL ) == qfalse ) {
-			UI_CDKeyMenu();
-			return;
+	if ( !uis.ios ) {
+		if( !uis.demoversion && !ui_cdkeychecked.integer ) {
+			char	key[17];
+			
+			trap_GetCDKey( key, sizeof(key) );
+			if( trap_VerifyCDKey( key, NULL ) == qfalse ) {
+				UI_CDKeyMenu();
+				return;
+			}
 		}
+		
+		MAIN_MENU_VERTICAL_SPACING = 34;
+	} else {
+		MAIN_MENU_VERTICAL_SPACING = 58;
 	}
 	
 	memset( &s_main, 0 ,sizeof(mainmenu_t) );

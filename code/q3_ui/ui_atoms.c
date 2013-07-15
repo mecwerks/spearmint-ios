@@ -124,9 +124,14 @@ void UI_PushMenu( menuframework_s *menu )
 	}
 
 	// only draw touch menus on iOS
-	if ( uis.ios && menu->touchDraw )
-		menu->touchDraw();
-
+	if ( uis.ios ) {
+		// mecwerks: make sure last menu's touch buttons are cleared out
+		trap_ClearTouchButtons();
+		
+		if( menu->touchDraw )
+			menu->touchDraw();
+	}
+	
 	uis.firstdraw = qtrue;
 }
 
@@ -144,11 +149,14 @@ void UI_PopMenu (void)
 	if (uis.menusp < 0)
 		trap_Error ("UI_PopMenu: menu stack underflow");
 
+	// mecwerks: make sure last menu's touch buttons are cleared out
+	if (uis.ios) trap_ClearTouchButtons();
+	
 	if (uis.menusp) {
 		uis.activemenu = uis.stack[uis.menusp-1];
 		uis.firstdraw = qtrue;
 		// redraw the touch buttons for the menu
-		if (uis.activemenu->touchDraw)
+		if (uis.ios && uis.activemenu->touchDraw)
 			uis.activemenu->touchDraw();
 	}
 	else {
@@ -857,17 +865,20 @@ void UI_SelectAndPress( uiMenuCommand_t menu, int callback ) {
 			Main_MenuTouch( callback, QM_ACTIVATED );
 			return;
 		case UIMENU_SPLEVEL:
-			UI_SPLevelMenu_Event ( callback, QM_ACTIVATED );
+			//UI_SPLevelMenu_Event ( callback, QM_ACTIVATED );
 			break;
 		case UIMENU_SPSKILL:
-			UI_SPSkillMenu_Event( callback, QM_ACTIVATED );
+			//UI_SPSkillMenu_Event( callback, QM_ACTIVATED );
 			break;
 		case UIMENU_INGAME:
-			InGame_EventTouch( callback, QM_ACTIVATED );
+			//InGame_EventTouch( callback, QM_ACTIVATED );
 			return;
 		case UIMENU_CONFIRM:
-			ConfirmMenu_TouchEvent( callback );
+			//ConfirmMenu_TouchEvent( callback );
 			return;
+		case UIMENU_NONE:
+		case UIMENU_NEED_CD:
+		case UIMENU_BAD_CD_KEY:
 		default:
 			Com_Printf("UI_SelectAndPress: No Touch Button Configuration For Menu %d\n", menu);
 			return;

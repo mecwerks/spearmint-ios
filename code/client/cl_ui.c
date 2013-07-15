@@ -1089,7 +1089,13 @@ intptr_t CL_UISystemCalls( intptr_t *args ) {
 		IOS_DrawTouchArea(VMF(1), VMF(2), VMF(3), VMF(4), args[5], args[6]);
 #endif
 		return 0;
-		
+	
+	case UI_CLEAR_TOUCH_BUTTONS:
+#ifdef IOS
+		IOS_FlushButtons();
+#endif
+		return 0;
+			
 	default:
 		Com_Error( ERR_DROP, "Bad UI system trap: %ld", (long int) args[0] );
 

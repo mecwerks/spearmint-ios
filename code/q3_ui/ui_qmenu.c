@@ -1355,46 +1355,103 @@ static int	propMapT[128][3] = {
 	{0, 0, -1}		// DEL
 };
 
+typedef struct {
+	float x, y, w, h;
+	int menu, id;
+} button_s;
+
+#define ScaleX(x, w) ((float)x + (((uis.glconfig.vidWidth/2.0)-(float)w)/2.0))
+
 /*
- =================
- Menu_AddTouchItem
- 
- NOT DONE!!!!!!!
- =================
- */
-void Menu_DrawTouchItem ( void *item ) {
+=================
+Text_TouchValues
+=================
+*/
+void Text_TouchValues ( menutext_s *item, button_s *button ) {
 	char buff[512];
 	const char *s;
 	unsigned char ch;
-	int width = 0;
-	menutext_s *menu;
+	float w = 0;
+	float aw = 0;
 	
-	if (!item)
-		return;
-	
-	menu = ((menutext_s*)item);
-	
-	if (menu->generic.name)
-		strcpy(buff, menu->generic.name);
-	else if (menu->string)
-		strcpy(buff, menu->string);
+	if (item->generic.name)
+		strcpy(buff, item->generic.name);
+	else if (item->string)
+		strcpy(buff, item->string);
+	else return;
 	
 	s = buff;
 	while ( *s )
 	{
 		ch = *s & 127;
 		if ( ch == ' ' ) {
-			width += PROP_SPACE_WIDTH;
+			aw = (float)PROP_SPACE_WIDTH * uis.xscale;
 		}
 		else if ( propMapT[ch][2] != -1 ) {
-			width += propMapT[ch][2];
+			aw = (float)propMapT[ch][2] * uis.xscale;
+		} else {
+			aw = 0;
 		}
+		
+		w += (aw + (float)PROP_GAP_WIDTH * uis.xscale);
 		s++;
 	}
 	
-	trap_DrawTouchArea((menu->generic.x)*uis.xscale, menu->generic.y*uis.yscale,
-					   (float)width, (float)PROP_HEIGHT,
-					   menu->generic.parent->id, menu->generic.id);
+	button->x = ScaleX(item->generic.x, w);
+	button->y = (float)item->generic.y * uis.yscale;
+	button->w = w;
+	button->h = (float)PROP_HEIGHT;
+	button->menu = item->generic.parent->id;
+	button->id = item->generic.id;
+}
+
+/*
+=================
+Bitmap_TouchValues
+=================
+*/
+void Bitmap_TouchValues ( menubitmap_s *item, button_s *button ) {
+	button->x = ScaleX(item->generic.x, item->width);
+	button->y = (float)item->generic.y * uis.yscale;
+	button->w = (float)item->width;
+	button->h = (float)item->height;
+	button->menu = item->generic.parent->id;
+	button->id = item->generic.id;
+}
+
+/*
+=================
+Menu_DrawTouchItem
+
+Automaticly draw touch button on menu items
+=================
+*/
+void Menu_DrawTouchItem ( void *item ) {
+	menucommon_s *menu;
+	button_s button;
+	
+	if (!item) return;
+	
+	menu = ((menucommon_s*)item);
+		
+	memset( &button, 0, sizeof(button_s) );
+
+	switch ( menu->type ) {
+		case MTYPE_TEXT:
+		case MTYPE_PTEXT:
+		case MTYPE_BTEXT:
+			Text_TouchValues((menutext_s*)item, &button);
+			break;
+		case MTYPE_BITMAP:
+//			Bitmap_TouchValues((menubitmap_s*)item, &button);
+//			break;
+		default:
+			Com_Printf("Menu_DrawTouchItem: Touch button id %d not drawn, unsupported type %d\n",
+					   ((menutext_s*)item)->generic.id, menu->type);
+			return;
+	}
+
+	trap_DrawTouchArea(button.x, button.y, button.w, button.h, button.menu, button.id);
 }
 
 /*
