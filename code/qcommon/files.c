@@ -2769,9 +2769,6 @@ qboolean FS_Which(const char *filename, void *searchPath)
 		if(search->pack)
 		{
 			Com_Printf("File \"%s\" found in \"%s\"\n", filename, search->pack->pakFilename);
-			if ( Q_strncmp(search->pack->pakFilename, IOS_PAKFILE_PREFIX, 6) == 0 ) {
-				Cvar_Get("vm_ios", "1", CVAR_TEMP);
-			}
 			return qtrue;
 		}
 		else if(search->dir)
@@ -2815,6 +2812,27 @@ void FS_Which_f( void ) {
 	Com_Printf("File not found: \"%s\"\n", filename);
 }
 
+/*
+================
+FS_iOSCheck
+================
+*/
+qboolean FS_iOSCheck ( const char *filename, void *searchPath ) {
+	searchpath_t *search = searchPath;
+	
+	if(FS_FOpenFileReadDir(filename, search, NULL, qfalse, qfalse) > 0)
+	{
+		if(search->pack)
+		{
+			if (!Q_strncmp(search->pack->pakBasename, IOS_PAKFILE_PREFIX, strlen(IOS_PAKFILE_PREFIX)))
+			{
+				Cvar_Get("vm_ios", "1", CVAR_TEMP);
+				return qtrue;
+			}
+		}
+	}
+	return qfalse;
+}
 
 //===========================================================================
 

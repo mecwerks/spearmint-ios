@@ -10,6 +10,13 @@
 		1D3623EC0D0F72F000981E51 /* CoreGraphics.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1D3623EB0D0F72F000981E51 /* CoreGraphics.framework */; };
 		1D60589F0D05DD5A006BFB54 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1D30AB110D05D00D00671497 /* Foundation.framework */; };
 		1DF5F4E00D08C38300B7A737 /* UIKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1DF5F4DF0D08C38300B7A737 /* UIKit.framework */; };
+		2C03759A17936B240004B110 /* cl_curl.c in Sources */ = {isa = PBXBuildFile; fileRef = 2C95BC28178C94D500BD1463 /* cl_curl.c */; };
+		2C03759E179370390004B110 /* CFNetwork.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 2C03759D179370380004B110 /* CFNetwork.framework */; };
+		2C0375A01793705D0004B110 /* Security.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 2C03759F1793705C0004B110 /* Security.framework */; };
+		2C0375A31793709B0004B110 /* libcurl-simulator.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 2C0375A1179370990004B110 /* libcurl-simulator.a */; };
+		2C0375A41793709B0004B110 /* libcurl.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 2C0375A21793709A0004B110 /* libcurl.a */; };
+		2C0375A5179370FC0004B110 /* qal.c in Sources */ = {isa = PBXBuildFile; fileRef = 2C95BC36178C94D500BD1463 /* qal.c */; };
+		2C0375A7179371C60004B110 /* OpenAL.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 2C0375A6179371C50004B110 /* OpenAL.framework */; };
 		2C1D87EB178F6D7300E3AE41 /* baseq3 in Resources */ = {isa = PBXBuildFile; fileRef = 2C1D87EA178F6D7300E3AE41 /* baseq3 */; };
 		2C7A7BA41767DA0000BEA13E /* Default@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 2C7A7BA31767DA0000BEA13E /* Default@2x.png */; };
 		2C7A7BAD1767E62E00BEA13E /* Default-568h@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 2C7A7BAC1767E62E00BEA13E /* Default-568h@2x.png */; };
@@ -201,6 +208,11 @@
 		1D3623EB0D0F72F000981E51 /* CoreGraphics.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreGraphics.framework; path = System/Library/Frameworks/CoreGraphics.framework; sourceTree = SDKROOT; };
 		1D6058910D05DD3D006BFB54 /* Quake3.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Quake3.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		1DF5F4DF0D08C38300B7A737 /* UIKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UIKit.framework; path = System/Library/Frameworks/UIKit.framework; sourceTree = SDKROOT; };
+		2C03759D179370380004B110 /* CFNetwork.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CFNetwork.framework; path = System/Library/Frameworks/CFNetwork.framework; sourceTree = SDKROOT; };
+		2C03759F1793705C0004B110 /* Security.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Security.framework; path = System/Library/Frameworks/Security.framework; sourceTree = SDKROOT; };
+		2C0375A1179370990004B110 /* libcurl-simulator.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = "libcurl-simulator.a"; path = "../libs/ios/libcurl-simulator.a"; sourceTree = "<group>"; };
+		2C0375A21793709A0004B110 /* libcurl.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libcurl.a; path = ../libs/ios/libcurl.a; sourceTree = "<group>"; };
+		2C0375A6179371C50004B110 /* OpenAL.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = OpenAL.framework; path = System/Library/Frameworks/OpenAL.framework; sourceTree = SDKROOT; };
 		2C1D87EA178F6D7300E3AE41 /* baseq3 */ = {isa = PBXFileReference; lastKnownFileType = folder; path = baseq3; sourceTree = "<group>"; };
 		2C44373B178A168C00EEFDA6 /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		2C7A7BA31767DA0000BEA13E /* Default@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "Default@2x.png"; sourceTree = "<group>"; };
@@ -735,6 +747,11 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				2C0375A7179371C60004B110 /* OpenAL.framework in Frameworks */,
+				2C0375A31793709B0004B110 /* libcurl-simulator.a in Frameworks */,
+				2C0375A41793709B0004B110 /* libcurl.a in Frameworks */,
+				2C0375A01793705D0004B110 /* Security.framework in Frameworks */,
+				2C03759E179370390004B110 /* CFNetwork.framework in Frameworks */,
 				1D60589F0D05DD5A006BFB54 /* Foundation.framework in Frameworks */,
 				1DF5F4E00D08C38300B7A737 /* UIKit.framework in Frameworks */,
 				1D3623EC0D0F72F000981E51 /* CoreGraphics.framework in Frameworks */,
@@ -777,6 +794,9 @@
 		1058C7A0FEA54F0111CA2CBB /* Linked Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				2C0375A6179371C50004B110 /* OpenAL.framework */,
+				2C03759F1793705C0004B110 /* Security.framework */,
+				2C03759D179370380004B110 /* CFNetwork.framework */,
 				FDBBE4610E2AEF4500A186BC /* QuartzCore.framework */,
 				FDD2544D0D8102C300E13415 /* OpenGLES.framework */,
 				1D3623EB0D0F72F000981E51 /* CoreGraphics.framework */,
@@ -839,6 +859,8 @@
 		29B97323FDCFA39411CA2CEA /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				2C0375A1179370990004B110 /* libcurl-simulator.a */,
+				2C0375A21793709A0004B110 /* libcurl.a */,
 				1058C7A0FEA54F0111CA2CBB /* Linked Frameworks */,
 				2CB366FF177A0EFE000C041F /* UIKit.framework */,
 				2CB36701177A0EFE000C041F /* Foundation.framework */,
@@ -1796,6 +1818,8 @@
 				FD261F150ECC159B0022D939 /* Q3Application.m in Sources */,
 				FD4BE740103D1BA100A9AC33 /* Q3Downloader.m in Sources */,
 				FD05A01913C1B8D70038165B /* ios_snddma.c in Sources */,
+				2C03759A17936B240004B110 /* cl_curl.c in Sources */,
+				2C0375A5179370FC0004B110 /* qal.c in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1807,6 +1831,10 @@
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				COPY_PHASE_STRIP = NO;
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(inherited)",
+					"\"$(SRCROOT)/../libs/ios\"",
+				);
 				GCC_DYNAMIC_NO_PIC = NO;
 				GCC_OPTIMIZATION_LEVEL = s;
 				GCC_PREPROCESSOR_DEFINITIONS = (
@@ -1814,9 +1842,15 @@
 					IOS,
 					BOTLIB,
 					C_ONLY,
+					USE_CURL,
+					USE_OPENAL,
 				);
 				INFOPLIST_FILE = "$(SRCROOT)/Info.plist";
 				IPHONEOS_DEPLOYMENT_TARGET = 6.0;
+				LIBRARY_SEARCH_PATHS = (
+					"$(inherited)",
+					"\"$(SRCROOT)/../libs/ios\"",
+				);
 				PRODUCT_NAME = Quake3;
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};
@@ -1827,6 +1861,10 @@
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				COPY_PHASE_STRIP = YES;
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(inherited)",
+					"\"$(SRCROOT)/../libs/ios\"",
+				);
 				GCC_OPTIMIZATION_LEVEL = s;
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					MACOS_X,
@@ -1834,10 +1872,15 @@
 					BOTLIB,
 					C_ONLY,
 					NDEBUG,
-					MOD_COMPATABILITY,
+					USE_CURL,
+					USE_OPENAL,
 				);
 				INFOPLIST_FILE = "$(SRCROOT)/Info.plist";
 				IPHONEOS_DEPLOYMENT_TARGET = 6.0;
+				LIBRARY_SEARCH_PATHS = (
+					"$(inherited)",
+					"\"$(SRCROOT)/../libs/ios\"",
+				);
 				PRODUCT_NAME = Quake3;
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};
@@ -1924,6 +1967,10 @@
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				COPY_PHASE_STRIP = YES;
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(inherited)",
+					"\"$(SRCROOT)/../libs/ios\"",
+				);
 				GCC_OPTIMIZATION_LEVEL = s;
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					MACOS_X,
@@ -1931,10 +1978,15 @@
 					BOTLIB,
 					C_ONLY,
 					NDEBUG,
-					MOD_COMPATABILITY,
+					USE_CURL,
+					USE_OPENAL,
 				);
 				INFOPLIST_FILE = "$(SRCROOT)/Info.plist";
 				IPHONEOS_DEPLOYMENT_TARGET = 6.0;
+				LIBRARY_SEARCH_PATHS = (
+					"$(inherited)",
+					"\"$(SRCROOT)/../libs/ios\"",
+				);
 				PRODUCT_NAME = Quake3;
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};

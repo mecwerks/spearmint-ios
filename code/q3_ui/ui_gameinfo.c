@@ -806,6 +806,7 @@ UI_InitGameinfo
 ===============
 */
 void UI_InitGameinfo( void ) {
+	char s[144];
 
 	UI_InitMemory();
 	UI_LoadArenas();
