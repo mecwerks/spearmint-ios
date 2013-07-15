@@ -13,13 +13,12 @@
 		2C03759A17936B240004B110 /* cl_curl.c in Sources */ = {isa = PBXBuildFile; fileRef = 2C95BC28178C94D500BD1463 /* cl_curl.c */; };
 		2C03759E179370390004B110 /* CFNetwork.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 2C03759D179370380004B110 /* CFNetwork.framework */; };
 		2C0375A01793705D0004B110 /* Security.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 2C03759F1793705C0004B110 /* Security.framework */; };
-		2C0375A31793709B0004B110 /* libcurl-simulator.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 2C0375A1179370990004B110 /* libcurl-simulator.a */; };
-		2C0375A41793709B0004B110 /* libcurl.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 2C0375A21793709A0004B110 /* libcurl.a */; };
 		2C0375A5179370FC0004B110 /* qal.c in Sources */ = {isa = PBXBuildFile; fileRef = 2C95BC36178C94D500BD1463 /* qal.c */; };
-		2C0375A7179371C60004B110 /* OpenAL.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 2C0375A6179371C50004B110 /* OpenAL.framework */; };
 		2C1D87EB178F6D7300E3AE41 /* baseq3 in Resources */ = {isa = PBXBuildFile; fileRef = 2C1D87EA178F6D7300E3AE41 /* baseq3 */; };
 		2C7A7BA41767DA0000BEA13E /* Default@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 2C7A7BA31767DA0000BEA13E /* Default@2x.png */; };
 		2C7A7BAD1767E62E00BEA13E /* Default-568h@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 2C7A7BAC1767E62E00BEA13E /* Default-568h@2x.png */; };
+		2C7CF87617948CCA00D31BA8 /* libcurl-simulator.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 2C7CF87417948CCA00D31BA8 /* libcurl-simulator.a */; };
+		2C7CF87717948CCA00D31BA8 /* libcurl.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 2C7CF87517948CCA00D31BA8 /* libcurl.a */; };
 		2C9161BC178CB7E800D43561 /* jquant1.c in Sources */ = {isa = PBXBuildFile; fileRef = 2C95BCB0178C94D600BD1463 /* jquant1.c */; };
 		2C9161BD178CB7E800D43561 /* jquant2.c in Sources */ = {isa = PBXBuildFile; fileRef = 2C95BCB1178C94D600BD1463 /* jquant2.c */; };
 		2C9161BE178CB7E800D43561 /* jutils.c in Sources */ = {isa = PBXBuildFile; fileRef = 2C95BCB2178C94D600BD1463 /* jutils.c */; };
@@ -210,13 +209,12 @@
 		1DF5F4DF0D08C38300B7A737 /* UIKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UIKit.framework; path = System/Library/Frameworks/UIKit.framework; sourceTree = SDKROOT; };
 		2C03759D179370380004B110 /* CFNetwork.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CFNetwork.framework; path = System/Library/Frameworks/CFNetwork.framework; sourceTree = SDKROOT; };
 		2C03759F1793705C0004B110 /* Security.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Security.framework; path = System/Library/Frameworks/Security.framework; sourceTree = SDKROOT; };
-		2C0375A1179370990004B110 /* libcurl-simulator.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = "libcurl-simulator.a"; path = "../libs/ios/libcurl-simulator.a"; sourceTree = "<group>"; };
-		2C0375A21793709A0004B110 /* libcurl.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libcurl.a; path = ../libs/ios/libcurl.a; sourceTree = "<group>"; };
-		2C0375A6179371C50004B110 /* OpenAL.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = OpenAL.framework; path = System/Library/Frameworks/OpenAL.framework; sourceTree = SDKROOT; };
 		2C1D87EA178F6D7300E3AE41 /* baseq3 */ = {isa = PBXFileReference; lastKnownFileType = folder; path = baseq3; sourceTree = "<group>"; };
 		2C44373B178A168C00EEFDA6 /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		2C7A7BA31767DA0000BEA13E /* Default@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "Default@2x.png"; sourceTree = "<group>"; };
 		2C7A7BAC1767E62E00BEA13E /* Default-568h@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "Default-568h@2x.png"; sourceTree = "<group>"; };
+		2C7CF87417948CCA00D31BA8 /* libcurl-simulator.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = "libcurl-simulator.a"; path = "../libs/ios/libcurl-simulator.a"; sourceTree = "<group>"; };
+		2C7CF87517948CCA00D31BA8 /* libcurl.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libcurl.a; path = ../libs/ios/libcurl.a; sourceTree = "<group>"; };
 		2C916232178CB9BA00D43561 /* banner.jpg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; path = banner.jpg; sourceTree = "<group>"; };
 		2C95BBBA178C94D400BD1463 /* al.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = al.h; sourceTree = "<group>"; };
 		2C95BBBB178C94D400BD1463 /* alc.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = alc.h; sourceTree = "<group>"; };
@@ -747,9 +745,6 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				2C0375A7179371C60004B110 /* OpenAL.framework in Frameworks */,
-				2C0375A31793709B0004B110 /* libcurl-simulator.a in Frameworks */,
-				2C0375A41793709B0004B110 /* libcurl.a in Frameworks */,
 				2C0375A01793705D0004B110 /* Security.framework in Frameworks */,
 				2C03759E179370390004B110 /* CFNetwork.framework in Frameworks */,
 				1D60589F0D05DD5A006BFB54 /* Foundation.framework in Frameworks */,
@@ -759,6 +754,8 @@
 				FDBBE4620E2AEF4500A186BC /* QuartzCore.framework in Frameworks */,
 				FDBE317E0FF09EB600FBA47B /* libz.dylib in Frameworks */,
 				FD05A0CD13C1CAAA0038165B /* AudioToolbox.framework in Frameworks */,
+				2C7CF87617948CCA00D31BA8 /* libcurl-simulator.a in Frameworks */,
+				2C7CF87717948CCA00D31BA8 /* libcurl.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -794,7 +791,8 @@
 		1058C7A0FEA54F0111CA2CBB /* Linked Frameworks */ = {
 			isa = PBXGroup;
 			children = (
-				2C0375A6179371C50004B110 /* OpenAL.framework */,
+				2C7CF87417948CCA00D31BA8 /* libcurl-simulator.a */,
+				2C7CF87517948CCA00D31BA8 /* libcurl.a */,
 				2C03759F1793705C0004B110 /* Security.framework */,
 				2C03759D179370380004B110 /* CFNetwork.framework */,
 				FDBBE4610E2AEF4500A186BC /* QuartzCore.framework */,
@@ -859,8 +857,6 @@
 		29B97323FDCFA39411CA2CEA /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
-				2C0375A1179370990004B110 /* libcurl-simulator.a */,
-				2C0375A21793709A0004B110 /* libcurl.a */,
 				1058C7A0FEA54F0111CA2CBB /* Linked Frameworks */,
 				2CB366FF177A0EFE000C041F /* UIKit.framework */,
 				2CB36701177A0EFE000C041F /* Foundation.framework */,
@@ -1843,7 +1839,6 @@
 					BOTLIB,
 					C_ONLY,
 					USE_CURL,
-					USE_OPENAL,
 				);
 				GCC_VERSION = "";
 				INFOPLIST_FILE = "$(SRCROOT)/Info.plist";
@@ -1874,7 +1869,6 @@
 					C_ONLY,
 					NDEBUG,
 					USE_CURL,
-					USE_OPENAL,
 				);
 				GCC_VERSION = "";
 				INFOPLIST_FILE = "$(SRCROOT)/Info.plist";
@@ -1981,7 +1975,6 @@
 					C_ONLY,
 					NDEBUG,
 					USE_CURL,
-					USE_OPENAL,
 				);
 				GCC_VERSION = "";
 				INFOPLIST_FILE = "$(SRCROOT)/Info.plist";
