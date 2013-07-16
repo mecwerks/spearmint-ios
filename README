@@ -12,6 +12,7 @@ The intent of this project is to provide a version of ioquake3 which may be used
 for further development of standalone games.
 Some of the major Spearmint features currently implemented are:
 
+  * iOS Support
   * Four player splitscreen, offline and in network games
   * Extended API for game, cgame, and ui, includes some of the features from
            RTCW, WolfET, Tremulous, and World of Padman
@@ -27,7 +28,6 @@ Some of the major Spearmint features currently implemented are:
 
 Some of the major ioquake3 features currently implemented are:
 
-  * iOS Support
   * SDL backend
   * OpenAL sound API support (multiple speaker support and better sound
     quality)
