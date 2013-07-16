@@ -41,7 +41,13 @@ typedef enum {
 	UIMENU_MAIN,
 	UIMENU_INGAME,
 	UIMENU_TEAM,
-	UIMENU_POSTGAME
+	UIMENU_POSTGAME,
+	// iOS touch menu
+	UIMENU_MODS,	// mod menu
+	UIMENU_SETUP,	// setup menu
+	UIMENU_SPLEVEL,	// single player level select
+	UIMENU_SPSKILL, // single player difficulty select
+	UIMENU_CONFIRM	// generic yes/no menu
 } uiMenuCommand_t;
 
 typedef enum {
@@ -79,13 +85,16 @@ typedef enum {
 
 	UI_DRAW_CONNECT_SCREEN,
 //	void	UI_DrawConnectScreen( qboolean overlay );
+
 // if !overlay, the background will be drawn, otherwise it will be
 // overlayed over whatever the cgame has drawn.
 // a GetClientState syscall will be made to get the current strings
 
 	UI_WANTSBINDKEYS,
 //	qboolean UI_WantsBindKeys( void );
-
+	
+	UI_SELECT_AND_PRESS
+// void		UI_SelectAndPress( uiMenuCommand_t menu, int callback );
 } uiExport_t;
 
 #endif

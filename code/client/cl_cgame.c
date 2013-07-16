@@ -32,6 +32,7 @@ Suite 120, Rockville, Maryland 20850 USA.
 #include "client.h"
 
 #include "../botlib/botlib.h"
+#include "../renderergl1/tr_local.h"
 
 #ifdef USE_MUMBLE
 #include "libmumblelink.h"
@@ -1250,13 +1251,31 @@ intptr_t CL_CgameSystemCalls( intptr_t *args ) {
 		re.LoadWorld( VMA(1) );
 		return 0; 
 	case CG_R_REGISTERMODEL:
+#ifdef IOS
+		GLimp_AcquireGL();
 		return re.RegisterModel( VMA(1) );
+		GLimp_ReleaseGL();
+#else
+		return re.RegisterModel( VMA(1) );
+#endif
 	case CG_R_REGISTERSKIN:
 		return re.RegisterSkin( VMA(1) );
 	case CG_R_REGISTERSHADER:
+#ifdef IOS_NOTYET
+		GLimp_AcquireGL();
 		return re.RegisterShader( VMA(1) );
+		GLimp_ReleaseGL();
+#else
+		return re.RegisterShader( VMA(1) );
+#endif
 	case CG_R_REGISTERSHADERNOMIP:
+#ifdef IOS_NOTYET
+		GLimp_AcquireGL();
 		return re.RegisterShaderNoMip( VMA(1) );
+		GLimp_ReleaseGL();
+#else
+		return re.RegisterShaderNoMip( VMA(1) );
+#endif
 	case CG_R_REGISTERFONT:
 		re.RegisterFont( VMA(1), args[2], VMA(3));
 		return 0;
@@ -1560,6 +1579,12 @@ intptr_t CL_CgameSystemCalls( intptr_t *args ) {
 	case CG_R_GET_SHADER_NAME:
 		re.GetShaderName( args[1], VMA(2), args[3] );
 		return 0;
+	case CG_DRAW_TOUCH_AREA:
+                CL_DrawTouchArea(VMF(1), VMF(2), VMF(3), VMF(4), args[5], args[6]);
+                return 0;
+        case CG_CLEAR_TOUCH_BUTTONS:
+                CL_FlushButtons();
+                return 0;
 
 	default:
 	        assert(0);
@@ -1594,7 +1619,11 @@ void CL_InitCGame( void ) {
 	Com_sprintf( cl.mapname, sizeof( cl.mapname ), "maps/%s.bsp", mapname );
 
 	// load the dll or bytecode
+#ifdef IOS
+	cgvm = VM_Create( "cgame", CL_CgameSystemCalls, VMI_BYTECODE );
+#else
 	cgvm = VM_Create( "cgame", CL_CgameSystemCalls, Cvar_VariableValue( "vm_cgame" ) );
+#endif
 	if ( !cgvm ) {
 		Com_Error( ERR_DROP, "VM_Create on cgame failed" );
 	}
@@ -1790,6 +1819,11 @@ void CL_FirstSnapshot( void ) {
 		return;
 	}
 	clc.state = CA_ACTIVE;
+
+#ifdef IOS
+	// Force the device into right landscape mode:
+	GLimp_SetMode(90);
+#endif // IOS
 
 	// set the timedelta so we are exactly on this first frame
 	cl.serverTimeDelta = cl.snap.serverTime - cls.realtime;

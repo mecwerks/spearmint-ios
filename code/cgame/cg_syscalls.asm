@@ -199,3 +199,5 @@ equ trap_CIN_RunCinematic 				-603
 equ trap_CIN_DrawCinematic				-604
 equ trap_CIN_SetExtents					-605
 
+equ trap_DrawTouchArea -606
+equ trap_ClearTouchButtons -607

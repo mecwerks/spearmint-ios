@@ -601,6 +601,8 @@ issues.
 #define NUM_ID_PAKS		9
 #define NUM_TA_PAKS		4
 
+#define IOS_PAKFILE_PREFIX	"q3ios_"
+
 #define	MAX_FILE_HANDLES	64
 
 #ifdef DEDICATED
@@ -743,6 +745,7 @@ void	FS_FilenameCompletion( const char *dir, const char *ext,
 
 const char *FS_GetCurrentGameDir(void);
 qboolean FS_Which(const char *filename, void *searchPath);
+qboolean FS_iOSCheck(const char *filename, void *searchPath);
 
 /*
 ==============================================================
@@ -802,13 +805,14 @@ typedef enum {
 	SE_MOUSE_LAST = SE_MOUSE + MAX_SPLITVIEW - 1, // Reserve values for SE_MOUSE events for splitscreen players
 	SE_JOYSTICK_AXIS,	// evValue is an axis number and evValue2 is the current state (-127 to 127)
 	SE_JOYSTICK_AXIS_LAST = SE_JOYSTICK_AXIS + MAX_SPLITVIEW - 1, // Reserve values for SE_JOYSTICK_AXIS events for splitscreen players
+	SE_ACCEL,		// iOS accelerometer
 	SE_CONSOLE		// evPtr is a char*
 } sysEventType_t;
 
 typedef struct {
 	int				evTime;
 	sysEventType_t	evType;
-	int				evValue, evValue2;
+	int				evValue, evValue2, evValue3;
 	int				evPtrLength;	// bytes of data pointed to by evPtr, for journaling
 	void			*evPtr;			// this must be manually freed if not NULL
 } sysEvent_t;
@@ -987,6 +991,7 @@ void Com_TouchMemory( void );
 
 // commandLine should not include the executable name (argv[0])
 void Com_Init( char *commandLine );
+void IN_Frame( void );
 void Com_Frame( void );
 void Com_Shutdown( void );
 
@@ -1194,7 +1199,9 @@ typedef enum
 	DT_OK_CANCEL
 } dialogType_t;
 
+#ifndef IOS
 dialogResult_t Sys_Dialog( dialogType_t type, const char *message, const char *title );
+#endif
 
 qboolean Sys_WritePIDFile( void );
 

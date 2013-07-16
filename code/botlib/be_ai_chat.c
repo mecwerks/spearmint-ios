@@ -77,6 +77,29 @@ Suite 120, Rockville, Maryland 20850 USA.
 //time to ignore a chat message after using it
 #define CHATMESSAGE_RECENTTIME	20
 
+#ifdef IOS
+//the actuall chat messages
+typedef struct bot_chatmessage_s
+{
+	char *chatmessage;					//chat message string
+	float time;							//last time used
+	struct bot_chatmessage_s *next;		//next chat message in a list
+} __attribute__((packed)) bot_chatmessage_t;
+//random string
+typedef struct bot_randomstring_s
+{
+	char *string;
+	struct bot_randomstring_s *next;
+} __attribute__((packed)) bot_randomstring_t;
+//list with random strings
+typedef struct bot_randomlist_s
+{
+	char *string;
+	int numstrings;
+	bot_randomstring_t *firstrandomstring;
+	struct bot_randomlist_s *next;
+} __attribute__((packed)) bot_randomlist_t;
+#else
 //the actuall chat messages
 typedef struct bot_chatmessage_s
 {
@@ -84,20 +107,6 @@ typedef struct bot_chatmessage_s
 	float time;							//last time used
 	struct bot_chatmessage_s *next;		//next chat message in a list
 } bot_chatmessage_t;
-//bot chat type with chat lines
-typedef struct bot_chattype_s
-{
-	char name[MAX_CHATTYPE_NAME];
-	int numchatmessages;
-	bot_chatmessage_t *firstchatmessage;
-	struct bot_chattype_s *next;
-} bot_chattype_t;
-//bot chat lines
-typedef struct bot_chat_s
-{
-	bot_chattype_t *types;
-} bot_chat_t;
-
 //random string
 typedef struct bot_randomstring_s
 {
@@ -112,6 +121,21 @@ typedef struct bot_randomlist_s
 	bot_randomstring_t *firstrandomstring;
 	struct bot_randomlist_s *next;
 } bot_randomlist_t;
+#endif // IOS
+
+//bot chat type with chat lines
+typedef struct bot_chattype_s
+{
+	char name[MAX_CHATTYPE_NAME];
+	int numchatmessages;
+	bot_chatmessage_t *firstchatmessage;
+	struct bot_chattype_s *next;
+} bot_chattype_t;
+//bot chat lines
+typedef struct bot_chat_s
+{
+	bot_chattype_t *types;
+} bot_chat_t;
 
 //synonym
 typedef struct bot_synonym_s
@@ -629,9 +653,12 @@ bot_synonymlist_t *BotLoadSynonyms(char *filename)
 	//the synonyms are parsed in two phases
 	for (pass = 0; pass < 2; pass++)
 	{
-		//
+#ifdef IOS
+		// Weird memory smasher here:
+		if (pass && size) ptr = (char *) malloc(size);
+#else
 		if (pass && size) ptr = (char *) GetClearedHunkMemory(size);
-		//
+#endif // IOS
 		PC_SetBaseFolder(BOTFILESBASEFOLDER);
 		source = LoadSourceFile(filename);
 		if (!source)
@@ -682,8 +709,12 @@ bot_synonymlist_t *BotLoadSynonyms(char *filename)
 					size += sizeof(bot_synonymlist_t);
 					if (pass && ptr)
 					{
+#ifdef IOS
+						syn = (bot_synonymlist_t *) malloc(sizeof(bot_synonymlist_t));
+#else
 						syn = (bot_synonymlist_t *) ptr;
 						ptr += sizeof(bot_synonymlist_t);
+#endif // IOS
 						syn->context = context;
 						syn->firstsynonym = NULL;
 						syn->next = NULL;
@@ -714,8 +745,12 @@ bot_synonymlist_t *BotLoadSynonyms(char *filename)
 						size += sizeof(bot_synonym_t) + len;
 						if (pass && ptr)
 						{
+#ifdef IOS
+							synonym = (bot_synonym_t *) malloc(sizeof(bot_synonym_t));
+#else
 							synonym = (bot_synonym_t *) ptr;
 							ptr += sizeof(bot_synonym_t);
+#endif // IOS
 							synonym->string = ptr;
 							ptr += len;
 							strcpy(synonym->string, token.string);
@@ -783,6 +818,7 @@ bot_synonymlist_t *BotLoadSynonyms(char *filename)
 //===========================================================================
 void BotReplaceSynonyms(char *string, unsigned long int context)
 {
+#ifndef IOS
 	bot_synonymlist_t *syn;
 	bot_synonym_t *synonym;
 
@@ -794,6 +830,7 @@ void BotReplaceSynonyms(char *string, unsigned long int context)
 			StringReplaceWords(string, synonym->string, syn->firstsynonym->string);
 		} //end for
 	} //end for
+#endif // !IOS
 } //end of the function BotReplaceSynonyms
 //===========================================================================
 //
@@ -803,6 +840,7 @@ void BotReplaceSynonyms(char *string, unsigned long int context)
 //===========================================================================
 void BotReplaceWeightedSynonyms(char *string, unsigned long int context)
 {
+#ifndef IOS
 	bot_synonymlist_t *syn;
 	bot_synonym_t *synonym, *replacement;
 	float weight, curweight;
@@ -827,6 +865,7 @@ void BotReplaceWeightedSynonyms(char *string, unsigned long int context)
 			StringReplaceWords(string, synonym->string, replacement->string);
 		} //end for
 	} //end for
+#endif // !IOS
 } //end of the function BotReplaceWeightedSynonyms
 //===========================================================================
 //
@@ -836,6 +875,7 @@ void BotReplaceWeightedSynonyms(char *string, unsigned long int context)
 //===========================================================================
 void BotReplaceReplySynonyms(char *string, unsigned long int context)
 {
+#ifndef IOS
 	char *str1, *str2, *replacement;
 	bot_synonymlist_t *syn;
 	bot_synonym_t *synonym;
@@ -874,6 +914,7 @@ void BotReplaceReplySynonyms(char *string, unsigned long int context)
 		while(*str1 && *str1 > ' ') str1++;
 		if (!*str1) break;
 	} //end while
+#endif // !IOS
 } //end of the function BotReplaceReplySynonyms
 //===========================================================================
 //

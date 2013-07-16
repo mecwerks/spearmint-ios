@@ -358,6 +358,18 @@ void CG_KeyMove( clientInput_t *ci, usercmd_t *cmd ) {
 	forward = 0;
 	side = 0;
 	up = 0;
+
+#ifdef IOS
+        side += cl_joyscale_y[0] * 5 * CL_KeyState (&ci->in_moveright);
+        side -= cl_joyscale_y[1] * 5 * CL_KeyState (&ci->in_moveleft);
+
+
+        up = movespeed * CL_KeyState (&ci->in_up);
+        up -= movespeed * CL_KeyState (&ci->in_down);
+
+        forward += cl_joyscale_x[0] * 5 * CL_KeyState (&ci->in_forward);
+        forward -= cl_joyscale_x[1] * 5 * CL_KeyState (&ci->in_back);
+#else
 	if ( ci->in_strafe.active ) {
 		side += movespeed * CL_KeyState (&ci->in_right);
 		side -= movespeed * CL_KeyState (&ci->in_left);
@@ -372,12 +384,27 @@ void CG_KeyMove( clientInput_t *ci, usercmd_t *cmd ) {
 
 	forward += movespeed * CL_KeyState (&ci->in_forward);
 	forward -= movespeed * CL_KeyState (&ci->in_back);
+#endif
 
 	cmd->forwardmove = ClampChar( forward );
 	cmd->rightmove = ClampChar( side );
 	cmd->upmove = ClampChar( up );
 }
 
+/*
+=================
+CL_AccelEvent
+ 
+iOS Accelerometer event
+=================
+*/
+void CL_AccelEvent( int pitch, int roll, int yaw ) {
+#if 0 // mecwerks: i need to reimplement this as a control option
+        cls.accelAngles[PITCH] = pitch;
+        cls.accelAngles[ROLL] = roll;
+        cls.accelAngles[YAW] = yaw;
+#endif
+}
 
 /*
 =================

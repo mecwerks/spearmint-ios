@@ -171,6 +171,7 @@ void R_ImageList_f( void ) {
 
 		switch(image->internalFormat)
 		{
+#ifndef IOS
 			case GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT1_EXT:
 				format = "sDXT1";
 				// 64 bits per 16 pixels, so 4 bits per pixel
@@ -201,38 +202,48 @@ void R_ImageList_f( void ) {
 				format = "BPTC ";
 				// 128 bits per 16 pixels, so 1 byte per pixel
 				break;
+#endif
 			case GL_RGB4_S3TC:
 				format = "S3TC ";
 				// same as DXT1?
 				estSize /= 2;
 				break;
+#ifndef IOS
 			case GL_RGBA4:
 			case GL_RGBA8:
+#endif
 			case GL_RGBA:
 				format = "RGBA ";
 				// 4 bytes per pixel
 				estSize *= 4;
 				break;
+#ifndef IOS
 			case GL_LUMINANCE8:
 			case GL_LUMINANCE16:
+#endif
 			case GL_LUMINANCE:
 				format = "L    ";
 				// 1 byte per pixel?
 				break;
+#ifndef IOS
 			case GL_RGB5:
 			case GL_RGB8:
+#endif
 			case GL_RGB:
 				format = "RGB  ";
 				// 3 bytes per pixel?
 				estSize *= 3;
 				break;
+#ifndef IOS
 			case GL_LUMINANCE8_ALPHA8:
 			case GL_LUMINANCE16_ALPHA16:
+#endif
 			case GL_LUMINANCE_ALPHA:
 				format = "LA   ";
 				// 2 bytes per pixel?
 				estSize *= 2;
 				break;
+#ifndef IOS
 			case GL_SRGB_EXT:
 			case GL_SRGB8_EXT:
 				format = "sRGB ";
@@ -256,6 +267,7 @@ void R_ImageList_f( void ) {
 				// 2 byte per pixel?
 				estSize *= 2;
 				break;
+#endif
 		}
 
 		// mipmap adds about 50%
@@ -657,7 +669,7 @@ static void Upload32( unsigned *data,
 			scan[i*4 + 2] = LERP(scan[i*4 + 2], luma, r_greyscale->value);
 		}
 	}
-
+#ifndef IOS
 	if(lightMap)
 	{
 		if(r_greyscale->integer)
@@ -667,6 +679,7 @@ static void Upload32( unsigned *data,
 	}
 	else
 	{
+#endif
 		for ( i = 0; i < c; i++ )
 		{
 			if ( scan[i*4+0] > rMax )
@@ -687,6 +700,7 @@ static void Upload32( unsigned *data,
 				break;
 			}
 		}
+#ifndef IOS
 		// select proper internal format
 		if ( samples == 3 )
 		{
@@ -751,6 +765,9 @@ static void Upload32( unsigned *data,
 			}
 		}
 	}
+#else
+	internalFormat = GL_RGBA;
+#endif
 
 	// copy or resample data as appropriate for first MIP level
 	if ( ( scaled_width == width ) && 
@@ -818,18 +835,21 @@ done:
 
 	if (mipmap)
 	{
+#ifndef IOS
 		if ( glConfig.textureFilterAnisotropic )
 			qglTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT,
 					(GLint)Com_Clamp( 1, glConfig.maxAnisotropy, r_ext_max_anisotropy->integer ) );
 
+#endif
 		qglTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, gl_filter_min);
 		qglTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, gl_filter_max);
 	}
 	else
 	{
+#ifndef IOS
 		if ( glConfig.textureFilterAnisotropic )
 			qglTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, 1 );
-
+#endif
 		qglTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
 		qglTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
 	}
@@ -1195,7 +1215,9 @@ static void R_CreateFogImages( void ) {
 	int		x, y, alpha;
 	byte	*data;
 	float	d;
+#ifndef IOS
 	float	borderColor[4];
+#endif
 	int		fog_s, fog_t;
 
 	// Create exponential fog image
@@ -1221,13 +1243,14 @@ static void R_CreateFogImages( void ) {
 	tr.fogImage = R_CreateImage("*fog", (byte *)data, fog_s, fog_t, IMGTYPE_COLORALPHA, IMGFLAG_CLAMPTOEDGE, 0 );
 	ri.Hunk_FreeTempMemory( data );
 
+#ifndef IOS
 	borderColor[0] = 1.0;
 	borderColor[1] = 1.0;
 	borderColor[2] = 1.0;
 	borderColor[3] = 1;
 
 	qglTexParameterfv( GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, borderColor );
-
+#endif
 
 	// Create linear fog image
 	fog_s = 16;
@@ -1267,12 +1290,14 @@ static void R_CreateFogImages( void ) {
 	ri.Hunk_FreeTempMemory( data );
 
 	// ydnar: the following lines are unecessary for new GL_CLAMP_TO_EDGE fog
+#ifndef IOS
 	borderColor[0] = 1.0;
 	borderColor[1] = 1.0;
 	borderColor[2] = 1.0;
 	borderColor[3] = 1;
-
+	
 	qglTexParameterfv( GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, borderColor );
+#endif // !IOS
 }
 
 /*

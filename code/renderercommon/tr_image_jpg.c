@@ -42,8 +42,11 @@ Suite 120, Rockville, Maryland 20850 USA.
 #  define JPEG_INTERNALS
 #endif
 
+#ifdef IOS
+#include "jpeglib.h"
+#else
 #include <jpeglib.h>
-
+#endif
 #ifndef USE_INTERNAL_JPEG
 #  if JPEG_LIB_VERSION < 80
 #    error Need system libjpeg >= 80

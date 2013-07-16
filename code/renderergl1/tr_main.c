@@ -142,10 +142,12 @@ void RB_Fog( int fogNum ) {
 
 	// only send changes if necessary
 
+#ifndef IOS
 	//if ( fogMode != lastFogMode ) {
 		qglFogi( GL_FOG_MODE, fogMode );
 	//	lastFogMode = fogMode;
 	//}
+#endif
 	//if ( color[0] != lastColor[0] || color[1] != lastColor[1] || color[2] != lastColor[2] || !lastFogMode ) {
 		qglFogfv( GL_FOG_COLOR, color );
 	//	VectorCopy( lastColor, color );
@@ -771,22 +773,56 @@ void R_SetupProjection(viewParms_t *dest, float zProj, qboolean computeFrustum)
 
 	width = xmax - xmin;
 	height = ymax - ymin;
+#ifdef IOS
+	if ( glConfig.vidRotation == 90 ) {
+		dest->projectionMatrix[0] = 0;
+		dest->projectionMatrix[4] = -2 * zProj / height;
+		dest->projectionMatrix[8] = ( ymax + ymin ) / height;	// normally 0
+		dest->projectionMatrix[12] = 0;
+		
+		dest->projectionMatrix[1] = 2 * zProj / width;
+		dest->projectionMatrix[5] = 0;
+		dest->projectionMatrix[9] = ( xmax + xmin ) / width;	// normally 0
+		dest->projectionMatrix[13] = 0;
+	} else if ( glConfig.vidRotation == 180 ) {
+		dest->projectionMatrix[0] = -2 * zProj / width;
+		dest->projectionMatrix[4] = 0;
+		dest->projectionMatrix[8] = ( xmax + xmin ) / width;	// normally 0
+		dest->projectionMatrix[12] = 0;
+		
+		dest->projectionMatrix[1] = 0;
+		dest->projectionMatrix[5] = -2 * zProj / height;
+		dest->projectionMatrix[9] = ( ymax + ymin ) / height;	// normally 0
+		dest->projectionMatrix[13] = 0;
+	} else if ( glConfig.vidRotation == 270 ) {
+		dest->projectionMatrix[0] = 0;
+		dest->projectionMatrix[4] = 2 * zProj / height;
+		dest->projectionMatrix[8] = ( ymax + ymin ) / height;	// normally 0
+		dest->projectionMatrix[12] = 0;
+		
+		dest->projectionMatrix[1] = -2 * zProj / width;
+		dest->projectionMatrix[5] = 0;
+		dest->projectionMatrix[9] = ( xmax + xmin ) / width;	// normally 0
+		dest->projectionMatrix[13] = 0;
+	} else
+#endif // IOS
+	{
+		dest->projectionMatrix[0] = 2 * zProj / width;
+		dest->projectionMatrix[4] = 0;
+		dest->projectionMatrix[8] = (xmax + xmin + 2 * stereoSep) / width;
+		dest->projectionMatrix[12] = 2 * zProj * stereoSep / width;
+		
+		dest->projectionMatrix[1] = 0;
+		dest->projectionMatrix[5] = 2 * zProj / height;
+		dest->projectionMatrix[9] = ( ymax + ymin ) / height;	// normally 0
+		dest->projectionMatrix[13] = 0;
+	}
 	
-	dest->projectionMatrix[0] = 2 * zProj / width;
-	dest->projectionMatrix[4] = 0;
-	dest->projectionMatrix[8] = (xmax + xmin + 2 * stereoSep) / width;
-	dest->projectionMatrix[12] = 2 * zProj * stereoSep / width;
-
-	dest->projectionMatrix[1] = 0;
-	dest->projectionMatrix[5] = 2 * zProj / height;
-	dest->projectionMatrix[9] = ( ymax + ymin ) / height;	// normally 0
-	dest->projectionMatrix[13] = 0;
-
 	dest->projectionMatrix[3] = 0;
 	dest->projectionMatrix[7] = 0;
 	dest->projectionMatrix[11] = -1;
 	dest->projectionMatrix[15] = 0;
-	
+
 	// Now that we have all the data for the projection matrix we can also setup the view frustum.
 	if(computeFrustum) {
 		// dynamically compute far clip plane distance

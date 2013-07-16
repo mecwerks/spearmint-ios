@@ -49,6 +49,9 @@ Suite 120, Rockville, Maryland 20850 USA.
   // MSVC users must install the OpenAL SDK which doesn't use the AL/*.h scheme.
   #include <al.h>
   #include <alc.h>
+#elif defined(IOS)
+	#include "al.h"
+	#include "alc.h"
 #else
   #include <AL/al.h>
   #include <AL/alc.h>

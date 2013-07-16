@@ -348,7 +348,7 @@ Dlls will call this directly
 ============
 */
 intptr_t QDECL VM_DllSyscall( intptr_t arg, ... ) {
-#if !id386 || defined __clang__
+#if !id386 || defined __clang__ || defined IOS
   // rcg010206 - see commentary above
   intptr_t args[MAX_VMSYSCALL_ARGS];
   int i;
@@ -400,10 +400,18 @@ vmHeader_t *VM_LoadQVM( vm_t *vm, qboolean alloc, qboolean unpure)
 		return NULL;
 	}
 
+#ifdef IOS
+	// show where the qvm was loaded from
+        FS_Which(filename, vm->searchPath);
+
+        // mecwerks: also set to running on ios if loading from an IOS pakfile
+        FS_iOSCheck(filename, vm->searchPath);
+#else
 	if (com_developer->integer) {
 		// show where the qvm was loaded from
 		FS_Which(filename, vm->searchPath);
 	}
+#endif
 
 	if( LittleLong( header.h->vmMagic ) == VM_MAGIC_VER2_NEO ) {
 		// byte swap the header
@@ -623,6 +631,7 @@ vm_t *VM_Create( const char *module, intptr_t (*systemCalls)(intptr_t *),
 		{
 			Com_DPrintf("Try loading dll file %s\n", filename);
 
+#ifndef IOS
 			vm->dllHandle = Sys_LoadGameDll(filename, &vm->entryPoint, VM_DllSyscall);
 			
 			if(vm->dllHandle)
@@ -630,7 +639,7 @@ vm_t *VM_Create( const char *module, intptr_t (*systemCalls)(intptr_t *),
 				vm->systemCall = systemCalls;
 				return vm;
 			}
-			
+#endif
 			Com_Printf("Failed loading dll, trying next\n");
 		}
 		else if(retval == VMI_COMPILED)

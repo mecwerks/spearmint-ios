@@ -302,8 +302,12 @@ typedef enum {
 /*
 	CG_LOADCAMERA = 700,
 	CG_STARTCAMERA,
-	CG_GETCAMERAINFO
+	CG_GETCAMERAINFO,
 */
+
+	// iOS syscalls
+	CG_DRAW_TOUCH_AREA,
+        CG_CLEAR_TOUCH_BUTTONS
 } cgameImport_t;
 
 

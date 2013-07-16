@@ -40,10 +40,31 @@ typedef qboolean GLboolean;
 #elif !defined __QGL_H__
 #define __QGL_H__
 
-#ifdef USE_LOCAL_HEADERS
+#ifdef IOS
+#	include "ios_glimp.h"
+#elif USE_LOCAL_HEADERS
 #	include "SDL_opengl.h"
 #else
 #	include <SDL_opengl.h>
+#endif
+
+#ifdef IOS
+#ifndef APIENTRY
+#define APIENTRY
+#endif
+
+#ifndef APIENTRYP
+#define APIENTRYP APIENTRY *
+#endif
+
+#ifndef GLAPI
+#define GLAPI extern
+#endif
+
+typedef long GLintptrARB;
+typedef long GLsizeiptrARB;
+typedef void *GLhandleARB;
+typedef char GLcharARB;
 #endif
 
 extern void (APIENTRYP qglActiveTextureARB) (GLenum texture);
@@ -69,15 +90,12 @@ extern void (APIENTRYP qglUnlockArraysEXT) (void);
 #define qglClear glClear
 #define qglClearAccum glClearAccum
 #define qglClearColor glClearColor
-#define qglClearDepth glClearDepth
 #define qglClearIndex glClearIndex
 #define qglClearStencil glClearStencil
-#define qglClipPlane glClipPlane
 #define qglColor3b glColor3b
 #define qglColor3bv glColor3bv
 #define qglColor3d glColor3d
 #define qglColor3dv glColor3dv
-#define qglColor3f glColor3f
 #define qglColor3fv glColor3fv
 #define qglColor3i glColor3i
 #define qglColor3iv glColor3iv
@@ -100,7 +118,6 @@ extern void (APIENTRYP qglUnlockArraysEXT) (void);
 #define qglColor4s glColor4s
 #define qglColor4sv glColor4sv
 #define qglColor4ub glColor4ub
-#define qglColor4ubv glColor4ubv
 #define qglColor4ui glColor4ui
 #define qglColor4uiv glColor4uiv
 #define qglColor4us glColor4us
@@ -118,7 +135,6 @@ extern void (APIENTRYP qglUnlockArraysEXT) (void);
 #define qglDeleteTextures glDeleteTextures
 #define qglDepthFunc glDepthFunc
 #define qglDepthMask glDepthMask
-#define qglDepthRange glDepthRange
 #define qglDisable glDisable
 #define qglDisableClientState glDisableClientState
 #define qglDrawArrays glDrawArrays
@@ -243,7 +259,6 @@ extern void (APIENTRYP qglUnlockArraysEXT) (void);
 #define qglNormal3s glNormal3s
 #define qglNormal3sv glNormal3sv
 #define qglNormalPointer glNormalPointer
-#define qglOrtho glOrtho
 #define qglPassThrough glPassThrough
 #define qglPixelMapfv glPixelMapfv
 #define qglPixelMapuiv glPixelMapuiv
@@ -254,7 +269,6 @@ extern void (APIENTRYP qglUnlockArraysEXT) (void);
 #define qglPixelTransferi glPixelTransferi
 #define qglPixelZoom glPixelZoom
 #define qglPointSize glPointSize
-#define qglPolygonMode glPolygonMode
 #define qglPolygonOffset glPolygonOffset
 #define qglPolygonStipple glPolygonStipple
 #define qglPopAttrib glPopAttrib
@@ -366,7 +380,6 @@ extern void (APIENTRYP qglUnlockArraysEXT) (void);
 #define qglTranslatef glTranslatef
 #define qglVertex2d glVertex2d
 #define qglVertex2dv glVertex2dv
-#define qglVertex2f glVertex2f
 #define qglVertex2fv glVertex2fv
 #define qglVertex2i glVertex2i
 #define qglVertex2iv glVertex2iv
@@ -390,6 +403,17 @@ extern void (APIENTRYP qglUnlockArraysEXT) (void);
 #define qglVertex4sv glVertex4sv
 #define qglVertexPointer glVertexPointer
 #define qglViewport glViewport
+
+#ifndef IOS
+#define qglDepthRange glDepthRange
+#define qglClearDepth glClearDepth
+#define qglClipPlane glClipPlane
+#define qglColor3f glColor3f
+#define qglColor4ubv glColor4ubv
+#define qglOrtho glOrtho
+#define qglPolygonMode glPolygonMode
+#define qglVertex2f glVertex2f
+#endif
 
 // GL_EXT_draw_range_elements
 extern void     (APIENTRY * qglDrawRangeElementsEXT) (GLenum mode, GLuint start, GLuint end, GLsizei count, GLenum type, const GLvoid *indices);

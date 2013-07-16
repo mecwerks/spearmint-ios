@@ -717,3 +717,10 @@ qboolean trap_getCameraInfo( int time, vec3_t *origin, vec3_t *angles) {
 }
 */
 
+void trap_DrawTouchArea( float x, float y, float w, float h, int menu, int callback ){
+        syscall( CG_DRAW_TOUCH_AREA, x, y, w, h, menu, callback );
+}
+
+void trap_ClearTouchButtons( void ) {
+        syscall( CG_CLEAR_TOUCH_BUTTONS );
+}

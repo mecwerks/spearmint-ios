@@ -32,6 +32,10 @@ Suite 120, Rockville, Maryland 20850 USA.
 
 #include "../botlib/botlib.h"
 
+#ifdef IOS
+#include "../renderercommon/tr_common.h"
+#endif
+
 extern	botlib_export_t	*botlib_export;
 
 vm_t *uivm;
@@ -66,7 +70,12 @@ void CL_InitUI( void ) {
 	unsigned int		minor;
 
 	// load the dll or bytecode
-	uivm = VM_Create( "ui", CL_CgameSystemCalls, Cvar_VariableValue( "vm_ui" ) );
+#ifdef IOS
+	uivm = VM_Create( "ui", CL_CgameSystemCalls, VMI_BYTECODE );
+#else
+        uivm = VM_Create( "ui", CL_CgameSystemCalls, Cvar_VariableValue( "vm_ui" ) );
+#endif
+
 	if ( !uivm ) {
 		Com_Error( ERR_FATAL, "VM_Create on UI failed" );
 	}

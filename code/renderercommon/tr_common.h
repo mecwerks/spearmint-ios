@@ -32,7 +32,12 @@ Suite 120, Rockville, Maryland 20850 USA.
 
 #include "../qcommon/q_shared.h"
 #include "../renderercommon/tr_public.h"
+
+#ifdef IOS
+#include "../ios/qgl.h"
+#else
 #include "qgl.h"
+#endif
 
 typedef enum
 {
@@ -158,16 +163,28 @@ IMPLEMENTATION SPECIFIC FUNCTIONS
 ====================================================================
 */
 
-void		GLimp_Init( void );
-void		GLimp_Shutdown( void );
-void		GLimp_EndFrame( void );
+void            GLimp_Init( void );
+#ifdef IOS
+void            GLimp_SetMode(float rotation);
+#endif // IOS
+void            GLimp_Shutdown( void );
+void            GLimp_AcquireGL( void );
+#ifdef IOS
+void            GLimp_ReleaseGL( void );
+#endif // IOS
+void            GLimp_EndFrame( void );
 
-void		GLimp_LogComment( char *comment );
-void		GLimp_Minimize(void);
+qboolean        GLimp_SpawnRenderThread( void (*function)( void ) );
+void            *GLimp_RendererSleep( void );
+void            GLimp_FrontEndSleep( void );
+void            GLimp_WakeRenderer( void *data );
 
-void		GLimp_SetGamma( unsigned char red[256],
-		unsigned char green[256],
-		unsigned char blue[256] );
+void            GLimp_LogComment( char *comment );
 
+// NOTE TTimo linux works with float gamma value, not the gamma table
+//   the params won't be used, getting the r_gamma cvar directly
+void            GLimp_SetGamma( unsigned char red[256],
+							   unsigned char green[256],
+							   unsigned char blue[256] );
 
 #endif

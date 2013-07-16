@@ -381,6 +381,11 @@ static void UI_SPLevelMenu_ResetAction( qboolean result ) {
 	UI_SPLevelMenu();
 }
 
+static void UI_SPLevelMenu_ResetEventMin( void )
+{
+	UI_ConfirmMenu( "RESET GAME?", UI_SPLevelMenu_ResetDraw, UI_SPLevelMenu_ResetAction );
+}
+
 static void UI_SPLevelMenu_ResetEvent( void* ptr, int event )
 {
 	if (event != QM_ACTIVATED) {
@@ -396,6 +401,18 @@ static void UI_SPLevelMenu_ResetEvent( void* ptr, int event )
 UI_SPLevelMenu_LevelEvent
 =================
 */
+static void UI_SPLevelMenu_LevelEventMin( int callback ) {
+	if ( selectedArenaSet == trainingTier || selectedArenaSet == finalTier ) {
+		return;
+	}
+	
+	selectedArena = callback - ID_PICTURE0;
+	levelMenuInfo.selectedArenaInfo = UI_GetArenaInfoByNumber( selectedArenaSet * ARENAS_PER_TIER + selectedArena );
+	UI_SPLevelMenu_SetBots();
+	
+	trap_Cvar_SetValue( "ui_spSelection", selectedArenaSet * ARENAS_PER_TIER + selectedArena );
+}
+
 static void UI_SPLevelMenu_LevelEvent( void* ptr, int notification ) {
 	if (notification != QM_ACTIVATED) {
 		return;
@@ -418,6 +435,15 @@ static void UI_SPLevelMenu_LevelEvent( void* ptr, int notification ) {
 UI_SPLevelMenu_LeftArrowEvent
 =================
 */
+static void UI_SPLevelMenu_LeftArrowEventMin( void ) {
+	if ( selectedArenaSet == minTier ) {
+		return;
+	}
+	
+	selectedArenaSet--;
+	UI_SPLevelMenu_SetMenuItems();
+}
+
 static void UI_SPLevelMenu_LeftArrowEvent( void* ptr, int notification ) {
 	if (notification != QM_ACTIVATED) {
 		return;
@@ -437,6 +463,15 @@ static void UI_SPLevelMenu_LeftArrowEvent( void* ptr, int notification ) {
 UI_SPLevelMenu_RightArrowEvent
 =================
 */
+static void UI_SPLevelMenu_RightArrowEventMin( void ) {
+	if ( selectedArenaSet == maxTier ) {
+		return;
+	}
+	
+	selectedArenaSet++;
+	UI_SPLevelMenu_SetMenuItems();
+}
+
 static void UI_SPLevelMenu_RightArrowEvent( void* ptr, int notification ) {
 	if (notification != QM_ACTIVATED) {
 		return;
@@ -456,6 +491,10 @@ static void UI_SPLevelMenu_RightArrowEvent( void* ptr, int notification ) {
 UI_SPLevelMenu_PlayerEvent
 =================
 */
+static void UI_SPLevelMenu_PlayerEventMin( void ) {
+	UI_PlayerSettingsMenu(0);
+}
+
 static void UI_SPLevelMenu_PlayerEvent( void* ptr, int notification ) {
 	if (notification != QM_ACTIVATED) {
 		return;
@@ -470,6 +509,10 @@ static void UI_SPLevelMenu_PlayerEvent( void* ptr, int notification ) {
 UI_SPLevelMenu_AwardEvent
 =================
 */
+static void UI_SPLevelMenu_AwardEventMin( int callback ) {
+	trap_S_StartLocalSound( levelMenuInfo.awardSounds[callback - ID_AWARD1], CHAN_ANNOUNCER );
+}
+
 static void UI_SPLevelMenu_AwardEvent( void* ptr, int notification ) {
 	int		n;
 
@@ -487,6 +530,18 @@ static void UI_SPLevelMenu_AwardEvent( void* ptr, int notification ) {
 UI_SPLevelMenu_NextEvent
 =================
 */
+static void UI_SPLevelMenu_NextEventMin( void ) {
+	if ( selectedArenaSet > currentSet ) {
+		return;
+	}
+	
+	if ( selectedArena == -1 ) {
+		selectedArena = 0;
+	}
+	
+	UI_SPSkillMenu( levelMenuInfo.selectedArenaInfo );
+}
+
 static void UI_SPLevelMenu_NextEvent( void* ptr, int notification ) {
 	if (notification != QM_ACTIVATED) {
 		return;
@@ -509,15 +564,23 @@ static void UI_SPLevelMenu_NextEvent( void* ptr, int notification ) {
 UI_SPLevelMenu_BackEvent
 =================
 */
+static void UI_SPLevelMenu_BackEventMin( void ) {
+	if ( selectedArena == -1 ) {
+		selectedArena = 0;
+	}
+	
+	UI_PopMenu();
+}
+
 static void UI_SPLevelMenu_BackEvent( void* ptr, int notification ) {
 	if (notification != QM_ACTIVATED) {
 		return;
 	}
-
+	
 	if ( selectedArena == -1 ) {
 		selectedArena = 0;
 	}
-
+	
 	UI_PopMenu();
 }
 
@@ -527,14 +590,68 @@ static void UI_SPLevelMenu_BackEvent( void* ptr, int notification ) {
 UI_SPLevelMenu_CustomEvent
 =================
 */
+static void UI_SPLevelMenu_CustomEventMin( void ) {
+	UI_StartServerMenu( qfalse );
+}
+
 static void UI_SPLevelMenu_CustomEvent( void* ptr, int notification ) {
 	if (notification != QM_ACTIVATED) {
 		return;
 	}
-
+	
 	UI_StartServerMenu( qfalse );
 }
 
+/*
+=================
+UI_SPLevelMenu_Event
+=================
+*/
+void UI_SPLevelMenu_Event ( int callback, int event ) {
+	if (event != QM_ACTIVATED) {
+		return;
+	}
+	
+	switch (callback) {
+		case ID_LEFTARROW:
+			UI_SPLevelMenu_LeftArrowEventMin();
+			break;
+		case ID_RIGHTARROW:
+			UI_SPLevelMenu_RightArrowEventMin();
+			break;
+		case ID_PICTURE0:
+		case ID_PICTURE1:
+		case ID_PICTURE2:
+		case ID_PICTURE3:
+			UI_SPLevelMenu_LevelEventMin( callback );
+			break;
+		case ID_PLAYERPIC:
+			UI_SPLevelMenu_PlayerEventMin();
+			break;
+		case ID_AWARD1:
+		case ID_AWARD2:
+		case ID_AWARD3:
+		case ID_AWARD4:
+		case ID_AWARD5:
+		case ID_AWARD6:
+			UI_SPLevelMenu_AwardEventMin( callback );
+			break;
+		case ID_BACK:
+			UI_SPLevelMenu_BackEventMin();
+			break;
+		case ID_CUSTOM:
+			UI_SPLevelMenu_CustomEventMin();
+			break;
+		case ID_NEXT:
+			UI_SPLevelMenu_NextEventMin();
+			break;
+		case ID_RESET:
+			UI_SPLevelMenu_ResetEventMin();
+			break;
+		default:
+			break;
+	}
+}
 
 /*
 =================
@@ -715,6 +832,25 @@ void UI_SPLevelMenu_Cache( void ) {
 	levelMenuInfo.levelCompletePic[4] = trap_R_RegisterShaderNoMip( ART_MAP_COMPLETE5 );
 }
 
+void UI_SPLevelMenu_DrawTouch ( void ) {
+//	Menu_DrawTouchItem( &levelMenuInfo.item_leftarrow );
+//	Menu_DrawTouchItem( &levelMenuInfo.item_maps[0] );
+//	Menu_DrawTouchItem( &levelMenuInfo.item_maps[1] );
+//	Menu_DrawTouchItem( &levelMenuInfo.item_maps[2] );
+//	Menu_DrawTouchItem( &levelMenuInfo.item_maps[3] );
+//	Menu_DrawTouchItem( &levelMenuInfo.item_rightarrow );
+//	Menu_DrawTouchItem( &levelMenuInfo.item_player );
+	
+//	for( n = 0; n < count; n++ ) {
+//		Menu_AddItem( &levelMenuInfo.menu, &levelMenuInfo.item_awards[n] );
+//	}
+	
+	Menu_DrawTouchItem( &levelMenuInfo.item_back );
+	Menu_DrawTouchItem( &levelMenuInfo.item_reset );
+	Menu_DrawTouchItem( &levelMenuInfo.item_custom );
+	Menu_DrawTouchItem( &levelMenuInfo.item_next );
+//	trap_DrawTouchArea(48, 298, 80, 100, UIMENU_SPLEVEL, ID_NEXT);
+}
 
 /*
 =================
@@ -737,6 +873,9 @@ static void UI_SPLevelMenu_Init( void ) {
 	levelMenuInfo.menu.fullscreen = qtrue;
 	levelMenuInfo.menu.wrapAround = qtrue;
 	levelMenuInfo.menu.draw = UI_SPLevelMenu_MenuDraw;
+	// iOS touch menu
+	levelMenuInfo.menu.id = UIMENU_SPLEVEL;
+	levelMenuInfo.menu.touchDraw = UI_SPLevelMenu_DrawTouch;
 
 	UI_SPLevelMenu_Cache();
 

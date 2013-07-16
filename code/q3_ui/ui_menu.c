@@ -52,7 +52,8 @@ MAIN MENU
 #define ID_EXIT					17
 
 #define MAIN_BANNER_MODEL				"models/mapobjects/banner/banner5.md3"
-#define MAIN_MENU_VERTICAL_SPACING		34
+
+static int MAIN_MENU_VERTICAL_SPACING = 0;
 
 
 typedef struct {
@@ -95,56 +96,57 @@ static void MainMenu_ExitAction( qboolean result ) {
 	UI_CreditMenu();
 }
 
-
-
 /*
 =================
 Main_MenuEvent
 =================
 */
-void Main_MenuEvent (void* ptr, int event) {
+void Main_MenuTouch ( int callback, int event ) {
 	if( event != QM_ACTIVATED ) {
 		return;
 	}
-
-	switch( ((menucommon_s*)ptr)->id ) {
-	case ID_SINGLEPLAYER:
-		UI_SPLevelMenu();
-		break;
-
-	case ID_MULTIPLAYER:
-		UI_ArenaServersMenu();
-		break;
-
-	case ID_SETUP:
-		UI_SetupMenu();
-		break;
-
-	case ID_DEMOS:
-		UI_DemosMenu();
-		break;
-
-	case ID_CINEMATICS:
-		UI_CinematicsMenu();
-		break;
-
-	case ID_MODS:
-		UI_ModsMenu();
-		break;
+	
+	switch( callback ) {
+		case ID_SINGLEPLAYER:
+			UI_SPLevelMenu();
+			break;
+			
+		case ID_MULTIPLAYER:
+			UI_ArenaServersMenu();
+			break;
+			
+		case ID_SETUP:
+			UI_SetupMenu();
+			break;
+			
+		case ID_DEMOS:
+			UI_DemosMenu();
+			break;
+			 
+		case ID_CINEMATICS:
+			UI_CinematicsMenu();
+			break;
+			
+		case ID_MODS:
+			UI_ModsMenu();
+			break;
 
 #ifndef MISSIONPACK
-	case ID_TEAMARENA:
-		trap_Cvar_Set( "fs_game", BASETA);
-		trap_Cmd_ExecuteText( EXEC_APPEND, "vid_restart;" );
-		break;
+        	case ID_TEAMARENA:
+                	trap_Cvar_Set( "fs_game", BASETA);
+                	trap_Cmd_ExecuteText( EXEC_APPEND, "vid_restart;" );
+                	break;
 #endif
 
-	case ID_EXIT:
-		UI_ConfirmMenu( "EXIT GAME?", 0, MainMenu_ExitAction );
-		break;
+		case ID_EXIT:
+			UI_ConfirmMenu( "EXIT GAME?", 0, MainMenu_ExitAction );
+			break;
 	}
 }
 
+void Main_MenuEvent (void* ptr, int event) {
+	Main_MenuTouch(((menucommon_s*)ptr)->id, event);
+}
 
 /*
 ===============
@@ -272,6 +274,13 @@ static qboolean UI_TeamArenaExists( void ) {
 }
 #endif
 
+void MainMenu_TouchDraw ( void ) {
+	Menu_DrawTouchItem( &s_main.singleplayer );
+	Menu_DrawTouchItem( &s_main.multiplayer );
+	Menu_DrawTouchItem( &s_main.setup );
+	Menu_DrawTouchItem( &s_main.mods );
+	Menu_DrawTouchItem( &s_main.exit );
+}
 
 /*
 ===============
@@ -291,6 +300,12 @@ void UI_MainMenu( void ) {
 
 	trap_Cvar_SetValue( "sv_killserver", 1 );
 
+	if ( !uis.ios ) {
+		MAIN_MENU_VERTICAL_SPACING = 34;
+	} else {
+		MAIN_MENU_VERTICAL_SPACING = 58;
+	}
+	
 	memset( &s_main, 0 ,sizeof(mainmenu_t) );
 	memset( &s_errorMessage, 0 ,sizeof(errorMessage_t) );
 
@@ -317,6 +332,9 @@ void UI_MainMenu( void ) {
 	s_main.menu.fullscreen = qtrue;
 	s_main.menu.wrapAround = qtrue;
 	s_main.menu.showlogo = qtrue;
+	// iOS touch menu
+	s_main.menu.id = UIMENU_MAIN;
+	s_main.menu.touchDraw = MainMenu_TouchDraw;
 
 	y = 134;
 	s_main.singleplayer.generic.type		= MTYPE_PTEXT;
@@ -351,43 +369,45 @@ void UI_MainMenu( void ) {
 	s_main.setup.color						= text_big_color;
 	s_main.setup.style						= style;
 
-	y += MAIN_MENU_VERTICAL_SPACING;
-	s_main.demos.generic.type				= MTYPE_PTEXT;
-	s_main.demos.generic.flags				= QMF_CENTER_JUSTIFY|QMF_PULSEIFFOCUS;
-	s_main.demos.generic.x					= 320;
-	s_main.demos.generic.y					= y;
-	s_main.demos.generic.id					= ID_DEMOS;
-	s_main.demos.generic.callback			= Main_MenuEvent; 
-	s_main.demos.string						= "DEMOS";
-	s_main.demos.color						= text_big_color;
-	s_main.demos.style						= style;
+	if ( !uis.ios ) {
+		y += MAIN_MENU_VERTICAL_SPACING;
+		s_main.demos.generic.type				= MTYPE_PTEXT;
+		s_main.demos.generic.flags				= QMF_CENTER_JUSTIFY|QMF_PULSEIFFOCUS;
+		s_main.demos.generic.x					= 320;
+		s_main.demos.generic.y					= y;
+		s_main.demos.generic.id					= ID_DEMOS;
+		s_main.demos.generic.callback			= Main_MenuEvent; 
+		s_main.demos.string						= "DEMOS";
+		s_main.demos.color						= text_big_color;
+		s_main.demos.style						= style;
 
-	y += MAIN_MENU_VERTICAL_SPACING;
-	s_main.cinematics.generic.type			= MTYPE_PTEXT;
-	s_main.cinematics.generic.flags			= QMF_CENTER_JUSTIFY|QMF_PULSEIFFOCUS;
-	s_main.cinematics.generic.x				= 320;
-	s_main.cinematics.generic.y				= y;
-	s_main.cinematics.generic.id			= ID_CINEMATICS;
-	s_main.cinematics.generic.callback		= Main_MenuEvent; 
-	s_main.cinematics.string				= "CINEMATICS";
-	s_main.cinematics.color					= text_big_color;
-	s_main.cinematics.style					= style;
+		y += MAIN_MENU_VERTICAL_SPACING;
+		s_main.cinematics.generic.type			= MTYPE_PTEXT;
+		s_main.cinematics.generic.flags			= QMF_CENTER_JUSTIFY|QMF_PULSEIFFOCUS;
+		s_main.cinematics.generic.x				= 320;
+		s_main.cinematics.generic.y				= y;
+		s_main.cinematics.generic.id			= ID_CINEMATICS;
+		s_main.cinematics.generic.callback		= Main_MenuEvent; 
+		s_main.cinematics.string				= "CINEMATICS";
+		s_main.cinematics.color					= text_big_color;
+		s_main.cinematics.style					= style;
 
 #ifndef MISSIONPACK
-	if ( !uis.demoversion && UI_TeamArenaExists() ) {
-		teamArena = qtrue;
-		y += MAIN_MENU_VERTICAL_SPACING;
-		s_main.teamArena.generic.type			= MTYPE_PTEXT;
-		s_main.teamArena.generic.flags			= QMF_CENTER_JUSTIFY|QMF_PULSEIFFOCUS;
-		s_main.teamArena.generic.x				= 320;
-		s_main.teamArena.generic.y				= y;
-		s_main.teamArena.generic.id				= ID_TEAMARENA;
-		s_main.teamArena.generic.callback		= Main_MenuEvent; 
-		s_main.teamArena.string					= "TEAM ARENA";
-		s_main.teamArena.color					= text_big_color;
-		s_main.teamArena.style					= style;
-	}
+		if ( !uis.demoversion && UI_TeamArenaExists() ) {
+			teamArena = qtrue;
+			y += MAIN_MENU_VERTICAL_SPACING;
+			s_main.teamArena.generic.type			= MTYPE_PTEXT;
+			s_main.teamArena.generic.flags			= QMF_CENTER_JUSTIFY|QMF_PULSEIFFOCUS;
+			s_main.teamArena.generic.x				= 320;
+			s_main.teamArena.generic.y				= y;
+			s_main.teamArena.generic.id				= ID_TEAMARENA;
+			s_main.teamArena.generic.callback		= Main_MenuEvent; 
+			s_main.teamArena.string					= "TEAM ARENA";
+			s_main.teamArena.color					= text_big_color;
+			s_main.teamArena.style					= style;
+		}
 #endif
+	}
 
 	if ( !uis.demoversion ) {
 		y += MAIN_MENU_VERTICAL_SPACING;
@@ -416,16 +436,18 @@ void UI_MainMenu( void ) {
 	Menu_AddItem( &s_main.menu,	&s_main.singleplayer );
 	Menu_AddItem( &s_main.menu,	&s_main.multiplayer );
 	Menu_AddItem( &s_main.menu,	&s_main.setup );
-	Menu_AddItem( &s_main.menu,	&s_main.demos );
-	Menu_AddItem( &s_main.menu,	&s_main.cinematics );
+	if ( !uis.ios ) {
+		Menu_AddItem( &s_main.menu,	&s_main.demos );
+		Menu_AddItem( &s_main.menu,	&s_main.cinematics );
 #ifndef MISSIONPACK
-	if (teamArena) {
-		Menu_AddItem( &s_main.menu,	&s_main.teamArena );
-	}
+		if (teamArena)
+			Menu_AddItem( &s_main.menu,	&s_main.teamArena );
 #endif
-	if ( !uis.demoversion ) {
-		Menu_AddItem( &s_main.menu,	&s_main.mods );
 	}
+	
+	if ( !uis.demoversion )
+		Menu_AddItem( &s_main.menu,	&s_main.mods );
+	
 	Menu_AddItem( &s_main.menu,	&s_main.exit );             
 
 	trap_Key_SetCatcher( KEYCATCH_UI );

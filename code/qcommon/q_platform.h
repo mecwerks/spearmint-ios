@@ -158,6 +158,10 @@ Suite 120, Rockville, Maryland 20850 USA.
 #define ID_INLINE inline
 #define PATH_SEP '/'
 
+#ifdef IOS
+#define ARCH_STRING "arm"
+#define Q3_LITTLE_ENDIAN
+#else
 #ifdef __ppc__
 #define ARCH_STRING "ppc"
 #define Q3_BIG_ENDIAN
@@ -169,6 +173,7 @@ Suite 120, Rockville, Maryland 20850 USA.
 #define idx64 1
 #define ARCH_STRING "x86_64"
 #define Q3_LITTLE_ENDIAN
+#endif
 #endif
 
 #define DLL_EXT ".dylib"

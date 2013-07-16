@@ -35,7 +35,7 @@ Suite 120, Rockville, Maryland 20850 USA.
 #include "../qcommon/q_shared.h"
 #include "../qcommon/qcommon.h"
 
-#ifdef USE_LOCAL_HEADERS
+#if defined(USE_LOCAL_HEADERS) || defined(IOS)
   #include "../libcurl/curl/curl.h"
 #else
   #include <curl/curl.h>

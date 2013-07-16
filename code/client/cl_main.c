@@ -112,6 +112,10 @@ clientConnection_t	clc;
 clientStatic_t		cls;
 vm_t				*cgvm;
 
+#ifdef IOS
+screenInput_t           clsi;
+#endif
+
 char				cl_reconnectArgs[MAX_OSPATH];
 char				cl_oldGame[MAX_QPATH];
 qboolean			cl_oldGameSet;
@@ -3636,7 +3640,9 @@ CL_Shutdown
 void CL_Shutdown(char *finalmsg, qboolean disconnect, qboolean quit)
 {
 	static qboolean recursive = qfalse;
+#if CL_MAX_SPLITVIEW > 1
 	int i;
+#endif
 	
 	// check whether the client is running at all.
 	if(!(com_cl_running && com_cl_running->integer))
