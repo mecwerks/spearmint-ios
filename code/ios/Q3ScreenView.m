@@ -139,9 +139,9 @@
 	{
 		if (clsi.buttons[i].active && !clsi.buttons[i].initialized)
 		{
-			if (clsi.buttons[i].menu == UIMENU_MAIN) {
+			if (1){//clsi.buttons[i].menu == UIMENU_MAIN) {
 				// the right way
-				buttonArea[i] = CGRectMake(clsi.buttons[i].x, self.frame.size.height - clsi.buttons[i].y,
+				buttonArea[i] = CGRectMake(clsi.buttons[i].x, (self.frame.size.height - 1) - clsi.buttons[i].y,
 										   clsi.buttons[i].w, clsi.buttons[i].h);
 			} else {
 				buttonArea[i] = CGRectMake(clsi.buttons[i].x, clsi.buttons[i].y,

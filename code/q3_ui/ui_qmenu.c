@@ -1360,8 +1360,6 @@ typedef struct {
 	int menu, id;
 } button_s;
 
-#define ScaleX(x, w) ((float)x + (((uis.glconfig.vidWidth/2.0)-(float)w)/2.0))
-
 /*
 =================
 Text_TouchValues
@@ -1369,38 +1367,51 @@ Text_TouchValues
 */
 void Text_TouchValues ( menutext_s *item, button_s *button ) {
 	char buff[512];
-	const char *s;
-	unsigned char ch;
-	float w = 0;
-	float aw = 0;
-	
+	float nx;
+	int width;
+	int charw;
+	int charh;
+		
 	if (item->generic.name)
 		strcpy(buff, item->generic.name);
 	else if (item->string)
 		strcpy(buff, item->string);
-	else return;
+	else
+		return;
 	
-	s = buff;
-	while ( *s )
-	{
-		ch = *s & 127;
-		if ( ch == ' ' ) {
-			aw = (float)PROP_SPACE_WIDTH * uis.xscale;
-		}
-		else if ( propMapT[ch][2] != -1 ) {
-			aw = (float)propMapT[ch][2] * uis.xscale;
-		} else {
-			aw = 0;
-		}
-		
-		w += (aw + (float)PROP_GAP_WIDTH * uis.xscale);
-		s++;
+	
+	if (item->style & UI_SMALLFONT) {
+		charw =	SMALLCHAR_WIDTH;
+		charh =	SMALLCHAR_HEIGHT;
+	} else if (item->style & UI_GIANTFONT) {
+		charw =	GIANTCHAR_WIDTH;
+		charh =	GIANTCHAR_HEIGHT;
+	} else {
+		charw =	BIGCHAR_WIDTH;
+		charh =	BIGCHAR_HEIGHT;
 	}
 	
-	button->x = ScaleX(item->generic.x, w);
+	nx = item->generic.x;
+	width = strlen(buff) * charw;
+	
+	switch (item->style & UI_FORMATMASK) {
+		case UI_CENTER:
+			// center justify at x
+			nx += width / 2;
+			break;
+		case UI_RIGHT:
+			// right justify at x
+			nx += width;
+			break;
+		default:
+			// left justify at x
+			break;
+	}
+	
+	button->x = nx * uis.xscale + uis.bias;
 	button->y = (float)item->generic.y * uis.yscale;
-	button->w = w;
-	button->h = (float)PROP_HEIGHT;
+	button->w = (float)width;
+	button->h = (float)charh;
 	button->menu = item->generic.parent->id;
 	button->id = item->generic.id;
 }
@@ -1411,10 +1422,10 @@ Bitmap_TouchValues
 =================
 */
 void Bitmap_TouchValues ( menubitmap_s *item, button_s *button ) {
-	button->x = ScaleX(item->generic.x, item->width);
+	button->x = item->generic.x * uis.xscale + (uis.bias*2.0);
 	button->y = (float)item->generic.y * uis.yscale;
-	button->w = (float)item->width;
-	button->h = (float)item->height;
+	button->w = (float)item->width * uis.xscale;
+	button->h = (float)item->height * uis.yscale;
 	button->menu = item->generic.parent->id;
 	button->id = item->generic.id;
 }
@@ -1443,8 +1454,8 @@ void Menu_DrawTouchItem ( void *item ) {
 			Text_TouchValues((menutext_s*)item, &button);
 			break;
 		case MTYPE_BITMAP:
-//			Bitmap_TouchValues((menubitmap_s*)item, &button);
-//			break;
+			Bitmap_TouchValues((menubitmap_s*)item, &button);
+			break;
 		default:
 			Com_Printf("Menu_DrawTouchItem: Touch button id %d not drawn, unsupported type %d\n",
 					   ((menutext_s*)item)->generic.id, menu->type);
