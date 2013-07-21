@@ -1164,8 +1164,9 @@ void R_Register( void )
 	ri.Cmd_AddCommand( "screenshot", R_ScreenShot_f );
 	ri.Cmd_AddCommand( "screenshotJPEG", R_ScreenShotJPEG_f );
 	ri.Cmd_AddCommand( "gfxinfo", GfxInfo_f );
-	// Not found on iOS or MACOS_X ???
-//	ri.Cmd_AddCommand( "minimize", GLimp_Minimize );
+#ifndef IOS
+	ri.Cmd_AddCommand( "minimize", GLimp_Minimize );
+#endif
 }
 
 /*
@@ -1185,13 +1186,9 @@ void R_Init( void ) {
 	Com_Memset( &backEnd, 0, sizeof( backEnd ) );
 	Com_Memset( &tess, 0, sizeof( tess ) );
 
-#ifdef IOS
-	if(sizeof(glconfig_t) != 11336)
-		ri.Error( ERR_FATAL, "Mod ABI incompatible: sizeof(glconfig_t) == %u != 11336", (unsigned int) sizeof(glconfig_t));
-#else
 	if(sizeof(glconfig_t) != 11332)
 		ri.Error( ERR_FATAL, "Mod ABI incompatible: sizeof(glconfig_t) == %u != 11332", (unsigned int) sizeof(glconfig_t));
-#endif
+
 //	Swap_Init();
 
 	if ( (intptr_t)tess.xyz & 15 ) {

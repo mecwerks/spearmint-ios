@@ -341,17 +341,17 @@
 	CGPoint mouseLocation, GUIMouseLocation;
 	int deltaX, deltaY;
     
-	if (glConfig.vidRotation == 90)
+	if (vidRotation == 90)
 	{
 		mouseLocation.x = _size.height - point.y;
 		mouseLocation.y = point.x;
 	}
-	else if (glConfig.vidRotation == 0)
+	else if (vidRotation == 0)
 	{
 		mouseLocation.x = point.x;
 		mouseLocation.y = point.y;
 	}
-	else if (glConfig.vidRotation == 270)
+	else if (vidRotation == 270)
 	{
 		mouseLocation.x = point.y;
 		mouseLocation.y = _size.width - point.x;
@@ -380,7 +380,7 @@
 // handleDragFromPoint rotates the camera based on a touchedMoved event
 - (void)_handleDragFromPoint:(CGPoint)location toPoint:(CGPoint)previousLocation
 {
-	if (glConfig.vidRotation == 90)
+	if (vidRotation == 90)
 	{
 		CGSize mouseDelta;
 

@@ -1314,8 +1314,9 @@ void R_Register( void )
 	ri.Cmd_AddCommand( "screenshot", R_ScreenShot_f );
 	ri.Cmd_AddCommand( "screenshotJPEG", R_ScreenShotJPEG_f );
 	ri.Cmd_AddCommand( "gfxinfo", GfxInfo_f );
-	// Not found on iOS or MACOS_X ???
-//	ri.Cmd_AddCommand( "minimize", GLimp_Minimize );
+#ifndef IOS
+	ri.Cmd_AddCommand( "minimize", GLimp_Minimize );
+#endif
 	ri.Cmd_AddCommand( "gfxmeminfo", GfxMemInfo_f );
 }
 

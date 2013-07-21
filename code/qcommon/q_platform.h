@@ -136,7 +136,6 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 #endif
 
-
 //============================================================== MAC OS X ===
 
 #if defined(MACOS_X) || defined(__APPLE_CC__)
@@ -150,10 +149,6 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #define ID_INLINE inline
 #define PATH_SEP '/'
 
-#ifdef IOS
-#define ARCH_STRING "arm"
-#define Q3_LITTLE_ENDIAN
-#else
 #ifdef __ppc__
 #define ARCH_STRING "ppc"
 #define Q3_BIG_ENDIAN
@@ -166,6 +161,27 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #define ARCH_STRING "x86_64"
 #define Q3_LITTLE_ENDIAN
 #endif
+
+#define DLL_EXT ".dylib"
+
+#endif
+
+//=================================================================== iOS ===
+
+#if defined(IOS)
+
+// make sure this is defined, just for sanity's sake...
+#ifndef MACOS_X
+#define MACOS_X
+#endif
+
+#define OS_STRING "ios"
+#define ID_INLINE inline
+#define PATH_SEP '/'
+
+#if defined __arm__
+#define ARCH_STRING "__arm__"
+#define Q3_LITTLE_ENDIAN
 #endif
 
 #define DLL_EXT ".dylib"

@@ -705,7 +705,7 @@ void	RB_SetGL2D (void) {
 
 	// set 2D virtual screen size
 #ifdef IOS
-	if ( glConfig.vidRotation == 90.0 || glConfig.vidRotation == 270.0 )
+	if ( vidRotation == 90.0 || vidRotation == 270.0 )
 	{
 		qglViewport ( 0, 0, glConfig.vidHeight, glConfig.vidWidth );
 		qglScissor( 0, 0, glConfig.vidHeight, glConfig.vidWidth );
@@ -720,7 +720,7 @@ void	RB_SetGL2D (void) {
 	qglMatrixMode(GL_PROJECTION);
     qglLoadIdentity ();
 #ifdef IOS
-	qglRotatef (glConfig.vidRotation, 0, 0, 1);
+	qglRotatef (vidRotation, 0, 0, 1);
 	qglTranslatef (0, 0, 0);
 #endif // IOS
 	qglOrtho (0, glConfig.vidWidth, glConfig.vidHeight, 0, 0, 1);

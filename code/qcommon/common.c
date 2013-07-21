@@ -2780,7 +2780,6 @@ void Com_Init( char *commandLine ) {
 
 	if( Sys_WritePIDFile( ) ) {
 #ifndef DEDICATED
-#ifndef IOS
 		const char *message = "The last time " CLIENT_WINDOW_TITLE " ran, "
 			"it didn't exit properly. This may be due to inappropriate video "
 			"settings. Would you like to start with \"safe\" video settings?";
@@ -2788,7 +2787,6 @@ void Com_Init( char *commandLine ) {
 		if( Sys_Dialog( DT_YES_NO, message, "Abnormal Exit" ) == DR_YES ) {
 			Cvar_Set( "com_abnormalExit", "1" );
 		}
-#endif
 #endif
 	}
 

@@ -802,31 +802,13 @@ intptr_t CL_UISystemCalls( intptr_t *args ) {
 		return FS_Seek( args[1], args[2], args[3] );
 	
 	case UI_R_REGISTERMODEL:
-#ifdef IOS
-		GLimp_AcquireGL();
 		return re.RegisterModel( VMA(1) );
-		GLimp_ReleaseGL();
-#else
-		return re.RegisterModel( VMA(1) );
-#endif // IOS
 			
 	case UI_R_REGISTERSKIN:
-#ifdef IOS
-		GLimp_AcquireGL();
 		return re.RegisterSkin( VMA(1) );
-		GLimp_ReleaseGL();
-#else
-		return re.RegisterSkin( VMA(1) );
-#endif // IOS
 			
 	case UI_R_REGISTERSHADERNOMIP:
-#ifdef IOS
-		GLimp_AcquireGL();
 		return re.RegisterShaderNoMip( VMA(1) );
-		GLimp_ReleaseGL();
-#else
-		return re.RegisterShaderNoMip( VMA(1) );
-#endif
 
 	case UI_R_CLEARSCENE:
 		re.ClearScene();
@@ -1085,15 +1067,11 @@ intptr_t CL_UISystemCalls( intptr_t *args ) {
 		return CL_CDKeyValidate(VMA(1), VMA(2));
 	
 	case UI_DRAW_TOUCH_AREA:
-#ifdef IOS
-		IOS_DrawTouchArea(VMF(1), VMF(2), VMF(3), VMF(4), args[5], args[6]);
-#endif
+		CL_DrawTouchArea(VMF(1), VMF(2), VMF(3), VMF(4), args[5], args[6]);
 		return 0;
 	
 	case UI_CLEAR_TOUCH_BUTTONS:
-#ifdef IOS
-		IOS_FlushButtons();
-#endif
+		CL_FlushButtons();
 		return 0;
 			
 	default:

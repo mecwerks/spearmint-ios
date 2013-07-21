@@ -142,11 +142,12 @@ Sys_PIDFileName
 */
 static char *Sys_PIDFileName( void )
 {
+#ifndef IOS
 	const char *homePath = Sys_DefaultHomePath( );
 
-	if( homePath != '\0' )
+	if( *homePath != '\0' )
 		return va( "%s/%s", homePath, PID_FILENAME );
-
+#endif
 	return NULL;
 }
 

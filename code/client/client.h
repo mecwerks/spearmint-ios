@@ -529,10 +529,8 @@ float CL_KeyState (kbutton_t *key);
 int Key_StringToKeynum( char *str );
 char *Key_KeynumToString (int keynum);
 
-#ifdef IOS
-void IOS_DrawTouchArea(float x, float y, float w, float h, int menu, int callback);
-void IOS_FlushButtons( void );
-#endif
+void CL_DrawTouchArea(float x, float y, float w, float h, int menu, int callback);
+void CL_FlushButtons( void );
 
 //
 // cl_parse.c

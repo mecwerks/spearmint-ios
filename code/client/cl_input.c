@@ -591,23 +591,25 @@ void CL_FinishMove( usercmd_t *cmd ) {
 	}
 }
 
-#ifdef IOS
 /*
 =================
-IOS_FlushButtons
+CL_FlushButtons
 =================
 */
-void IOS_FlushButtons ( void ) {
+void CL_FlushButtons ( void ) {
+#ifdef IOS
 	memset( &clsi, 0, sizeof(screenInput_t) );
 	clsi.clean = qtrue;
+#endif
 }
 
 /*
 =================
-IOS_DrawTouchArea
+CL_DrawTouchArea
 =================
 */
-void IOS_DrawTouchArea ( float x, float y, float w, float h, int menu, int callback ) {
+void CL_DrawTouchArea ( float x, float y, float w, float h, int menu, int callback ) {
+#ifdef IOS
 	int i;
 	qboolean buttonFound = qfalse;
 	
@@ -630,8 +632,8 @@ void IOS_DrawTouchArea ( float x, float y, float w, float h, int menu, int callb
 	
 	if ( !buttonFound )
 		Com_Printf("IOS_DrawTouchArea: Max buttons reached\n");
-}
 #endif
+}
 
 /*
 =================
