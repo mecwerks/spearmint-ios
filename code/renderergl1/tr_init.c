@@ -166,6 +166,10 @@ int		max_polys;
 cvar_t	*r_maxpolyverts;
 int		max_polyverts;
 
+#ifndef GLimp_Minimize
+static void GLimp_Minimize ( void ) { return 0; };
+#endif
+
 /*
 ** InitOpenGL
 **
@@ -1164,9 +1168,7 @@ void R_Register( void )
 	ri.Cmd_AddCommand( "screenshot", R_ScreenShot_f );
 	ri.Cmd_AddCommand( "screenshotJPEG", R_ScreenShotJPEG_f );
 	ri.Cmd_AddCommand( "gfxinfo", GfxInfo_f );
-#ifndef IOS
 	ri.Cmd_AddCommand( "minimize", GLimp_Minimize );
-#endif
 }
 
 /*

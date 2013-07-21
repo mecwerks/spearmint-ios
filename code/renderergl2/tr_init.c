@@ -224,6 +224,10 @@ int		max_polys;
 cvar_t	*r_maxpolyverts;
 int		max_polyverts;
 
+#ifndef GLimp_Minimize
+static void GLimp_Minimize ( void ) { return 0; };
+#endif
+
 /*
 ** InitOpenGL
 **
