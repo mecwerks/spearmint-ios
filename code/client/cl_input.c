@@ -608,7 +608,7 @@ void CL_FlushButtons ( void ) {
 CL_DrawTouchArea
 =================
 */
-void CL_DrawTouchArea ( float x, float y, float w, float h, int menu, int callback ) {
+void CL_DrawTouchArea ( float x, float y, float w, float h ) {
 #ifdef IOS
 	int i;
 	qboolean buttonFound = qfalse;
@@ -622,8 +622,6 @@ void CL_DrawTouchArea ( float x, float y, float w, float h, int menu, int callba
 			clsi.buttons[i].y = x;
 			clsi.buttons[i].w = h;
 			clsi.buttons[i].h = w;
-			clsi.buttons[i].menu = menu;
-			clsi.buttons[i].callback = callback;
 			clsi.buttons[i].active = qtrue;
 			buttonFound = qtrue;
 			break;

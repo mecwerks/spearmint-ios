@@ -366,8 +366,6 @@ typedef struct {
 	qboolean pressed;
 	qboolean initialized;
 	float x, y, h, w;
-	int callback;
-	int menu;
 } buttons_t;
 
 typedef struct {
@@ -529,7 +527,7 @@ float CL_KeyState (kbutton_t *key);
 int Key_StringToKeynum( char *str );
 char *Key_KeynumToString (int keynum);
 
-void CL_DrawTouchArea(float x, float y, float w, float h, int menu, int callback);
+void CL_DrawTouchArea(float x, float y, float w, float h);
 void CL_FlushButtons( void );
 
 //

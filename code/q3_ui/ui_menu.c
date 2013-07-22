@@ -89,12 +89,12 @@ static void MainMenu_ExitAction( qboolean result ) {
 Main_MenuEvent
 =================
 */
-void Main_MenuTouch ( int callback, int event ) {
+void Main_MenuEvent (void* ptr, int event) {
 	if( event != QM_ACTIVATED ) {
 		return;
 	}
 	
-	switch( callback ) {
+	switch( ((menucommon_s*)ptr)->id ) {
 		case ID_SINGLEPLAYER:
 			UI_SPLevelMenu();
 			break;
@@ -128,10 +128,6 @@ void Main_MenuTouch ( int callback, int event ) {
 			UI_ConfirmMenu( "EXIT GAME?", 0, MainMenu_ExitAction );
 			break;
 	}
-}
-
-void Main_MenuEvent (void* ptr, int event) {
-	Main_MenuTouch(((menucommon_s*)ptr)->id, event);
 }
 
 /*
@@ -325,7 +321,6 @@ void UI_MainMenu( void ) {
 	s_main.menu.wrapAround = qtrue;
 	s_main.menu.showlogo = qtrue;
 	// iOS touch menu
-	s_main.menu.id = UIMENU_MAIN;
 	s_main.menu.touchDraw = MainMenu_TouchDraw;
 
 	y = 134;

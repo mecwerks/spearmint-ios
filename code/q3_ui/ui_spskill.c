@@ -134,10 +134,6 @@ static void UI_SPSkillMenu_SkillEvent( void *ptr, int notification ) {
 UI_SPSkillMenu_FightEvent
 =================
 */
-static void UI_SPSkillMenu_FightEventMin( void ) {
-	UI_SPArena_Start( skillMenuInfo.arenaInfo );
-}
-
 static void UI_SPSkillMenu_FightEvent( void *ptr, int notification ) {
 	if (notification != QM_ACTIVATED)
 		return;
@@ -173,24 +169,6 @@ static sfxHandle_t UI_SPSkillMenu_Key( int key ) {
 	return Menu_DefaultKey( &skillMenuInfo.menu, key );
 }
 
-/*
- =================
- UI_SPSkillMenu_EventTouch
- =================
- */
-void UI_SPSkillMenu_Event( int callback, int notification ) {
-	if (notification != QM_ACTIVATED) {
-		return;
-	}
-	
-	switch (callback) {
-		case ID_FIGHT:
-			UI_SPSkillMenu_FightEventMin();
-			break;
-		default:
-			break;
-	}
-}
 
 /*
 =================
@@ -214,7 +192,7 @@ void UI_SPSkillMenu_Cache( void ) {
 }
 
 void UI_SPSkillMenu_TouchDraw ( void ) {
-	trap_DrawTouchArea(48, 298, 80, 100, UIMENU_SPSKILL, ID_FIGHT);
+        trap_DrawTouchArea(48, 298, 80, 100); // ID_FIGHT
 }
 
 /*
@@ -228,8 +206,6 @@ static void UI_SPSkillMenu_Init( void ) {
 	memset( &skillMenuInfo, 0, sizeof(skillMenuInfo) );
 	skillMenuInfo.menu.fullscreen = qtrue;
 	skillMenuInfo.menu.key = UI_SPSkillMenu_Key;
-	// iOS touch menu
-	skillMenuInfo.menu.id = UIMENU_SPSKILL;
 	skillMenuInfo.menu.touchDraw = UI_SPSkillMenu_TouchDraw;
 
 	UI_SPSkillMenu_Cache();

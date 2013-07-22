@@ -265,8 +265,8 @@ ifneq ($(BUILD_CLIENT),0)
     CURL_LIBS=$(shell pkg-config --silence-errors --libs libcurl)
     OPENAL_CFLAGS=$(shell pkg-config --silence-errors --cflags openal)
     OPENAL_LIBS=$(shell pkg-config --silence-errors --libs openal)
-    SDL_CFLAGS=$(shell pkg-config --silence-errors --cflags sdl|sed 's/-Dmain=SDL_main//')
-    SDL_LIBS=$(shell pkg-config --silence-errors --libs sdl)
+#    SDL_CFLAGS=$(shell pkg-config --silence-errors --cflags sdl|sed 's/-Dmain=SDL_main//')
+#    SDL_LIBS=$(shell pkg-config --silence-errors --libs sdl)
     FREETYPE_CFLAGS=$(shell pkg-config --silence-errors --cflags freetype2)
   endif
   # Use sdl-config if all else fails

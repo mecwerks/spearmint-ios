@@ -139,7 +139,7 @@
 	{
 		if (clsi.buttons[i].active && !clsi.buttons[i].initialized)
 		{
-			if (1){//clsi.buttons[i].menu == UIMENU_MAIN) {
+			if (1) {//clsi.buttons[i].menu == UIMENU_MAIN) {
 				// the right way
 				buttonArea[i] = CGRectMake(clsi.buttons[i].x, (self.frame.size.height - 1) - clsi.buttons[i].y,
 										   clsi.buttons[i].w, clsi.buttons[i].h);
@@ -411,7 +411,7 @@
 				if (CGRectContainsPoint(buttonArea[i], touchLocation) && clsi.buttons[i].active)
 				{
 					Com_Printf("button %d active\n", i);
-					VM_Call(uivm, UI_SELECT_AND_PRESS, clsi.buttons[i].menu, clsi.buttons[i].callback);
+					VM_Call(uivm, UI_SELECT_AND_PRESS, i);
 				}
 			}
 		}

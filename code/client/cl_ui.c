@@ -1067,7 +1067,7 @@ intptr_t CL_UISystemCalls( intptr_t *args ) {
 		return CL_CDKeyValidate(VMA(1), VMA(2));
 	
 	case UI_DRAW_TOUCH_AREA:
-		CL_DrawTouchArea(VMF(1), VMF(2), VMF(3), VMF(4), args[5], args[6]);
+		CL_DrawTouchArea(VMF(1), VMF(2), VMF(3), VMF(4));
 		return 0;
 	
 	case UI_CLEAR_TOUCH_BUTTONS:

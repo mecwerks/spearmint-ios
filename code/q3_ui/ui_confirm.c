@@ -62,29 +62,21 @@ static confirmMenu_t	s_confirm;
 ConfirmMenu_Event
 =================
 */
-static void ConfirmMenu_EventMin( int callback, int event ) {
+static void ConfirmMenu_Event( void* ptr, int event ) {
 	qboolean	result = qtrue;
 	
 	if( event != QM_ACTIVATED )
 		return;
 	
-	if ( callback == ID_CONFIRM_NO )
+	if ( ((menucommon_s*)ptr)->id == ID_CONFIRM_NO )
 		result = qfalse;
-	else if ( callback != ID_CONFIRM_YES )
+	else if ( ((menucommon_s*)ptr)->id != ID_CONFIRM_YES )
 		return;
 	
 	UI_PopMenu();
 	
 	if( s_confirm.action )
 		s_confirm.action( result );
-}
-
-static void ConfirmMenu_Event( void* ptr, int event ) {
-	ConfirmMenu_EventMin(((menucommon_s*)ptr)->id, event);
-}
-
-void ConfirmMenu_TouchEvent( int callback ) {
-	ConfirmMenu_EventMin( callback, QM_ACTIVATED );
 }
 
 /*
@@ -168,8 +160,8 @@ void ConfirmMenu_Cache( void ) {
 }
 
 void ConfirmMenu_TouchDraw( void ) {
-	trap_DrawTouchArea(280, 180, 60, 60, UIMENU_CONFIRM, ID_CONFIRM_YES);
-	trap_DrawTouchArea(215, 180, 60, 60, UIMENU_CONFIRM, ID_CONFIRM_NO);
+	trap_DrawTouchArea(280, 180, 60, 60); // ID_CONFIRM_YES
+	trap_DrawTouchArea(215, 180, 60, 60); // ID_CONFIRM_NO
 }
 
 /*
@@ -204,7 +196,6 @@ void UI_ConfirmMenu_Style( const char *question, int style, void (*draw)( void )
 	s_confirm.menu.key        = ConfirmMenu_Key;
 	s_confirm.menu.wrapAround = qtrue;
 	// iOS touch menu
-	s_confirm.menu.id = UIMENU_CONFIRM;
 	s_confirm.menu.touchDraw = ConfirmMenu_TouchDraw;
 
 	trap_GetClientState( &cstate );

@@ -146,13 +146,7 @@ typedef enum {
 	UIMENU_NEED_CD,
 	UIMENU_BAD_CD_KEY,
 	UIMENU_TEAM,
-	UIMENU_POSTGAME,
-	// iOS touch menu
-	UIMENU_MODS,	// mod menu
-	UIMENU_SETUP,	// setup menu
-	UIMENU_SPLEVEL,	// single player level select
-	UIMENU_SPSKILL, // single player difficulty select
-	UIMENU_CONFIRM	// generic yes/no menu
+	UIMENU_POSTGAME
 } uiMenuCommand_t;
 
 #define SORT_HOST			0
