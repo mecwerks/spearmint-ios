@@ -1252,7 +1252,7 @@ int BotAISetupClient(int client, struct bot_settings_s *settings, qboolean resta
 	bot_state_t *bs;
 	int errnum;
 
-	if (!botstates[client]) botstates[client] = G_Alloc(sizeof(bot_state_t));
+	if (!botstates[client]) botstates[client] = trap_Alloc(sizeof(bot_state_t), NULL);
 	bs = botstates[client];
 
 	if (bs && bs->inuse) {
@@ -1280,6 +1280,7 @@ int BotAISetupClient(int client, struct bot_settings_s *settings, qboolean resta
 	errnum = BotLoadItemWeights(bs->gs, filename);
 	if (errnum != BLERR_NOERROR) {
 		BotFreeGoalState(bs->gs);
+		BotAI_Print(PRT_FATAL, "BotLoadItemWeights failed\n");
 		return qfalse;
 	}
 	//allocate a weapon state
@@ -1290,6 +1291,7 @@ int BotAISetupClient(int client, struct bot_settings_s *settings, qboolean resta
 	if (errnum != BLERR_NOERROR) {
 		BotFreeGoalState(bs->gs);
 		BotFreeWeaponState(bs->ws);
+		BotAI_Print(PRT_FATAL, "BotLoadWeaponWeights failed\n");
 		return qfalse;
 	}
 	//allocate a chat state
@@ -1302,6 +1304,7 @@ int BotAISetupClient(int client, struct bot_settings_s *settings, qboolean resta
 		trap_BotFreeChatState(bs->cs);
 		BotFreeGoalState(bs->gs);
 		BotFreeWeaponState(bs->ws);
+		BotAI_Print(PRT_FATAL, "trap_BotLoadChatFile failed\n");
 		return qfalse;
 	}
 	//get the gender characteristic
@@ -1449,10 +1452,11 @@ int BotAILoadMap( int restart ) {
 	if (!restart) {
 		trap_Cvar_Register( &mapname, "mapname", "", CVAR_SERVERINFO | CVAR_ROM );
 		trap_BotLibLoadMap( mapname.string );
-		//initialize the items in the level
-		BotInitLevelItems();		//ai_goal.h
-		BotSetBrushModelTypes();	//ai_move.h
 	}
+
+	//initialize the items in the level
+	BotInitLevelItems();		//ai_goal.h
+	BotSetBrushModelTypes();	//ai_move.h
 
 	for (i = 0; i < MAX_CLIENTS; i++) {
 		if (botstates[i] && botstates[i]->inuse) {
@@ -1760,16 +1764,15 @@ int BotAISetup( int restart ) {
 	trap_Cvar_Register(&bot_interbreedcycle, "bot_interbreedcycle", "20", 0);
 	trap_Cvar_Register(&bot_interbreedwrite, "bot_interbreedwrite", "", 0);
 
-	//if the game is restarted for a tournament
-	if (restart) {
-		return qtrue;
+	//if the game isn't restarted for a tournament
+	if (!restart) {
+		//initialize the bot states
+		memset( botstates, 0, sizeof(botstates) );
+
+		errnum = BotInitLibrary();
+		if (errnum != BLERR_NOERROR) return qfalse;
 	}
 
-	//initialize the bot states
-	memset( botstates, 0, sizeof(botstates) );
-
-	errnum = BotInitLibrary();
-	if (errnum != BLERR_NOERROR) return qfalse;
 	errnum = EA_Setup();			//ai_ea.c
 	if (errnum != BLERR_NOERROR) return qfalse;
 	errnum = BotSetupWeaponAI();	//ai_weap.c
@@ -1802,14 +1805,16 @@ int BotAIShutdown( int restart ) {
 	}
 	else {
 		trap_BotLibShutdown();
-		//
-		BotShutdownMoveAI();		//ai_move.c
-		BotShutdownGoalAI();		//ai_goal.c
-		BotShutdownWeaponAI();		//ai_weap.c
-		BotShutdownWeights();		//ai_weight.c
-		//shut down bot elemantary actions
-		EA_Shutdown();
 	}
+
+	//
+	BotShutdownMoveAI();		//ai_move.c
+	BotShutdownGoalAI();		//ai_goal.c
+	BotShutdownWeaponAI();		//ai_weap.c
+	BotShutdownWeights();		//ai_weight.c
+	//shut down bot elemantary actions
+	EA_Shutdown();
+
 	return qtrue;
 }
 

@@ -434,7 +434,7 @@ void BotInitInfoEntities(void)
 				continue;
 			} //end if
 
-			cs = (campspot_t *) G_Alloc(sizeof(campspot_t));
+			cs = (campspot_t *) trap_Alloc(sizeof(campspot_t), NULL);
 			VectorCopy(origin, cs->origin);
 			trap_AAS_ValueForBSPEpairKey(ent, "message", cs->name, sizeof(cs->name));
 			trap_AAS_FloatForBSPEpairKey(ent, "range", &cs->range);
@@ -1620,7 +1620,11 @@ int BotLoadItemWeights(int goalstate, char *filename)
 		return BLERR_CANNOTLOADITEMWEIGHTS;
 	} //end if
 	//if there's no item configuration
-	if (!itemconfig) return BLERR_CANNOTLOADITEMWEIGHTS;
+	if (!itemconfig)
+	{
+		BotAI_Print(PRT_FATAL, "couldn't load weights (no item config)\n");
+		return BLERR_CANNOTLOADITEMWEIGHTS;
+	}
 	//create the item weight index
 	ItemWeightIndex(itemconfig, gs->itemweightconfig, gs->itemweightindex);
 	//everything went ok

@@ -185,13 +185,18 @@ void RE_SetSurfaceShader( int surfaceNum, const char *name ) {
 RE_GetSurfaceShader
 
 return a shader index for a given world surface
-'withlightmap' set to '0' will create a new shader that is a copy of the one found
+
+withlightmap 0 will create a new shader that is a copy of the one found
 on the model, without the lighmap stage, if the shader has a lightmap stage
+
+withlightmap -1 will create shader for 2D UI/HUD usage.
 ==============
 */
 qhandle_t RE_GetSurfaceShader( int surfaceNum, int withlightmap ) {
 	msurface_t	*surf;
 	shader_t	*shd;
+	int			lightmapIndex;
+	int			i;
 
 	// remove the plus one offset
 	surfaceNum--;
@@ -207,12 +212,35 @@ qhandle_t RE_GetSurfaceShader( int surfaceNum, int withlightmap ) {
 		return 0;
 	}
 
-	if ( !withlightmap && surf->shader->lightmapIndex > LIGHTMAP_NONE ) {
-		shd = R_FindShader( surf->shader->name, LIGHTMAP_NONE, qtrue );
+	switch ( withlightmap ) {
+		case 0:
+			lightmapIndex = LIGHTMAP_NONE;
+			break;
+		case -1:
+			lightmapIndex = LIGHTMAP_2D;
+			break;
+		default:
+			lightmapIndex = 0;
+			break;
+	}
+
+	if ( lightmapIndex < 0 && surf->shader->lightmapIndex != lightmapIndex ) {
+		shd = R_FindShader( surf->shader->name, lightmapIndex, qtrue );
+
 		// ZTM: FIXME: I'm not sure forcing lighting diffuse is good idea...
 		//             at least allow const and waveform
-		if ( shd->stages[0]->rgbGen != CGEN_CONST && shd->stages[0]->rgbGen != CGEN_WAVEFORM ) {
-			shd->stages[0]->rgbGen = CGEN_LIGHTING_DIFFUSE; // (SA) new
+		for ( i = 0 ; i < MAX_SHADER_STAGES ; i++ ) {
+			if ( !shd->stages[i] ) {
+				break;
+			}
+
+			if ( shd->stages[i]->rgbGen != CGEN_CONST && shd->stages[i]->rgbGen != CGEN_WAVEFORM ) {
+				shd->stages[i]->rgbGen = ( lightmapIndex == LIGHTMAP_NONE ) ? CGEN_LIGHTING_DIFFUSE : CGEN_IDENTITY;
+			}
+
+			if ( lightmapIndex == LIGHTMAP_2D && shd->stages[i]->alphaGen != AGEN_CONST && shd->stages[i]->alphaGen != AGEN_WAVEFORM ) {
+				shd->stages[i]->alphaGen = AGEN_IDENTITY;
+			}
 		}
 	} else {
 		shd = surf->shader;
@@ -1092,7 +1120,8 @@ static qboolean ParseStage( shaderStage_t *stage, char **text, int *ifIndent )
 				}
 				continue;
 			} else {
-				stage->bundle[0].image[0] = R_FindImageFile( token, IMGTYPE_COLORALPHA, IMGFLAG_LIGHTMAP | IMGFLAG_CLAMPTOEDGE );
+				stage->bundle[0].image[0] = R_FindImageFile( token, IMGTYPE_COLORALPHA,
+						IMGFLAG_LIGHTMAP | IMGFLAG_NOLIGHTSCALE | IMGFLAG_NO_COMPRESSION | IMGFLAG_CLAMPTOEDGE );
 				if ( !stage->bundle[0].image[0] ) {
 					ri.Printf( PRINT_WARNING, "WARNING: R_FindImageFile could not find '%s' in shader '%s'\n", token, shader.name );
 					return qfalse;
@@ -3892,7 +3921,7 @@ void R_FindLightmap( int *lightmapIndex ) {
 
 	// attempt to load an external lightmap
 	Com_sprintf( fileName, sizeof (fileName), "%s/" EXTERNAL_LIGHTMAP, tr.worldDir, *lightmapIndex );
-	image = R_FindImageFile( fileName, IMGTYPE_COLORALPHA, IMGFLAG_CLAMPTOEDGE );
+	image = R_FindImageFile( fileName, IMGTYPE_COLORALPHA, IMGFLAG_LIGHTMAP | IMGFLAG_NOLIGHTSCALE | IMGFLAG_NO_COMPRESSION | IMGFLAG_CLAMPTOEDGE );
 	if ( image == NULL ) {
 		*lightmapIndex = LIGHTMAP_BY_VERTEX;
 		return;

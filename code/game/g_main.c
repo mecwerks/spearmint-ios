@@ -80,7 +80,6 @@ vmCvar_t	g_forcerespawn;
 vmCvar_t	g_inactivity;
 vmCvar_t	g_debugMove;
 vmCvar_t	g_debugDamage;
-vmCvar_t	g_debugAlloc;
 vmCvar_t	g_weaponRespawn;
 vmCvar_t	g_weaponTeamRespawn;
 vmCvar_t	g_motd;
@@ -116,6 +115,7 @@ vmCvar_t	g_enableDust;
 vmCvar_t	g_enableBreath;
 vmCvar_t	g_proxMineTimeout;
 #endif
+vmCvar_t	g_playerCapsule;
 
 static cvarTable_t		gameCvarTable[] = {
 	// don't override the cheat state set by the system
@@ -169,7 +169,6 @@ static cvarTable_t		gameCvarTable[] = {
 	{ &g_inactivity, "g_inactivity", "0", 0, GCF_TRACK_CHANGE, RANGE_BOOL },
 	{ &g_debugMove, "g_debugMove", "0", 0, 0, RANGE_BOOL },
 	{ &g_debugDamage, "g_debugDamage", "0", 0, 0, RANGE_BOOL },
-	{ &g_debugAlloc, "g_debugAlloc", "0", 0, 0, RANGE_BOOL },
 	{ &g_motd, "g_motd", "", 0, 0, RANGE_ALL },
 	{ &g_blood, "com_blood", "1", CVAR_ARCHIVE, 0, RANGE_ALL },
 
@@ -195,6 +194,7 @@ static cvarTable_t		gameCvarTable[] = {
 	{ &g_enableBreath, "g_enableBreath", "0", CVAR_SERVERINFO, GCF_TRACK_CHANGE, RANGE_BOOL },
 	{ &g_proxMineTimeout, "g_proxMineTimeout", "20000", 0, 0, RANGE_ALL },
 #endif
+	{ &g_playerCapsule, "g_playerCapsule", "0", 0, 0, RANGE_BOOL },
 	{ &g_smoothClients, "g_smoothClients", "1", 0, 0, RANGE_BOOL },
 	{ &pmove_fixed, "pmove_fixed", "0", CVAR_SYSTEMINFO, 0, RANGE_BOOL },
 	{ &pmove_msec, "pmove_msec", "8", CVAR_SYSTEMINFO, 0, RANGE_ALL },
@@ -476,8 +476,6 @@ void G_InitGame( int levelTime, int randomSeed, int restart ) {
 	G_RegisterCvars();
 
 	G_ProcessIPBans();
-
-	G_InitMemory();
 
 	// tell server entity and player state size and network field info
 	trap_SetNetFields( sizeof (entityState_t), bg_entityStateFields, bg_numEntityStateFields,

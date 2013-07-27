@@ -317,6 +317,9 @@ New cvars
                                       1.32 had no lead announcements in TDM).
   cg_consoleLatency                 - controls how long messages stay in cgame
                                       notify area in miliseconds (default 3000)
+  cg_drawShaderInfo                 - draw world shader name/image on HUD that
+                                      that player's crosshair is pointing at
+                                      (must enable cm_betterIbspSurfaceNums!)
 
   vm_minQvmHunkKB                   - minimum memory pool size for each QVM's
                                       trap_Alloc. DLLs use shared memory pool
@@ -330,6 +333,10 @@ New cvars
   r_shaderlod                       - used for if-endifs in shaders
                                       "if shaderlod 0.45" .. "endif"
                                        check if r_shaderlod > 0.45
+
+  g_playerCapsule                   - use capsule instead of box for player
+                                      collision. each player has it set at spawn
+                                      allowing mix of capsule and box in game
 
 
 New commands
