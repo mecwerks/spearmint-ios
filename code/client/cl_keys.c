@@ -52,7 +52,7 @@ qboolean	key_overstrikeMode;
 
 int				anykeydown;
 qkey_t		keys[MAX_KEYS];
-static int	keyCatchers = 0;
+
 
 typedef struct {
 	char	*name;
@@ -1542,6 +1542,8 @@ void Key_ClearStates (void)
 		keys[i].repeats = 0;
 	}
 }
+
+static int keyCatchers = 0;
 
 /*
 ====================

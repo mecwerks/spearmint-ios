@@ -139,7 +139,7 @@
 	{
 		if (clsi.buttons[i].active && !clsi.buttons[i].initialized)
 		{
-			if (1){//clsi.buttons[i].menu == UIMENU_MAIN) {
+			if (1) {//clsi.buttons[i].menu == UIMENU_MAIN) {
 				// the right way
 				buttonArea[i] = CGRectMake(clsi.buttons[i].x, (self.frame.size.height - 1) - clsi.buttons[i].y,
 										   clsi.buttons[i].w, clsi.buttons[i].h);
@@ -341,17 +341,17 @@
 	CGPoint mouseLocation, GUIMouseLocation;
 	int deltaX, deltaY;
     
-	if (glConfig.vidRotation == 90)
+	if (vidRotation == 90)
 	{
 		mouseLocation.x = _size.height - point.y;
 		mouseLocation.y = point.x;
 	}
-	else if (glConfig.vidRotation == 0)
+	else if (vidRotation == 0)
 	{
 		mouseLocation.x = point.x;
 		mouseLocation.y = point.y;
 	}
-	else if (glConfig.vidRotation == 270)
+	else if (vidRotation == 270)
 	{
 		mouseLocation.x = point.y;
 		mouseLocation.y = _size.width - point.x;
@@ -380,7 +380,7 @@
 // handleDragFromPoint rotates the camera based on a touchedMoved event
 - (void)_handleDragFromPoint:(CGPoint)location toPoint:(CGPoint)previousLocation
 {
-	if (glConfig.vidRotation == 90)
+	if (vidRotation == 90)
 	{
 		CGSize mouseDelta;
 
@@ -411,7 +411,7 @@
 				if (CGRectContainsPoint(buttonArea[i], touchLocation) && clsi.buttons[i].active)
 				{
 					Com_Printf("button %d active\n", i);
-					VM_Call(uivm, UI_SELECT_AND_PRESS, clsi.buttons[i].menu, clsi.buttons[i].callback);
+					VM_Call(uivm, UI_SELECT_AND_PRESS, i);
 				}
 			}
 		}

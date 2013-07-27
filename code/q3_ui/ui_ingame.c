@@ -131,12 +131,12 @@ void UI_TogglePlayerIngame(int localClientNum)
 InGame_Event
 =================
 */
-void InGame_EventTouch( int callback, int notification ) {
+void InGame_Event( void *ptr, int notification ) {
 	if( notification != QM_ACTIVATED ) {
 		return;
 	}
 
-	switch( callback ) {
+	switch( ((menucommon_s*)ptr)->id ) {
 	case ID_TEAM:
 		InSelectPlayerMenu(UI_TeamMainMenu, "CHANGE TEAM", qtrue);
 		break;
@@ -183,17 +183,13 @@ void InGame_EventTouch( int callback, int notification ) {
 	}
 }
 
-void InGame_Event( void *ptr, int notification ) {
-	InGame_EventTouch(((menucommon_s*)ptr)->id, notification);
-}
-
 void InGameMenu_DrawTouch ( void ) {
-	trap_DrawTouchArea( 240, 65, 46, 30, UIMENU_INGAME, ID_TEAM);
-	trap_DrawTouchArea( 238, 98, 62, 30, UIMENU_INGAME, ID_SETUP);
-	trap_DrawTouchArea( 232, 138, 68, 30, UIMENU_INGAME, ID_ADDBOTS);
-	trap_DrawTouchArea( 234, 180, 65, 25, UIMENU_INGAME, ID_RESTART);
-	trap_DrawTouchArea( 234, 205, 65, 20, UIMENU_INGAME, ID_RESUME);
-	trap_DrawTouchArea( 234, 245, 62, 20, UIMENU_INGAME, ID_LEAVEARENA);
+	trap_DrawTouchArea( 240, 65, 46, 30); // ID_TEAM
+	trap_DrawTouchArea( 238, 98, 62, 30); // ID_SETUP
+	trap_DrawTouchArea( 232, 138, 68, 30); // ID_ADDBOTS
+	trap_DrawTouchArea( 234, 180, 65, 25); // ID_RESTART
+	trap_DrawTouchArea( 234, 205, 65, 20); // ID_RESUME
+	trap_DrawTouchArea( 234, 245, 62, 20); // ID_LEAVEARENA
 }
 
 /*
@@ -214,7 +210,6 @@ void InGame_MenuInit( void ) {
 	s_ingame.menu.wrapAround = qtrue;
 	s_ingame.menu.fullscreen = qfalse;
 	// iOS touch menu
-	s_ingame.menu.id = UIMENU_INGAME;
 	s_ingame.menu.touchDraw = InGameMenu_DrawTouch;
 
 	s_ingame.frame.generic.type			= MTYPE_BITMAP;

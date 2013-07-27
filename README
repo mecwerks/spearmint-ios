@@ -28,7 +28,11 @@ Some of the major spearmint-ios features currently implemented are:
 
 Some of the major ioquake3-ios features currently implemented are:
 
+ioq3-ios:
   * iOS Support
+  * WIP touch menu buttons for iOS
+
+ioquake3:
   * SDL backend
   * OpenAL sound API support (multiple speaker support and better sound
     quality)
@@ -102,7 +106,6 @@ Makefile.local:
   BUILD_CLIENT       - build the 'spearmint' client binary
   BUILD_BASEGAME     - build the 'baseq3' binaries
   BUILD_MISSIONPACK  - build the 'missionpack' binaries
-  BUILD_IOS_BASEGAME - build the 'baseq3-ios' binaries (this replaces the 'baseq3' binaries)
   BUILD_GAME_SO      - build the game shared libraries
   BUILD_GAME_QVM     - build the game qvms
   SERVERBIN          - rename 'spearmint-server' server binary

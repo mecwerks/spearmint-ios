@@ -870,6 +870,15 @@ dialogResult_t Sys_Dialog( dialogType_t type, const char *message, const char *t
 }
 #endif
 
+#ifdef IOS
+/*
+==============
+Sys_Dialog
+==============
+*/
+dialogResult_t Sys_Dialog( dialogType_t type, const char *message, const char *title ) { return NULL; }
+#endif
+
 /*
 ==============
 Sys_GLimpSafeInit

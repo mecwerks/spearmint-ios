@@ -240,6 +240,10 @@ int		max_polyverts;
 cvar_t	*r_maxpolybuffers;
 int		max_polybuffers;
 
+#ifndef GLimp_Minimize
+static void GLimp_Minimize ( void ) { return 0; };
+#endif
+
 /*
 ** InitOpenGL
 **
@@ -1378,8 +1382,9 @@ void R_Register( void )
 	ri.Cmd_AddCommand( "screenshotJPEG", R_ScreenShotJPEG_f );
 	ri.Cmd_AddCommand( "screenshotPNG", R_ScreenShotPNG_f );
 	ri.Cmd_AddCommand( "gfxinfo", GfxInfo_f );
-	// Not found on iOS or MACOS_X ???
-//	ri.Cmd_AddCommand( "minimize", GLimp_Minimize );
+#ifndef IOS
+	ri.Cmd_AddCommand( "minimize", GLimp_Minimize );
+#endif
 	ri.Cmd_AddCommand( "gfxmeminfo", GfxMemInfo_f );
 }
 

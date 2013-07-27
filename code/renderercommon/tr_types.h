@@ -252,10 +252,6 @@ typedef struct {
 	int						displayHeight;
 	float					displayAspect;
 
-#ifdef IOS
-	float					vidRotation;
-#endif // IOS
-
 	int						displayFrequency;
 
 	// synonymous with "does rendering consume the entire screen?", therefore

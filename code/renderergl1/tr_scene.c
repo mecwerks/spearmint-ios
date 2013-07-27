@@ -481,9 +481,9 @@ void RE_RenderScene( const refdef_t *fd ) {
 	//
 	Com_Memset( &parms, 0, sizeof( parms ) );
 #ifdef IOS
-	if ( glConfig.vidRotation == 90 || glConfig.vidRotation == 270 ) {
+	if ( vidRotation == 90 || vidRotation == 270 ) {
 		parms.viewportX = tr.refdef.y;
-		if ( glConfig.vidRotation == 270 ) {
+		if ( vidRotation == 270 ) {
 			parms.viewportX = glConfig.vidHeight - ( tr.refdef.y + tr.refdef.height );
 			parms.viewportY = glConfig.vidWidth - ( tr.refdef.x + tr.refdef.width );
 		} else {
@@ -497,7 +497,7 @@ void RE_RenderScene( const refdef_t *fd ) {
 #endif // IOS
 	{
 #ifdef IOS
-		if ( glConfig.vidRotation == 180 ) {
+		if ( vidRotation == 180 ) {
 			parms.viewportX = glConfig.vidWidth - ( tr.refdef.x + tr.refdef.width );
 			parms.viewportY = tr.refdef.y;
 		} else

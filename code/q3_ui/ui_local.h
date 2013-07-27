@@ -140,27 +140,27 @@ extern vmCvar_t	ui_ioq3;
 #define MTYPE_PTEXT				9
 #define MTYPE_BTEXT				10
 
-#define QMF_BLINK				((unsigned int) 0x00000001)
+#define QMF_BLINK			((unsigned int) 0x00000001)
 #define QMF_SMALLFONT			((unsigned int) 0x00000002)
 #define QMF_LEFT_JUSTIFY		((unsigned int) 0x00000004)
 #define QMF_CENTER_JUSTIFY		((unsigned int) 0x00000008)
 #define QMF_RIGHT_JUSTIFY		((unsigned int) 0x00000010)
 #define QMF_NUMBERSONLY			((unsigned int) 0x00000020)	// edit field is only numbers
 #define QMF_HIGHLIGHT			((unsigned int) 0x00000040)
-#define QMF_HIGHLIGHT_IF_FOCUS	((unsigned int) 0x00000080)	// steady focus
+#define QMF_HIGHLIGHT_IF_FOCUS		((unsigned int) 0x00000080)	// steady focus
 #define QMF_PULSEIFFOCUS		((unsigned int) 0x00000100)	// pulse if focus
 #define QMF_HASMOUSEFOCUS		((unsigned int) 0x00000200)
 #define QMF_NOONOFFTEXT			((unsigned int) 0x00000400)
 #define QMF_MOUSEONLY			((unsigned int) 0x00000800)	// only mouse input allowed
-#define QMF_HIDDEN				((unsigned int) 0x00001000)	// skips drawing
-#define QMF_GRAYED				((unsigned int) 0x00002000)	// grays and disables
+#define QMF_HIDDEN			((unsigned int) 0x00001000)	// skips drawing
+#define QMF_GRAYED			((unsigned int) 0x00002000)	// grays and disables
 #define QMF_INACTIVE			((unsigned int) 0x00004000)	// disables any input
 #define QMF_NODEFAULTINIT		((unsigned int) 0x00008000)	// skip default initialization
 #define QMF_OWNERDRAW			((unsigned int) 0x00010000)
-#define QMF_PULSE				((unsigned int) 0x00020000)
+#define QMF_PULSE			((unsigned int) 0x00020000)
 #define QMF_LOWERCASE			((unsigned int) 0x00040000)	// edit field is all lower case
 #define QMF_UPPERCASE			((unsigned int) 0x00080000)	// edit field is all upper case
-#define QMF_SILENT				((unsigned int) 0x00100000)
+#define QMF_SILENT			((unsigned int) 0x00100000)
 
 // callback notifications
 #define QM_GOTFOCUS				1
@@ -182,7 +182,6 @@ typedef struct _tag_menuframework
 	qboolean	fullscreen;
 	qboolean	showlogo;
 	// iOS touch menu
-	uiMenuCommand_t	id;
 	void (*touchDraw) (void);
 } menuframework_s;
 
@@ -345,7 +344,6 @@ extern void MainMenu_Cache( void );
 extern void UI_MainMenu(void);
 extern void UI_RegisterCvars( void );
 extern void UI_UpdateCvars( void );
-extern void Main_MenuTouch( int callback, int event );
 
 //
 // ui_credits.c
@@ -357,7 +355,6 @@ extern void UI_CreditMenu( void );
 //
 extern void InGame_Cache( void );
 extern void UI_InGameMenu(void);
-extern void InGame_EventTouch( int callback, int event );
 
 //
 // ui_ingame_selectplayer.c
@@ -369,7 +366,6 @@ extern void InSelectPlayerMenu( void (*playerfunc)(int), const char *banner, qbo
 // ui_confirm.c
 //
 extern void ConfirmMenu_Cache( void );
-extern void ConfirmMenu_TouchEvent( int callback );
 extern void UI_ConfirmMenu( const char *question, void (*draw)( void ), void (*action)( qboolean result ) );
 extern void UI_ConfirmMenu_Style( const char *question, int style, void (*draw)( void ), void (*action)( qboolean result ) );
 extern void UI_Message( const char **lines );
@@ -630,7 +626,7 @@ extern void			UI_AdjustFrom640( float *x, float *y, float *w, float *h );
 extern void			UI_DrawTextBox (int x, int y, int width, int lines);
 extern qboolean		UI_IsFullscreen( void );
 extern void			UI_SetActiveMenu( uiMenuCommand_t menu );
-extern void			UI_SelectAndPress( uiMenuCommand_t menu, int callback );
+extern void			UI_SelectAndPress( int button );
 extern void			UI_PushMenu ( menuframework_s *menu );
 extern void			UI_PopMenu (void);
 extern void			UI_ForceMenuOff (void);

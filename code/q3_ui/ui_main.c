@@ -98,7 +98,7 @@ Q_EXPORT intptr_t vmMain( int command, int arg0, int arg1, int arg2, int arg3, i
 		return Controls_WantsBindKeys();
 			
 	case UI_SELECT_AND_PRESS:
-		UI_SelectAndPress( arg0, arg1 );
+		UI_SelectAndPress( arg0 );
 		return 0;
 	}
 

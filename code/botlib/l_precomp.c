@@ -713,11 +713,7 @@ int PC_ExpandBuiltinDefine(source_t *source, token_t *deftoken, define_t *define
 										token_t **firsttoken, token_t **lasttoken)
 {
 	token_t *token;
-#ifdef IOS
 	time_t t;
-#else
-	unsigned long t;	//to prevent LCC warning
-#endif
 	
 	char *curtime;
 

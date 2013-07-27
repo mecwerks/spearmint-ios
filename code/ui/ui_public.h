@@ -41,13 +41,7 @@ typedef enum {
 	UIMENU_MAIN,
 	UIMENU_INGAME,
 	UIMENU_TEAM,
-	UIMENU_POSTGAME,
-	// iOS touch menu
-	UIMENU_MODS,	// mod menu
-	UIMENU_SETUP,	// setup menu
-	UIMENU_SPLEVEL,	// single player level select
-	UIMENU_SPSKILL, // single player difficulty select
-	UIMENU_CONFIRM	// generic yes/no menu
+	UIMENU_POSTGAME
 } uiMenuCommand_t;
 
 typedef enum {

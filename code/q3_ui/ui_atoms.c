@@ -886,32 +886,13 @@ void UI_SetActiveMenu( uiMenuCommand_t menu ) {
 }
 
 /*
- =================
- UI_SelectAndPress
- =================
- */
-void UI_SelectAndPress( uiMenuCommand_t menu, int callback ) {
-	switch ( menu ) {
-		case UIMENU_MAIN:
-			Main_MenuTouch( callback, QM_ACTIVATED );
-			return;
-		case UIMENU_SPLEVEL:
-			UI_SPLevelMenu_Event ( callback, QM_ACTIVATED );
-			break;
-		case UIMENU_SPSKILL:
-			UI_SPSkillMenu_Event( callback, QM_ACTIVATED );
-			break;
-		case UIMENU_INGAME:
-//			InGame_EventTouch( callback, QM_ACTIVATED );
-			return;
-		case UIMENU_CONFIRM:
-//			ConfirmMenu_TouchEvent( callback );
-			return;
-		case UIMENU_NONE:
-		default:
-			Com_Printf("UI_SelectAndPress: No Touch Button Configuration For Menu %d\n", menu);
-			return;
-	}
+=================
+UI_SelectAndPress
+=================
+*/
+void UI_SelectAndPress( int button ) {
+	Menu_SetCursor(uis.activemenu, button);
+	Menu_DefaultKey(uis.activemenu, K_ENTER);
 }
 
 /*
