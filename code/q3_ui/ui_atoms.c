@@ -173,15 +173,6 @@ void UI_PushMenu( menuframework_s *menu )
 		}
 	}
 
-	// only draw touch menus on iOS
-	if ( uis.ios ) {
-		// mecwerks: make sure last menu's touch buttons are cleared out
-		trap_ClearTouchButtons();
-		
-		if( menu->touchDraw )
-			menu->touchDraw();
-	}
-	
 	uis.firstdraw = qtrue;
 }
 
@@ -198,16 +189,10 @@ void UI_PopMenu (void)
 
 	if (uis.menusp < 0)
 		trap_Error ("UI_PopMenu: menu stack underflow");
-
-	// mecwerks: make sure last menu's touch buttons are cleared out
-	if (uis.ios) trap_ClearTouchButtons();
 	
 	if (uis.menusp) {
 		uis.activemenu = uis.stack[uis.menusp-1];
 		uis.firstdraw = qtrue;
-		// redraw the touch buttons for the menu
-		if (uis.ios && uis.activemenu->touchDraw)
-			uis.activemenu->touchDraw();
 	}
 	else {
 		UI_ForceMenuOff ();
@@ -887,16 +872,6 @@ void UI_SetActiveMenu( uiMenuCommand_t menu ) {
 
 /*
 =================
-UI_SelectAndPress
-=================
-*/
-void UI_SelectAndPress( int button ) {
-	Menu_SetCursor(uis.activemenu, button);
-	Menu_DefaultKey(uis.activemenu, K_ENTER);
-}
-
-/*
-=================
 UI_KeyEvent
 =================
 */
@@ -925,7 +900,7 @@ void UI_KeyEvent( int key, int down ) {
 UI_MouseEvent
 =================
 */
-void UI_MouseEvent( int localClientNum, int dx, int dy )
+void UI_MouseEvent( int localClientNum, int dx, int dy, qboolean absolute )
 {
 	int				i;
 	menucommon_s*	m;
@@ -938,28 +913,33 @@ void UI_MouseEvent( int localClientNum, int dx, int dy )
 
 	if (!uis.activemenu)
 		return;
-
+	
 	// update mouse screen position
-	uis.cursorx += dx;
+	if (absolute) uis.cursorx = dx;
+        else uis.cursorx += dx;
+
 	if (uis.cursorx < -biasScaled)
 		uis.cursorx = -biasScaled;
 	else if (uis.cursorx > SCREEN_WIDTH+biasScaled)
 		uis.cursorx = SCREEN_WIDTH+biasScaled;
 
-	uis.cursory += dy;
+	if (absolute) uis.cursory = dy;
+	else uis.cursory += dy;
+	
 	if (uis.cursory < 0)
 		uis.cursory = 0;
 	else if (uis.cursory > SCREEN_HEIGHT)
 		uis.cursory = SCREEN_HEIGHT;
-
+	
 	// region test the active menu items
+	
 	for (i=0; i<uis.activemenu->nitems; i++)
 	{
 		m = (menucommon_s*)uis.activemenu->items[i];
-
+		
 		if (m->flags & (QMF_GRAYED|QMF_INACTIVE))
 			continue;
-
+		
 		if ((uis.cursorx < m->left) ||
 			(uis.cursorx > m->right) ||
 			(uis.cursory < m->top) ||
@@ -968,22 +948,22 @@ void UI_MouseEvent( int localClientNum, int dx, int dy )
 			// cursor out of item bounds
 			continue;
 		}
-
+		
 		// set focus to item at cursor
 		if (uis.activemenu->cursor != i)
 		{
 			Menu_SetCursor( uis.activemenu, i );
 			((menucommon_s*)(uis.activemenu->items[uis.activemenu->cursor_prev]))->flags &= ~QMF_HASMOUSEFOCUS;
-
+			
 			if ( !(((menucommon_s*)(uis.activemenu->items[uis.activemenu->cursor]))->flags & QMF_SILENT ) ) {
 				trap_S_StartLocalSound( menu_move_sound, CHAN_LOCAL_SOUND );
 			}
 		}
-
+		
 		((menucommon_s*)(uis.activemenu->items[uis.activemenu->cursor]))->flags |= QMF_HASMOUSEFOCUS;
 		return;
-	}  
-
+	}
+	
 	if (uis.activemenu->nitems > 0) {
 		// out of any region
 		((menucommon_s*)(uis.activemenu->items[uis.activemenu->cursor]))->flags &= ~QMF_HASMOUSEFOCUS;
@@ -1021,7 +1001,7 @@ void UI_SetMousePosition( int localClientNum, int x, int y )
 	uis.cursorx = x / uis.xscale - (uis.bias / uis.xscale);
 	uis.cursory = y / uis.yscale;
 
-	UI_MouseEvent(localClientNum, 0, 0);
+	UI_MouseEvent(localClientNum, 0, 0, qtrue);
 }
 
 char *UI_Argv( int arg ) {
@@ -1317,7 +1297,7 @@ void UI_Refresh( int realtime )
 			int i;
 
 			for (i = 0; i < UI_MaxSplitView(); ++i) {
-				UI_MouseEvent( i, 0, 0 );
+				UI_MouseEvent( i, 0, 0, qtrue );
 			}
 			uis.firstdraw = qfalse;
 		}

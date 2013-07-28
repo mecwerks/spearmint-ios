@@ -34,6 +34,7 @@ Suite 120, Rockville, Maryland 20850 USA.
 qboolean	refHeadless;
 
 glconfig_t  glConfig;
+float		vidRotation = 90.0f;
 
 glstate_t	glState;
 

@@ -1561,13 +1561,6 @@ intptr_t CL_CgameSystemCalls( intptr_t *args ) {
 	case CG_R_GET_SHADER_NAME:
 		re.GetShaderName( args[1], VMA(2), args[3] );
 		return 0;
-	case CG_DRAW_TOUCH_AREA:
-                CL_DrawTouchArea(VMF(1), VMF(2), VMF(3), VMF(4), args[5], args[6]);
-                return 0;
-        case CG_CLEAR_TOUCH_BUTTONS:
-                CL_FlushButtons();
-                return 0;
-
 	default:
 	        assert(0);
 		Com_Error( ERR_DROP, "Bad cgame system trap: %ld", (long int) args[0] );

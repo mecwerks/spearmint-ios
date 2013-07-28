@@ -803,6 +803,7 @@ typedef enum {
 	SE_CHAR,		// evValue is an ascii char
 	SE_MOUSE,		// evValue and evValue2 are relative signed x / y moves
 	SE_MOUSE_LAST = SE_MOUSE + MAX_SPLITVIEW - 1, // Reserve values for SE_MOUSE events for splitscreen players
+	SE_MOUSE_ABS,		// evValue and evValue2 are absolute signed x / y moves
 	SE_JOYSTICK_AXIS,	// evValue is an axis number and evValue2 is the current state (-127 to 127)
 	SE_JOYSTICK_AXIS_LAST = SE_JOYSTICK_AXIS + MAX_SPLITVIEW - 1, // Reserve values for SE_JOYSTICK_AXIS events for splitscreen players
 	SE_ACCEL,		// iOS accelerometer
@@ -1034,7 +1035,7 @@ void CL_KeyEvent (int key, qboolean down, unsigned time);
 void CL_CharEvent( int key );
 // char events are for field typing, not game control
 
-void CL_MouseEvent( int localClientNum, int dx, int dy, int time );
+void CL_MouseEvent( int localClientNum, int dx, int dy, int time, qboolean absolute );
 
 void CL_JoystickEvent( int localClientNum, int axis, int value, int time );
 

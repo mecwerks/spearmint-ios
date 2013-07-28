@@ -270,14 +270,6 @@ static qboolean UI_TeamArenaExists( void ) {
 }
 #endif
 
-void MainMenu_TouchDraw ( void ) {
-	Menu_DrawTouchItem( &s_main.singleplayer );
-	Menu_DrawTouchItem( &s_main.multiplayer );
-	Menu_DrawTouchItem( &s_main.setup );
-	Menu_DrawTouchItem( &s_main.mods );
-	Menu_DrawTouchItem( &s_main.exit );
-}
-
 /*
 ===============
 UI_MainMenu
@@ -328,8 +320,6 @@ void UI_MainMenu( void ) {
 	s_main.menu.fullscreen = qtrue;
 	s_main.menu.wrapAround = qtrue;
 	s_main.menu.showlogo = qtrue;
-	// iOS touch menu
-	s_main.menu.touchDraw = MainMenu_TouchDraw;
 
 	y = 134;
 	s_main.singleplayer.generic.type		= MTYPE_PTEXT;

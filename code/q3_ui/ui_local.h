@@ -279,7 +279,6 @@ typedef struct
 
 extern void			Menu_Cache( void );
 extern void			Menu_Focus( menucommon_s *m );
-extern void			Menu_DrawTouchItem( void *item );
 extern void			Menu_AddItem( menuframework_s *menu, void *item );
 extern void			Menu_AdjustCursor( menuframework_s *menu, int dir );
 extern void			Menu_Draw( menuframework_s *menu );
@@ -601,7 +600,7 @@ typedef struct {
 extern void			UI_Init( qboolean inGameLoad, int maxSplitView );
 extern void			UI_Shutdown( void );
 extern void			UI_KeyEvent( int key, int down );
-extern void			UI_MouseEvent( int localClientNum, int dx, int dy );
+extern void			UI_MouseEvent( int localClientNum, int dx, int dy, qboolean absolute );
 extern int			UI_MousePosition( int localClientNum );
 extern void			UI_SetMousePosition( int localClientNum, int x, int y );
 extern void			UI_Refresh( int realtime );

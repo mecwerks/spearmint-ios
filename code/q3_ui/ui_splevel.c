@@ -715,26 +715,6 @@ void UI_SPLevelMenu_Cache( void ) {
 	levelMenuInfo.levelCompletePic[4] = trap_R_RegisterShaderNoMip( ART_MAP_COMPLETE5 );
 }
 
-void UI_SPLevelMenu_DrawTouch ( void ) {
-//      Menu_DrawTouchItem( &levelMenuInfo.item_leftarrow );
-//      Menu_DrawTouchItem( &levelMenuInfo.item_maps[0] );
-//      Menu_DrawTouchItem( &levelMenuInfo.item_maps[1] );
-//      Menu_DrawTouchItem( &levelMenuInfo.item_maps[2] );
-//      Menu_DrawTouchItem( &levelMenuInfo.item_maps[3] );
-//      Menu_DrawTouchItem( &levelMenuInfo.item_rightarrow );
-//      Menu_DrawTouchItem( &levelMenuInfo.item_player );
-
-//      for( n = 0; n < count; n++ ) {
-//              Menu_AddItem( &levelMenuInfo.menu, &levelMenuInfo.item_awards[n] );
-//      }
-
-        Menu_DrawTouchItem( &levelMenuInfo.item_back );
-        Menu_DrawTouchItem( &levelMenuInfo.item_reset );
-        Menu_DrawTouchItem( &levelMenuInfo.item_custom );
-        Menu_DrawTouchItem( &levelMenuInfo.item_next );
-//      trap_DrawTouchArea(48, 298, 80, 100, UIMENU_SPLEVEL, ID_NEXT);
-}
-
 /*
 =================
 UI_SPLevelMenu_Init
@@ -756,7 +736,6 @@ static void UI_SPLevelMenu_Init( void ) {
 	levelMenuInfo.menu.fullscreen = qtrue;
 	levelMenuInfo.menu.wrapAround = qtrue;
 	levelMenuInfo.menu.draw = UI_SPLevelMenu_MenuDraw;
-	levelMenuInfo.menu.touchDraw = UI_SPLevelMenu_DrawTouch;
 
 	UI_SPLevelMenu_Cache();
 

@@ -46,61 +46,56 @@
         {
 			if (i == 0 && joypadCap0.hidden) break;
 			else if (i == 1 && joypadCap1.hidden) break;
-			
-			if ((Key_GetCatcher() & KEYCATCH_UI) && !(Sys_Milliseconds() - lastKeyTime >= 180))
-				goto skipkeys;
-			
+						
             if (height < -5)
             {
-                cl_joyscale_x[0] = abs(height);
+                cl_joyscale_y[0] = abs(height);
                 CL_KeyEvent(Joypad[i].keys[UP_KEY], 1, Sys_Milliseconds());
                 CL_KeyEvent(Joypad[i].keys[DOWN_KEY], 0, Sys_Milliseconds());
             }
             else if (height > 5)
             {
-                cl_joyscale_x[1] = height;
+                cl_joyscale_y[1] = height;
                 CL_KeyEvent(Joypad[i].keys[UP_KEY], 0, Sys_Milliseconds());
                 CL_KeyEvent(Joypad[i].keys[DOWN_KEY], 1, Sys_Milliseconds());
             }
             else
             {
-                cl_joyscale_x[0] = cl_joyscale_x[1] = 0;
+                cl_joyscale_y[0] = cl_joyscale_y[1] = 0;
                 CL_KeyEvent(Joypad[i].keys[UP_KEY], 0, Sys_Milliseconds());
                 CL_KeyEvent(Joypad[i].keys[DOWN_KEY], 0, Sys_Milliseconds());
+            }
+            
+            if (i != 0) cl_joyscale_y[0] = cl_joyscale_y[1] = 0;
+            if (cl_joyscale_y[0] > 60) cl_joyscale_y[0] = 60;
+            if (cl_joyscale_y[1] > 60) cl_joyscale_y[1] = 60;
+            
+            if (width < -5)
+            {
+                cl_joyscale_x[1] = abs(width);
+                CL_KeyEvent(Joypad[i].keys[LEFT_KEY], 1, Sys_Milliseconds());
+                CL_KeyEvent(Joypad[i].keys[RIGHT_KEY], 0, Sys_Milliseconds());
+            }
+            else if (width > 5)
+            {
+                cl_joyscale_x[0] = width;
+                CL_KeyEvent(Joypad[i].keys[LEFT_KEY], 0, Sys_Milliseconds());
+                CL_KeyEvent(Joypad[i].keys[RIGHT_KEY], 1, Sys_Milliseconds());
+            }
+            else
+            {
+                cl_joyscale_x[0] = cl_joyscale_x[1] = 0;
+                CL_KeyEvent(Joypad[i].keys[LEFT_KEY], 0, Sys_Milliseconds());
+                CL_KeyEvent(Joypad[i].keys[RIGHT_KEY], 0, Sys_Milliseconds());
             }
             
             if (i != 0) cl_joyscale_x[0] = cl_joyscale_x[1] = 0;
             if (cl_joyscale_x[0] > 60) cl_joyscale_x[0] = 60;
             if (cl_joyscale_x[1] > 60) cl_joyscale_x[1] = 60;
             
-            if (width < -5)
-            {
-                cl_joyscale_y[1] = abs(width);
-                CL_KeyEvent(Joypad[i].keys[LEFT_KEY], 1, Sys_Milliseconds());
-                CL_KeyEvent(Joypad[i].keys[RIGHT_KEY], 0, Sys_Milliseconds());
-            }
-            else if (width > 5)
-            {
-                cl_joyscale_y[0] = width;
-                CL_KeyEvent(Joypad[i].keys[LEFT_KEY], 0, Sys_Milliseconds());
-                CL_KeyEvent(Joypad[i].keys[RIGHT_KEY], 1, Sys_Milliseconds());
-            }
-            else
-            {
-                cl_joyscale_y[0] = cl_joyscale_y[1] = 0;
-                CL_KeyEvent(Joypad[i].keys[LEFT_KEY], 0, Sys_Milliseconds());
-                CL_KeyEvent(Joypad[i].keys[RIGHT_KEY], 0, Sys_Milliseconds());
-            }
-            
-            if (i != 0) cl_joyscale_y[0] = cl_joyscale_y[1] = 0;
-            if (cl_joyscale_y[0] > 60) cl_joyscale_y[0] = 60;
-            if (cl_joyscale_y[1] > 60) cl_joyscale_y[1] = 60;
-            lastKeyTime = Sys_Milliseconds();
-            
         }
         else
         {
-			skipkeys:
             if (i == 0) cl_joyscale_x[0] = cl_joyscale_x[1] = cl_joyscale_y[0] = cl_joyscale_y[1] = 0;
             CL_KeyEvent(Joypad[i].keys[UP_KEY], 0, Sys_Milliseconds());
             CL_KeyEvent(Joypad[i].keys[DOWN_KEY], 0, Sys_Milliseconds());
@@ -124,40 +119,21 @@
 	escapeButton.hidden = YES;
 }
 
-- (void)_updateButtonsCG
-{
-	if (!clsi.clean) CL_FlushButtons();
-	if (joypadCap0.hidden || joypadCap1.hidden) [self _showInGameView];
-	[self _checkJoypads];
-}
-
-- (void)_updateButtonsUI
-{
-	int i;
-	
-	for (i = 0; i < MAX_BUTTONS; i++)
-	{
-		if (clsi.buttons[i].active && !clsi.buttons[i].initialized)
-		{
-			if (1) {//clsi.buttons[i].menu == UIMENU_MAIN) {
-				// the right way
-				buttonArea[i] = CGRectMake(clsi.buttons[i].x, (self.frame.size.height - 1) - clsi.buttons[i].y,
-										   clsi.buttons[i].w, clsi.buttons[i].h);
-			} else {
-				buttonArea[i] = CGRectMake(clsi.buttons[i].x, clsi.buttons[i].y,
-										   clsi.buttons[i].w, clsi.buttons[i].h);
-			}
-			clsi.buttons[i].initialized = TRUE;
-		}
-	}
-	if (!joypadCap0.hidden || !joypadCap1.hidden) [self _hideView];
-}
-
 - (void)_mainGameLoop
 {
-    if (Key_GetCatcher() & KEYCATCH_UI) [self _updateButtonsUI];
-	else if (clc.state == CA_ACTIVE) [self _updateButtonsCG];
-	else [self _hideView];
+    if (Key_GetCatcher() & KEYCATCH_UI)
+	{
+		if (!joypadCap0.hidden || !joypadCap1.hidden) [self _hideView];
+	}
+	else if (clc.state == CA_ACTIVE)
+	{
+		if (joypadCap0.hidden || joypadCap1.hidden) [self _showInGameView];
+		[self _checkJoypads];
+	}
+	else
+	{
+		[self _hideView];
+	}
 }
 
 - (BOOL)_commonInit
@@ -362,19 +338,21 @@
 		mouseLocation.y = _size.height - point.y;
 	}
     
-	GUIMouseLocation.x = roundf(_GUIMouseOffset.width + mouseLocation.x * _mouseScale.x);
-	GUIMouseLocation.y = roundf(_GUIMouseOffset.height + mouseLocation.y * _mouseScale.y);
+//	GUIMouseLocation.x = roundf(_GUIMouseOffset.width + mouseLocation.x * _mouseScale.x);
+//	GUIMouseLocation.y = roundf(_GUIMouseOffset.height + mouseLocation.y * _mouseScale.y);
+  
+//	GUIMouseLocation.x = MIN(MAX(GUIMouseLocation.x, 0), 640);
+//	GUIMouseLocation.y = MIN(MAX(GUIMouseLocation.y, 0), 480);
     
-	GUIMouseLocation.x = MIN(MAX(GUIMouseLocation.x, 0), 640);
-	GUIMouseLocation.y = MIN(MAX(GUIMouseLocation.y, 0), 480);
-    
-	deltaX = GUIMouseLocation.x - _GUIMouseLocation.x;
-	deltaY = GUIMouseLocation.y - _GUIMouseLocation.y;
+	deltaX = roundf(_GUIMouseOffset.width + mouseLocation.x * _mouseScale.x);
+				//GUIMouseLocation.x - _GUIMouseLocation.x;
+	deltaY = roundf(_GUIMouseOffset.height + mouseLocation.y * _mouseScale.y);
+				//GUIMouseLocation.y - _GUIMouseLocation.y;
 	_GUIMouseLocation = GUIMouseLocation;
     
 	ri.Printf(PRINT_DEVELOPER, "%s: deltaX = %d, deltaY = %d\n", __PRETTY_FUNCTION__, deltaX, deltaY);
-	if (deltaX || deltaY)
-		CL_MouseEvent(0, deltaX, deltaY, Sys_Milliseconds());
+
+	CL_MouseEvent(0, deltaX, deltaY, Sys_Milliseconds(), qtrue);
 }
 
 // handleDragFromPoint rotates the camera based on a touchedMoved event
@@ -387,31 +365,28 @@
 		mouseDelta.width = roundf((previousLocation.y - location.y) * _mouseScale.x);
 		mouseDelta.height = roundf((location.x - previousLocation.x) * _mouseScale.y);
 
-		CL_MouseEvent(0, mouseDelta.width, mouseDelta.height, Sys_Milliseconds());
+		CL_MouseEvent(0, mouseDelta.width, mouseDelta.height, Sys_Milliseconds(), qfalse);
 	}
 }
 
 - (void)touchesBegan:(NSSet *)touches withEvent:(UIEvent *)event {
-    int i;
-
     for (UITouch *touch in touches) {
-        CGPoint touchLocation = [touch locationInView:self];
-        for (i = 0; i < NUM_JOYPADS; i++) {
-            if (CGRectContainsPoint(Joypad[i].joypadArea, touchLocation) &&
-                !Joypad[i].isJoypadMoving)
-            {
-                Joypad[i].isJoypadMoving = YES;
-                Joypad[i].joypadTouchHash = [touch hash];
-                if (i == 0) lastKeyTime = Sys_Milliseconds();
-                else _isLooking = YES;
-			}
-        }
 		if (Key_GetCatcher() & KEYCATCH_UI) {
-			for (i = 0; i < MAX_BUTTONS; i++) {
-				if (CGRectContainsPoint(buttonArea[i], touchLocation) && clsi.buttons[i].active)
+			if (_numTouches == 0) {
+				[self _handleMenuDragToPoint:[touch locationInView:self]];
+			}
+			_numTouches++;
+		} else {
+			int i;
+			
+			CGPoint touchLocation = [touch locationInView:self];
+			for (i = 0; i < NUM_JOYPADS; i++) {
+				if (CGRectContainsPoint(Joypad[i].joypadArea, touchLocation) &&
+					!Joypad[i].isJoypadMoving)
 				{
-					Com_Printf("button %d active\n", i);
-					VM_Call(uivm, UI_SELECT_AND_PRESS, i);
+					Joypad[i].isJoypadMoving = YES;
+					Joypad[i].joypadTouchHash = [touch hash];
+					if (i != 0) _isLooking = YES;
 				}
 			}
 		}
@@ -419,61 +394,73 @@
 }
 
 - (void)touchesMoved:(NSSet *)touches withEvent:(UIEvent *)event {
-    int i;
-
-    for (UITouch *touch in touches)
-    {
-        for (i = 0; i < NUM_JOYPADS; i++) {
-            if ([touch hash] == Joypad[i].joypadTouchHash && Joypad[i].isJoypadMoving)
-            {
-                CGPoint touchLocation = [touch locationInView:self];
-                float dx = (float)Joypad[i].joypadCenterx - (float)touchLocation.x;
-                float dy = (float)Joypad[i].joypadCentery - (float)touchLocation.y;
-                
-                Joypad[i].distanceFromCenter = sqrtf(
-                                (Joypad[i].joypadCenterx - touchLocation.x) * (Joypad[i].joypadCenterx - touchLocation.x) +
-                                (Joypad[i].joypadCentery - touchLocation.y) * (Joypad[i].joypadCentery - touchLocation.y));
-                
-                Joypad[i].touchAngle = atan2(dy, dx);
-                
-                if (i == 0) {
-                    if (Joypad[i].distanceFromCenter > Joypad[i].joypadMaxRadius)
-                        joypadCap0.center = CGPointMake(
-                                        Joypad[i].joypadCenterx - cosf(Joypad[i].touchAngle) * Joypad[i].joypadMaxRadius,
-                                        Joypad[i].joypadCentery - sinf(Joypad[i].touchAngle) * Joypad[i].joypadMaxRadius);
-                    else
-                        joypadCap0.center = touchLocation;
-                } else {
-                    if (Joypad[i].distanceFromCenter > Joypad[i].joypadMaxRadius)
-                        joypadCap1.center = CGPointMake(
-                                        Joypad[i].joypadCenterx - cosf(Joypad[i].touchAngle) * Joypad[i].joypadMaxRadius,
-                                        Joypad[i].joypadCentery - sinf(Joypad[i].touchAngle) * Joypad[i].joypadMaxRadius);
-                    else
-                        joypadCap1.center = touchLocation;
-                }
-            }
-        }
-    }
+	for (UITouch *touch in touches)
+	{
+		if (Key_GetCatcher() & KEYCATCH_UI) {
+			[self _handleMenuDragToPoint:[[touches anyObject] locationInView:self]];
+		} else {
+			int i;
+			
+			for (i = 0; i < NUM_JOYPADS; i++) {
+				if ([touch hash] == Joypad[i].joypadTouchHash && Joypad[i].isJoypadMoving)
+				{
+					CGPoint touchLocation = [touch locationInView:self];
+					float dx = (float)Joypad[i].joypadCenterx - (float)touchLocation.x;
+					float dy = (float)Joypad[i].joypadCentery - (float)touchLocation.y;
+					
+					Joypad[i].distanceFromCenter = sqrtf(
+														 (Joypad[i].joypadCenterx - touchLocation.x) * (Joypad[i].joypadCenterx - touchLocation.x) +
+														 (Joypad[i].joypadCentery - touchLocation.y) * (Joypad[i].joypadCentery - touchLocation.y));
+					
+					Joypad[i].touchAngle = atan2(dy, dx);
+					
+					if (i == 0) {
+						if (Joypad[i].distanceFromCenter > Joypad[i].joypadMaxRadius)
+							joypadCap0.center = CGPointMake(
+															Joypad[i].joypadCenterx - cosf(Joypad[i].touchAngle) * Joypad[i].joypadMaxRadius,
+															Joypad[i].joypadCentery - sinf(Joypad[i].touchAngle) * Joypad[i].joypadMaxRadius);
+						else
+							joypadCap0.center = touchLocation;
+					} else {
+						if (Joypad[i].distanceFromCenter > Joypad[i].joypadMaxRadius)
+							joypadCap1.center = CGPointMake(
+															Joypad[i].joypadCenterx - cosf(Joypad[i].touchAngle) * Joypad[i].joypadMaxRadius,
+															Joypad[i].joypadCentery - sinf(Joypad[i].touchAngle) * Joypad[i].joypadMaxRadius);
+						else
+							joypadCap1.center = touchLocation;
+					}
+				}
+			}
+		}
+	}
 }
 
 - (void)touchesEnded:(NSSet *)touches withEvent:(UIEvent *)event {
     int i;
 	
-    for (UITouch *touch in touches)
-    {
-        for (i = 0; i < NUM_JOYPADS; i++) {
-            if ([touch hash] == Joypad[i].joypadTouchHash)
-            {
-                Joypad[i].isJoypadMoving = NO;
-                Joypad[i].joypadTouchHash = 0;
-                Joypad[i].distanceFromCenter = 0;
-                Joypad[i].touchAngle = 0;
-                // Joypad caps
-                if (i == 0) joypadCap0.center = CGPointMake(Joypad[i].joypadCenterx, Joypad[i].joypadCentery);
-                else joypadCap1.center = CGPointMake(Joypad[i].joypadCenterx, Joypad[i].joypadCentery);
-            }
-        }
-    }
+	if (Key_GetCatcher() & KEYCATCH_UI) {
+		if (_numTouches == 1) {
+			CL_KeyEvent(K_MOUSE1, qtrue, Sys_Milliseconds());
+			CL_KeyEvent(K_MOUSE1, qfalse, Sys_Milliseconds());
+		}
+		_numTouches--;
+	} else {
+		for (UITouch *touch in touches)
+		{
+			for (i = 0; i < NUM_JOYPADS; i++) {
+				if ([touch hash] == Joypad[i].joypadTouchHash)
+				{
+					Joypad[i].isJoypadMoving = NO;
+					Joypad[i].joypadTouchHash = 0;
+					Joypad[i].distanceFromCenter = 0;
+					Joypad[i].touchAngle = 0;
+					// Joypad caps
+					if (i == 0) joypadCap0.center = CGPointMake(Joypad[i].joypadCenterx, Joypad[i].joypadCentery);
+					else joypadCap1.center = CGPointMake(Joypad[i].joypadCenterx, Joypad[i].joypadCentery);
+				}
+			}
+		}
+	}
 }
 
 @dynamic numColorBits;

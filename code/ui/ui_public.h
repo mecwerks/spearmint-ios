@@ -57,7 +57,7 @@ typedef enum {
 //	void	UI_KeyEvent( int key );
 
 	UI_MOUSE_EVENT,
-//	void	UI_MouseEvent( int localClientNum, int dx, int dy );
+//	void	UI_MouseEvent( int localClientNum, int dx, int dy, qboolean absolute );
 
 	UI_MOUSE_POSITION,
 //  int		UI_MousePosition( int localClientNum );
@@ -84,11 +84,8 @@ typedef enum {
 // overlayed over whatever the cgame has drawn.
 // a GetClientState syscall will be made to get the current strings
 
-	UI_WANTSBINDKEYS,
+	UI_WANTSBINDKEYS
 //	qboolean UI_WantsBindKeys( void );
-	
-	UI_SELECT_AND_PRESS
-// void		UI_SelectAndPress( uiMenuCommand_t menu, int callback );
 } uiExport_t;
 
 #endif

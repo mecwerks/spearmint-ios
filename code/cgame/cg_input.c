@@ -360,15 +360,20 @@ void CG_KeyMove( clientInput_t *ci, usercmd_t *cmd ) {
 	up = 0;
 
 #ifdef IOS
-        side += cl_joyscale_y[0] * 5 * CL_KeyState (&ci->in_moveright);
-        side -= cl_joyscale_y[1] * 5 * CL_KeyState (&ci->in_moveleft);
+	if ( in_strafe.active ) {
+                side += movespeed * CL_KeyState (&ci->in_right);
+                side -= movespeed * CL_KeyState (&ci->in_left);
+        }
+
+        side += cl_joyscale_x[0] * 5 * CL_KeyState (&ci->in_moveright);
+        side -= cl_joyscale_x[1] * 5 * CL_KeyState (&ci->in_moveleft);
 
 
         up = movespeed * CL_KeyState (&ci->in_up);
         up -= movespeed * CL_KeyState (&ci->in_down);
 
-        forward += cl_joyscale_x[0] * 5 * CL_KeyState (&ci->in_forward);
-        forward -= cl_joyscale_x[1] * 5 * CL_KeyState (&ci->in_back);
+        forward += cl_joyscale_y[0] * 5 * CL_KeyState (&ci->in_forward);
+        forward -= cl_joyscale_y[1] * 5 * CL_KeyState (&ci->in_back);
 #else
 	if ( ci->in_strafe.active ) {
 		side += movespeed * CL_KeyState (&ci->in_right);

@@ -130,7 +130,7 @@ vmCvar_t  ui_teamArenaFirstRun;
 void _UI_Init( qboolean inGameLoad, int maxSplitView );
 void _UI_Shutdown( void );
 void _UI_KeyEvent( int key, qboolean down );
-void _UI_MouseEvent( int localClientNum, int dx, int dy );
+void _UI_MouseEvent( int localClientNum, int dx, int dy, qboolean absolute );
 int _UI_MousePosition( int localClientNum );
 void _UI_SetMousePosition( int localClientNum, int x, int y );
 void _UI_Refresh( int realtime );
@@ -153,7 +153,7 @@ Q_EXPORT intptr_t vmMain( int command, int arg0, int arg1, int arg2, int arg3, i
 		  return 0;
 
 	  case UI_MOUSE_EVENT:
-		  _UI_MouseEvent( arg0, arg1, arg2 );
+		  _UI_MouseEvent( arg0, arg1, arg2, arg3 );
 		  return 0;
 
 	  case UI_MOUSE_POSITION:
@@ -5146,7 +5146,7 @@ void _UI_KeyEvent( int key, qboolean down ) {
 UI_MouseEvent
 =================
 */
-void _UI_MouseEvent( int localClientNum, int dx, int dy )
+void _UI_MouseEvent( int localClientNum, int dx, int dy, qboolean absolute )
 {
 	if (localClientNum != 0) {
 		// ui currently only supports one cursor
@@ -5154,13 +5154,17 @@ void _UI_MouseEvent( int localClientNum, int dx, int dy )
 	}
 
 	// update mouse screen position
-	uiInfo.uiDC.cursorx += dx;
+	if (absolute) uiInfo.uiDC.cursorx = dx;
+	else uiInfo.uiDC.cursorx += dx;
+	
 	if (uiInfo.uiDC.cursorx < 0)
 		uiInfo.uiDC.cursorx = 0;
 	else if (uiInfo.uiDC.cursorx > SCREEN_WIDTH)
 		uiInfo.uiDC.cursorx = SCREEN_WIDTH;
 
-	uiInfo.uiDC.cursory += dy;
+	if (absolute) uiInfo.uiDC.cursory = dy;
+	else uiInfo.uiDC.cursory += dy;
+	
 	if (uiInfo.uiDC.cursory < 0)
 		uiInfo.uiDC.cursory = 0;
 	else if (uiInfo.uiDC.cursory > SCREEN_HEIGHT)

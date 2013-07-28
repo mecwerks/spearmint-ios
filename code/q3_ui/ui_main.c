@@ -66,7 +66,7 @@ Q_EXPORT intptr_t vmMain( int command, int arg0, int arg1, int arg2, int arg3, i
 		return 0;
 
 	case UI_MOUSE_EVENT:
-		UI_MouseEvent( arg0, arg1, arg2 );
+		UI_MouseEvent( arg0, arg1, arg2, arg3 );
 		return 0;
 
 	case UI_MOUSE_POSITION:
@@ -96,10 +96,6 @@ Q_EXPORT intptr_t vmMain( int command, int arg0, int arg1, int arg2, int arg3, i
 
 	case UI_WANTSBINDKEYS:
 		return Controls_WantsBindKeys();
-			
-	case UI_SELECT_AND_PRESS:
-		UI_SelectAndPress( arg0 );
-		return 0;
 	}
 
 	return -1;

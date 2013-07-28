@@ -2380,9 +2380,11 @@ int Com_EventLoop( void ) {
 		}
 
 		if (ev.evType >= SE_MOUSE && ev.evType <= SE_MOUSE_LAST)
-			CL_MouseEvent( ev.evType - SE_MOUSE, ev.evValue, ev.evValue2, ev.evTime );
+			CL_MouseEvent( ev.evType - SE_MOUSE, ev.evValue, ev.evValue2, ev.evTime, qfalse );
 		else if (ev.evType >= SE_JOYSTICK_AXIS && ev.evType <= SE_JOYSTICK_AXIS_LAST)
 			CL_JoystickEvent( ev.evType - SE_JOYSTICK_AXIS, ev.evValue, ev.evValue2, ev.evTime );
+		else if (ev.evType == SE_MOUSE_ABS)
+			CL_MouseEvent( ev.evType, ev.evValue, ev.evValue2, ev.evTime, qtrue );
 		else
 		{
 			switch(ev.evType)
@@ -2844,7 +2846,7 @@ void Com_Init( char *commandLine ) {
 
 	if( Sys_WritePIDFile( ) ) {
 #ifndef DEDICATED
-		const char *message = "The last time " CLIENT_WINDOW_TITLE " ran, "
+		const char *message = "The last time " PRODUCT_NAME " ran, "
 			"it didn't exit properly. This may be due to inappropriate video "
 			"settings. Would you like to start with \"safe\" video settings?";
 

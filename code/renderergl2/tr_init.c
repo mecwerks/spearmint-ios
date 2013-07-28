@@ -241,7 +241,7 @@ cvar_t	*r_maxpolybuffers;
 int		max_polybuffers;
 
 #ifndef GLimp_Minimize
-static void GLimp_Minimize ( void ) { return 0; };
+static void GLimp_Minimize ( void ) { return; };
 #endif
 
 /*

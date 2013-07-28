@@ -252,8 +252,5 @@ qboolean	trap_loadCamera(const char *name);
 void		trap_startCamera(int time);
 qboolean	trap_getCameraInfo(int time, vec3_t *origin, vec3_t *angles);
 */
-
-void                    trap_DrawTouchArea( float x, float y, float w, float h, int menu, int callback );
-void                    trap_ClearTouchButtons( void );
 #endif
 
