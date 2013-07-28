@@ -916,7 +916,7 @@ void UI_MouseEvent( int localClientNum, int dx, int dy, qboolean absolute )
 	
 	// update mouse screen position
 	if (absolute) uis.cursorx = dx;
-        else uis.cursorx += dx;
+	else uis.cursorx += dx;
 
 	if (uis.cursorx < -biasScaled)
 		uis.cursorx = -biasScaled;
@@ -1001,7 +1001,7 @@ void UI_SetMousePosition( int localClientNum, int x, int y )
 	uis.cursorx = x / uis.xscale - (uis.bias / uis.xscale);
 	uis.cursory = y / uis.yscale;
 
-	UI_MouseEvent(localClientNum, 0, 0, qtrue);
+	UI_MouseEvent(localClientNum, 0, 0, qfalse);
 }
 
 char *UI_Argv( int arg ) {
@@ -1297,7 +1297,7 @@ void UI_Refresh( int realtime )
 			int i;
 
 			for (i = 0; i < UI_MaxSplitView(); ++i) {
-				UI_MouseEvent( i, 0, 0, qtrue );
+				UI_MouseEvent( i, 0, 0, qfalse );
 			}
 			uis.firstdraw = qfalse;
 		}

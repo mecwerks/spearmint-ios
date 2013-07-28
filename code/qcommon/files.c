@@ -4022,10 +4022,8 @@ static void FS_CheckPaks( qboolean quiet )
 		Com_Printf(S_COLOR_YELLOW "WARNING: %s\n%s\n", line1, line2);
 
 		if ( fs_pakMismatchWarningDialog ) {
-#ifndef IOS
 #ifndef DEDICATED
 			Sys_Dialog( type, va("%s %s", line1, line2), "Unpure" );
-#endif
 #endif
 		}
 	}

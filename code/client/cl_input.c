@@ -59,7 +59,11 @@ void CL_MouseEvent( int localClientNum, int dx, int dy, int time, qboolean absol
 	}
 
 	if ( Key_GetCatcher( ) & KEYCATCH_UI ) {
+#ifdef IOS
 		VM_Call(uivm, UI_MOUSE_EVENT, localClientNum, dx, dy, absolute);
+#else
+		VM_Call(uivm, UI_MOUSE_EVENT, localClientNum, dx, dy, qfalse);
+#endif
 	} else if (Key_GetCatcher( ) & KEYCATCH_CGAME) {
 		VM_Call(cgvm, CG_MOUSE_EVENT, localClientNum, dx, dy);
 	} else {

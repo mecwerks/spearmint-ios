@@ -200,12 +200,33 @@
 /* Begin PBXFileReference section */
 		1D30AB110D05D00D00671497 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
 		1D3623EB0D0F72F000981E51 /* CoreGraphics.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreGraphics.framework; path = System/Library/Frameworks/CoreGraphics.framework; sourceTree = SDKROOT; };
-		1D6058910D05DD3D006BFB54 /* Quake3.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Quake3.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		1D6058910D05DD3D006BFB54 /* Spearmint.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Spearmint.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		1DF5F4DF0D08C38300B7A737 /* UIKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UIKit.framework; path = System/Library/Frameworks/UIKit.framework; sourceTree = SDKROOT; };
 		2C03759D179370380004B110 /* CFNetwork.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CFNetwork.framework; path = System/Library/Frameworks/CFNetwork.framework; sourceTree = SDKROOT; };
 		2C03759F1793705C0004B110 /* Security.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Security.framework; path = System/Library/Frameworks/Security.framework; sourceTree = SDKROOT; };
 		2C1D87EA178F6D7300E3AE41 /* baseq3 */ = {isa = PBXFileReference; lastKnownFileType = folder; path = baseq3; sourceTree = "<group>"; };
 		2C44373B178A168C00EEFDA6 /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		2C4E214217A57152006C566A /* cg_atmospheric.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = cg_atmospheric.c; sourceTree = "<group>"; };
+		2C4E214317A57152006C566A /* cg_input.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = cg_input.c; sourceTree = "<group>"; };
+		2C4E214417A57152006C566A /* cg_polybus.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = cg_polybus.c; sourceTree = "<group>"; };
+		2C4E214517A57152006C566A /* cg_spawn.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = cg_spawn.c; sourceTree = "<group>"; };
+		2C4E214617A57152006C566A /* cg_syscalls.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = cg_syscalls.h; sourceTree = "<group>"; };
+		2C4E214D17A571D2006C566A /* ai_ea.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = ai_ea.c; sourceTree = "<group>"; };
+		2C4E214E17A571D2006C566A /* ai_ea.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ai_ea.h; sourceTree = "<group>"; };
+		2C4E214F17A571D2006C566A /* ai_goal.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = ai_goal.c; sourceTree = "<group>"; };
+		2C4E215017A571D2006C566A /* ai_goal.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ai_goal.h; sourceTree = "<group>"; };
+		2C4E215117A571D2006C566A /* ai_move.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = ai_move.c; sourceTree = "<group>"; };
+		2C4E215217A571D2006C566A /* ai_move.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ai_move.h; sourceTree = "<group>"; };
+		2C4E215317A571D2006C566A /* ai_weap.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = ai_weap.c; sourceTree = "<group>"; };
+		2C4E215417A571D2006C566A /* ai_weap.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ai_weap.h; sourceTree = "<group>"; };
+		2C4E215517A571D2006C566A /* ai_weight.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = ai_weight.c; sourceTree = "<group>"; };
+		2C4E215617A571D2006C566A /* ai_weight.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ai_weight.h; sourceTree = "<group>"; };
+		2C4E215717A571D2006C566A /* bg_misc.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = bg_misc.h; sourceTree = "<group>"; };
+		2C4E215817A571D2006C566A /* bg_tracemap.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = bg_tracemap.c; sourceTree = "<group>"; };
+		2C4E215917A571D2006C566A /* g_syscalls.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = g_syscalls.h; sourceTree = "<group>"; };
+		2C4E215A17A5721C006C566A /* ui_ingame_selectplayer.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = ui_ingame_selectplayer.c; sourceTree = "<group>"; };
+		2C4E215B17A5721C006C566A /* ui_joystick.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = ui_joystick.c; sourceTree = "<group>"; };
+		2C4E215C17A5721C006C566A /* ui_selectplayer.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = ui_selectplayer.c; sourceTree = "<group>"; };
 		2C7A7BA31767DA0000BEA13E /* Default@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "Default@2x.png"; sourceTree = "<group>"; };
 		2C7A7BAC1767E62E00BEA13E /* Default-568h@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "Default-568h@2x.png"; sourceTree = "<group>"; };
 		2C7CF87417948CCA00D31BA8 /* libcurl-simulator.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = "libcurl-simulator.a"; path = "../libs/ios/libcurl-simulator.a"; sourceTree = "<group>"; };
@@ -368,7 +389,6 @@
 		2C95BC63178C94D600BD1463 /* g_items.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = g_items.c; sourceTree = "<group>"; };
 		2C95BC64178C94D600BD1463 /* g_local.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = g_local.h; sourceTree = "<group>"; };
 		2C95BC65178C94D600BD1463 /* g_main.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = g_main.c; sourceTree = "<group>"; };
-		2C95BC66178C94D600BD1463 /* g_mem.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = g_mem.c; sourceTree = "<group>"; };
 		2C95BC67178C94D600BD1463 /* g_misc.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = g_misc.c; sourceTree = "<group>"; };
 		2C95BC68178C94D600BD1463 /* g_missile.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = g_missile.c; sourceTree = "<group>"; };
 		2C95BC69178C94D600BD1463 /* g_mover.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = g_mover.c; sourceTree = "<group>"; };
@@ -798,7 +818,7 @@
 		19C28FACFE9D520D11CA2CBB /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				1D6058910D05DD3D006BFB54 /* Quake3.app */,
+				1D6058910D05DD3D006BFB54 /* Spearmint.app */,
 			);
 			name = Products;
 			sourceTree = BUILT_PRODUCTS_DIR;
@@ -940,6 +960,7 @@
 		2C95BC0A178C94D500BD1463 /* cgame */ = {
 			isa = PBXGroup;
 			children = (
+				2C4E214217A57152006C566A /* cg_atmospheric.c */,
 				2C95BC0B178C94D500BD1463 /* cg_consolecmds.c */,
 				2C95BC0C178C94D500BD1463 /* cg_draw.c */,
 				2C95BC0D178C94D500BD1463 /* cg_drawtools.c */,
@@ -947,6 +968,7 @@
 				2C95BC0F178C94D500BD1463 /* cg_ents.c */,
 				2C95BC10178C94D500BD1463 /* cg_event.c */,
 				2C95BC11178C94D500BD1463 /* cg_info.c */,
+				2C4E214317A57152006C566A /* cg_input.c */,
 				2C95BC12178C94D500BD1463 /* cg_local.h */,
 				2C95BC13178C94D500BD1463 /* cg_localents.c */,
 				2C95BC14178C94D500BD1463 /* cg_main.c */,
@@ -955,13 +977,16 @@
 				2C95BC17178C94D500BD1463 /* cg_particles.c */,
 				2C95BC18178C94D500BD1463 /* cg_players.c */,
 				2C95BC19178C94D500BD1463 /* cg_playerstate.c */,
+				2C4E214417A57152006C566A /* cg_polybus.c */,
 				2C95BC1A178C94D500BD1463 /* cg_predict.c */,
 				2C95BC1B178C94D500BD1463 /* cg_public.h */,
 				2C95BC1C178C94D500BD1463 /* cg_scoreboard.c */,
 				2C95BC1D178C94D500BD1463 /* cg_servercmds.c */,
 				2C95BC1E178C94D500BD1463 /* cg_snapshot.c */,
+				2C4E214517A57152006C566A /* cg_spawn.c */,
 				2C95BC1F178C94D500BD1463 /* cg_syscalls.asm */,
 				2C95BC20178C94D500BD1463 /* cg_syscalls.c */,
+				2C4E214617A57152006C566A /* cg_syscalls.h */,
 				2C95BC21178C94D500BD1463 /* cg_view.c */,
 				2C95BC22178C94D500BD1463 /* cg_weapons.c */,
 			);
@@ -1012,6 +1037,8 @@
 		2C95BC46178C94D500BD1463 /* game */ = {
 			isa = PBXGroup;
 			children = (
+				2C4E214D17A571D2006C566A /* ai_ea.c */,
+				2C4E214E17A571D2006C566A /* ai_ea.h */,
 				2C95BC47178C94D500BD1463 /* ai_chat.c */,
 				2C95BC48178C94D500BD1463 /* ai_chat.h */,
 				2C95BC49178C94D500BD1463 /* ai_cmd.c */,
@@ -1020,19 +1047,29 @@
 				2C95BC4C178C94D500BD1463 /* ai_dmnet.h */,
 				2C95BC4D178C94D500BD1463 /* ai_dmq3.c */,
 				2C95BC4E178C94D500BD1463 /* ai_dmq3.h */,
+				2C4E214F17A571D2006C566A /* ai_goal.c */,
+				2C4E215017A571D2006C566A /* ai_goal.h */,
 				2C95BC4F178C94D500BD1463 /* ai_main.c */,
 				2C95BC50178C94D500BD1463 /* ai_main.h */,
+				2C4E215117A571D2006C566A /* ai_move.c */,
+				2C4E215217A571D2006C566A /* ai_move.h */,
 				2C95BC51178C94D500BD1463 /* ai_team.c */,
 				2C95BC52178C94D500BD1463 /* ai_team.h */,
 				2C95BC53178C94D500BD1463 /* ai_vcmd.c */,
 				2C95BC54178C94D500BD1463 /* ai_vcmd.h */,
+				2C4E215317A571D2006C566A /* ai_weap.c */,
+				2C4E215417A571D2006C566A /* ai_weap.h */,
+				2C4E215517A571D2006C566A /* ai_weight.c */,
+				2C4E215617A571D2006C566A /* ai_weight.h */,
 				2C95BC55178C94D500BD1463 /* bg_lib.c */,
 				2C95BC56178C94D600BD1463 /* bg_lib.h */,
 				2C95BC57178C94D600BD1463 /* bg_local.h */,
 				2C95BC58178C94D600BD1463 /* bg_misc.c */,
+				2C4E215717A571D2006C566A /* bg_misc.h */,
 				2C95BC59178C94D600BD1463 /* bg_pmove.c */,
 				2C95BC5A178C94D600BD1463 /* bg_public.h */,
 				2C95BC5B178C94D600BD1463 /* bg_slidemove.c */,
+				2C4E215817A571D2006C566A /* bg_tracemap.c */,
 				2C95BC5C178C94D600BD1463 /* chars.h */,
 				2C95BC5D178C94D600BD1463 /* g_active.c */,
 				2C95BC5E178C94D600BD1463 /* g_arenas.c */,
@@ -1043,7 +1080,6 @@
 				2C95BC63178C94D600BD1463 /* g_items.c */,
 				2C95BC64178C94D600BD1463 /* g_local.h */,
 				2C95BC65178C94D600BD1463 /* g_main.c */,
-				2C95BC66178C94D600BD1463 /* g_mem.c */,
 				2C95BC67178C94D600BD1463 /* g_misc.c */,
 				2C95BC68178C94D600BD1463 /* g_missile.c */,
 				2C95BC69178C94D600BD1463 /* g_mover.c */,
@@ -1055,6 +1091,7 @@
 				2C95BC6F178C94D600BD1463 /* g_svcmds.c */,
 				2C95BC70178C94D600BD1463 /* g_syscalls.asm */,
 				2C95BC71178C94D600BD1463 /* g_syscalls.c */,
+				2C4E215917A571D2006C566A /* g_syscalls.h */,
 				2C95BC72178C94D600BD1463 /* g_target.c */,
 				2C95BC73178C94D600BD1463 /* g_team.c */,
 				2C95BC74178C94D600BD1463 /* g_team.h */,
@@ -1160,6 +1197,8 @@
 				2C95BCD8178C94D600BD1463 /* ui_display.c */,
 				2C95BCD9178C94D600BD1463 /* ui_gameinfo.c */,
 				2C95BCDA178C94D600BD1463 /* ui_ingame.c */,
+				2C4E215A17A5721C006C566A /* ui_ingame_selectplayer.c */,
+				2C4E215B17A5721C006C566A /* ui_joystick.c */,
 				2C95BCDB178C94D600BD1463 /* ui_loadconfig.c */,
 				2C95BCDC178C94D600BD1463 /* ui_local.h */,
 				2C95BCDD178C94D600BD1463 /* ui_login.c */,
@@ -1180,6 +1219,7 @@
 				2C95BCEC178C94D600BD1463 /* ui_saveconfig.c */,
 				2C95BCED178C94D600BD1463 /* ui_serverinfo.c */,
 				2C95BCEE178C94D600BD1463 /* ui_servers2.c */,
+				2C4E215C17A5721C006C566A /* ui_selectplayer.c */,
 				2C95BCEF178C94D600BD1463 /* ui_setup.c */,
 				2C95BCF0178C94D700BD1463 /* ui_signup.c */,
 				2C95BCF1178C94D700BD1463 /* ui_sound.c */,
@@ -1526,9 +1566,9 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		1D6058900D05DD3D006BFB54 /* Quake3 */ = {
+		1D6058900D05DD3D006BFB54 /* Spearmint */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 1D6058960D05DD3E006BFB54 /* Build configuration list for PBXNativeTarget "Quake3" */;
+			buildConfigurationList = 1D6058960D05DD3E006BFB54 /* Build configuration list for PBXNativeTarget "Spearmint" */;
 			buildPhases = (
 				1D60588D0D05DD3D006BFB54 /* Resources */,
 				1D60588E0D05DD3D006BFB54 /* Sources */,
@@ -1539,9 +1579,9 @@
 			);
 			dependencies = (
 			);
-			name = Quake3;
+			name = Spearmint;
 			productName = Quake3;
-			productReference = 1D6058910D05DD3D006BFB54 /* Quake3.app */;
+			productReference = 1D6058910D05DD3D006BFB54 /* Spearmint.app */;
 			productType = "com.apple.product-type.application";
 		};
 /* End PBXNativeTarget section */
@@ -1567,7 +1607,7 @@
 			projectDirPath = "";
 			projectRoot = ../..;
 			targets = (
-				1D6058900D05DD3D006BFB54 /* Quake3 */,
+				1D6058900D05DD3D006BFB54 /* Spearmint */,
 			);
 		};
 /* End PBXProject section */
@@ -1811,7 +1851,7 @@
 					"$(inherited)",
 					"\"$(SRCROOT)/../libs/ios\"",
 				);
-				PRODUCT_NAME = Quake3;
+				PRODUCT_NAME = Spearmint;
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};
 			name = Debug;
@@ -1841,7 +1881,7 @@
 					"$(inherited)",
 					"\"$(SRCROOT)/../libs/ios\"",
 				);
-				PRODUCT_NAME = Quake3;
+				PRODUCT_NAME = Spearmint;
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};
 			name = Release;
@@ -1947,7 +1987,7 @@
 					"$(inherited)",
 					"\"$(SRCROOT)/../libs/ios\"",
 				);
-				PRODUCT_NAME = Quake3;
+				PRODUCT_NAME = Spearmint;
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};
 			name = Distribution;
@@ -1955,7 +1995,7 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		1D6058960D05DD3E006BFB54 /* Build configuration list for PBXNativeTarget "Quake3" */ = {
+		1D6058960D05DD3E006BFB54 /* Build configuration list for PBXNativeTarget "Spearmint" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				1D6058940D05DD3E006BFB54 /* Debug */,
