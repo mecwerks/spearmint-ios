@@ -336,15 +336,20 @@ void CL_KeyMove( usercmd_t *cmd ) {
 	up = 0;
 	
 #ifdef IOS
-	side += cl_joyscale_y[0] * 5 * CL_KeyState (&in_moveright);
-	side -= cl_joyscale_y[1] * 5 * CL_KeyState (&in_moveleft);
+	if ( in_strafe.active ) {
+		side += movespeed * CL_KeyState (&in_right);
+		side -= movespeed * CL_KeyState (&in_left);
+	}
+
+	side += cl_joyscale_x[0] * 4.0f * CL_KeyState (&in_moveright);
+	side -= cl_joyscale_x[1] * 4.0f * CL_KeyState (&in_moveleft);
 	
 	
 	up = movespeed * CL_KeyState (&in_up);
 	up -= movespeed * CL_KeyState (&in_down);
 	
-	forward += cl_joyscale_x[0] * 5 * CL_KeyState (&in_forward);
-	forward -= cl_joyscale_x[1] * 5 * CL_KeyState (&in_back);
+	forward += cl_joyscale_y[0] * 4.0f * CL_KeyState (&in_forward);
+	forward -= cl_joyscale_y[1] * 4.0f * CL_KeyState (&in_back);
 #else
 	if ( in_strafe.active ) {
 		side += movespeed * CL_KeyState (&in_right);
@@ -372,9 +377,9 @@ void CL_KeyMove( usercmd_t *cmd ) {
 CL_MouseEvent
 =================
 */
-void CL_MouseEvent( int dx, int dy, int time ) {
+void CL_MouseEvent( int dx, int dy, int time, qboolean absolute ) {
 	if ( Key_GetCatcher( ) & KEYCATCH_UI ) {
-		VM_Call( uivm, UI_MOUSE_EVENT, dx, dy );
+		VM_Call( uivm, UI_MOUSE_EVENT, dx, dy, absolute );
 	} else if (Key_GetCatcher( ) & KEYCATCH_CGAME) {
 		VM_Call (cgvm, CG_MOUSE_EVENT, dx, dy);
 	} else {
@@ -589,48 +594,6 @@ void CL_FinishMove( usercmd_t *cmd ) {
 	for (i=0 ; i<3 ; i++) {
 		cmd->angles[i] = ANGLE2SHORT(cl.viewangles[i]);
 	}
-}
-
-/*
-=================
-CL_FlushButtons
-=================
-*/
-void CL_FlushButtons ( void ) {
-#ifdef IOS
-	memset( &clsi, 0, sizeof(screenInput_t) );
-	clsi.clean = qtrue;
-#endif
-}
-
-/*
-=================
-CL_DrawTouchArea
-=================
-*/
-void CL_DrawTouchArea ( float x, float y, float w, float h ) {
-#ifdef IOS
-	int i;
-	qboolean buttonFound = qfalse;
-	
-//	Com_Printf("Button: %f %f %f %f\n", y, x, w, h);
-
-	for (i = 0; i < MAX_BUTTONS; i++) {
-		if ( !clsi.buttons[i].active ) {
-			if (clsi.clean) clsi.clean = qfalse;
-			clsi.buttons[i].x = y;
-			clsi.buttons[i].y = x;
-			clsi.buttons[i].w = h;
-			clsi.buttons[i].h = w;
-			clsi.buttons[i].active = qtrue;
-			buttonFound = qtrue;
-			break;
-		}
-	}
-	
-	if ( !buttonFound )
-		Com_Printf("IOS_DrawTouchArea: Max buttons reached\n");
-#endif
 }
 
 /*

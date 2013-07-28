@@ -259,7 +259,6 @@ typedef struct
 
 extern void			Menu_Cache( void );
 extern void			Menu_Focus( menucommon_s *m );
-extern void			Menu_DrawTouchItem( void *item );
 extern void			Menu_AddItem( menuframework_s *menu, void *item );
 extern void			Menu_AdjustCursor( menuframework_s *menu, int dir );
 extern void			Menu_Draw( menuframework_s *menu );
@@ -565,7 +564,7 @@ typedef struct {
 extern void			UI_Init( void );
 extern void			UI_Shutdown( void );
 extern void			UI_KeyEvent( int key, int down );
-extern void			UI_MouseEvent( int dx, int dy );
+extern void			UI_MouseEvent( int dx, int dy, qboolean absolute );
 extern void			UI_Refresh( int realtime );
 extern qboolean		UI_ConsoleCommand( int realTime );
 extern float		UI_ClampCvar( float min, float max, float value );

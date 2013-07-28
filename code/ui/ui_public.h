@@ -124,9 +124,6 @@ typedef enum {
 	// 1.32
 	UI_FS_SEEK,
 	UI_SET_PBCLSTATUS,
-	// iOS touch menu
-	UI_DRAW_TOUCH_AREA,
-	UI_CLEAR_TOUCH_BUTTONS,
 
 	UI_MEMSET = 100,
 	UI_MEMCPY,
@@ -169,7 +166,7 @@ typedef enum {
 //	void	UI_KeyEvent( int key );
 
 	UI_MOUSE_EVENT,
-//	void	UI_MouseEvent( int dx, int dy );
+//	void	UI_MouseEvent( int dx, int dy, qboolean absolute );
 
 	UI_REFRESH,
 //	void	UI_Refresh( int time );
@@ -186,13 +183,10 @@ typedef enum {
 	UI_DRAW_CONNECT_SCREEN,
 //	void	UI_DrawConnectScreen( qboolean overlay );
 	
-	UI_HASUNIQUECDKEY,
+	UI_HASUNIQUECDKEY
 // if !overlay, the background will be drawn, otherwise it will be
 // overlayed over whatever the cgame has drawn.
 // a GetClientState syscall will be made to get the current strings
-	
-	UI_SELECT_AND_PRESS
-// void		UI_SelectAndPress( uiMenuCommand_t menu, int callback );
 } uiExport_t;
 
 #endif

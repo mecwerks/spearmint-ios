@@ -149,15 +149,6 @@ void InGame_Event( void *ptr, int notification ) {
 	}
 }
 
-void InGameMenu_DrawTouch ( void ) {
-	trap_DrawTouchArea( 240, 65, 46, 30); // ID_TEAM
-	trap_DrawTouchArea( 238, 98, 62, 30); // ID_SETUP
-	trap_DrawTouchArea( 232, 138, 68, 30); // ID_ADDBOTS
-	trap_DrawTouchArea( 234, 180, 65, 25); // ID_RESTART
-	trap_DrawTouchArea( 234, 205, 65, 20); // ID_RESUME
-	trap_DrawTouchArea( 234, 245, 62, 20); // ID_LEAVEARENA
-}
-
 /*
 =================
 InGame_MenuInit
@@ -175,8 +166,6 @@ void InGame_MenuInit( void ) {
 
 	s_ingame.menu.wrapAround = qtrue;
 	s_ingame.menu.fullscreen = qfalse;
-	// iOS touch menu
-	s_ingame.menu.touchDraw = InGameMenu_DrawTouch;
 
 	s_ingame.frame.generic.type			= MTYPE_BITMAP;
 	s_ingame.frame.generic.flags		= QMF_INACTIVE;

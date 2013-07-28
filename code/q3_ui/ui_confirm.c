@@ -159,11 +159,6 @@ void ConfirmMenu_Cache( void ) {
 	trap_R_RegisterShaderNoMip( ART_CONFIRM_FRAME );
 }
 
-void ConfirmMenu_TouchDraw( void ) {
-	trap_DrawTouchArea(280, 180, 60, 60); // ID_CONFIRM_YES
-	trap_DrawTouchArea(215, 180, 60, 60); // ID_CONFIRM_NO
-}
-
 /*
 =================
 UI_ConfirmMenu_Stlye
@@ -195,8 +190,6 @@ void UI_ConfirmMenu_Style( const char *question, int style, void (*draw)( void )
 	s_confirm.menu.draw       = ConfirmMenu_Draw;
 	s_confirm.menu.key        = ConfirmMenu_Key;
 	s_confirm.menu.wrapAround = qtrue;
-	// iOS touch menu
-	s_confirm.menu.touchDraw = ConfirmMenu_TouchDraw;
 
 	trap_GetClientState( &cstate );
 	if ( cstate.connState >= CA_CONNECTED ) {

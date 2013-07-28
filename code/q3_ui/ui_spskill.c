@@ -191,10 +191,6 @@ void UI_SPSkillMenu_Cache( void ) {
 	skillMenuInfo.silenceSound = trap_S_RegisterSound( "sound/misc/silence.wav", qfalse );
 }
 
-void UI_SPSkillMenu_TouchDraw ( void ) {
-        trap_DrawTouchArea(48, 298, 80, 100); // ID_FIGHT
-}
-
 /*
 =================
 UI_SPSkillMenu_Init
@@ -206,7 +202,6 @@ static void UI_SPSkillMenu_Init( void ) {
 	memset( &skillMenuInfo, 0, sizeof(skillMenuInfo) );
 	skillMenuInfo.menu.fullscreen = qtrue;
 	skillMenuInfo.menu.key = UI_SPSkillMenu_Key;
-	skillMenuInfo.menu.touchDraw = UI_SPSkillMenu_TouchDraw;
 
 	UI_SPSkillMenu_Cache();
 

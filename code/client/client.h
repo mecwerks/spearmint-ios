@@ -359,22 +359,6 @@ extern	clientStatic_t		cls;
 extern	char		cl_oldGame[MAX_QPATH];
 extern	qboolean	cl_oldGameSet;
 
-#define MAX_BUTTONS 20
-
-typedef struct {
-	qboolean active;
-	qboolean pressed;
-	qboolean initialized;
-	float x, y, h, w;
-} buttons_t;
-
-typedef struct {
-	qboolean clean;
-	buttons_t buttons[MAX_BUTTONS];
-} screenInput_t;
-
-extern	screenInput_t		clsi;
-
 #ifdef IOS
 int cl_joyscale_x[2];
 int cl_joyscale_y[2];
@@ -526,9 +510,6 @@ void CL_VerifyCode( void );
 float CL_KeyState (kbutton_t *key);
 int Key_StringToKeynum( char *str );
 char *Key_KeynumToString (int keynum);
-
-void CL_DrawTouchArea(float x, float y, float w, float h);
-void CL_FlushButtons( void );
 
 //
 // cl_parse.c

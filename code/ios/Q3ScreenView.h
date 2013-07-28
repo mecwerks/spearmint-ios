@@ -56,7 +56,6 @@ typedef struct joyPad_s {
     joyPad_t Joypad[NUM_JOYPADS];
 	BOOL _isShooting;
 	BOOL _isLooking;
-    int lastKeyTime;
     BOOL _inGame;
 	CGRect buttonArea[MAX_BUTTONS];
 }
