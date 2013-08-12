@@ -98,6 +98,21 @@ typedef struct {
 #define SORT_GAME			3
 #define SORT_PING			4
 
+// server browser sources
+// TTimo: AS_MPLAYER is no longer used
+#define AS_LOCAL			0
+#define AS_MPLAYER		1
+#define AS_GLOBAL			2
+#define AS_FAVORITES	3
+
+typedef enum {
+	DS_NONE,
+
+	DS_PLAYBACK,
+	DS_RECORDING,
+
+	DS_NUM_DEMO_STATES
+} demoState_t;
 
 /*
 ==================================================================
@@ -183,6 +198,9 @@ typedef enum {
 	CG_GETDEMOPOS,
 	CG_GETDEMONAME,
 	CG_GETDEMOLENGTH,
+	CG_SETMAPTITLE,
+	CG_SETVIEWANGLES,
+	CG_GETVIEWANGLES,
 
 	// note: these were not originally available in cgame
 	CG_GETCLIENTSTATE = 190,

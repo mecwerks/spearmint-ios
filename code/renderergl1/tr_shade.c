@@ -785,7 +785,7 @@ Blends a fog texture on top of everything else
 static void RB_FogPass( void ) {
 	fog_t		*fog;
 	unsigned	colorInt;
-	qboolean	linearFog;
+	fogType_t	fogType;
 	int			i;
 
 	// no fog pass
@@ -802,19 +802,24 @@ static void RB_FogPass( void ) {
 		return;
 	}
 
-	fog = tr.world->fogs + tess.fogNum;
-
-	// Global fog
-	if ( fog->originalBrushNumber < 0 ) {
-		if ( backEnd.refdef.fogType == FT_NONE ) {
-			return;
-		}
-
-		linearFog = ( backEnd.refdef.fogType == FT_LINEAR );
-		colorInt = backEnd.refdef.fogColorInt;
+	if ( tess.shader->isSky ) {
+		fogType = tr.skyFogType;
+		colorInt = tr.skyFogColorInt;
 	} else {
-		linearFog = ( fog->shader->fogParms.fogType == FT_LINEAR );
-		colorInt = fog->colorInt;
+		fog = tr.world->fogs + tess.fogNum;
+
+		// Global fog
+		if ( fog->originalBrushNumber < 0 ) {
+			fogType = backEnd.refdef.fogType;
+			colorInt = backEnd.refdef.fogColorInt;
+		} else {
+			fogType = fog->shader->fogParms.fogType;
+			colorInt = fog->colorInt;
+		}
+	}
+
+	if ( fogType == FT_NONE ) {
+		return;
 	}
 
 	qglEnableClientState( GL_COLOR_ARRAY );
@@ -829,15 +834,13 @@ static void RB_FogPass( void ) {
 
 	RB_CalcFogTexCoords( ( float * ) tess.svars.texcoords[0] );
 
-	if ( linearFog ) {
+	if ( fogType == FT_LINEAR ) {
 		GL_Bind( tr.linearFogImage );
 	} else {
 		GL_Bind( tr.fogImage );
 	}
 
 	if ( tess.shader->fogPass == FP_EQUAL ) {
-		GL_State( GLS_SRCBLEND_SRC_ALPHA | GLS_DSTBLEND_ONE_MINUS_SRC_ALPHA | GLS_DEPTHFUNC_EQUAL );
-	} else if ( tess.shader->sort >= SS_BLEND0 ) {
 		GL_State( GLS_SRCBLEND_SRC_ALPHA | GLS_DSTBLEND_ONE_MINUS_SRC_ALPHA | GLS_DEPTHFUNC_EQUAL );
 	} else {
 		GL_State( GLS_SRCBLEND_SRC_ALPHA | GLS_DSTBLEND_ONE_MINUS_SRC_ALPHA );
@@ -919,8 +922,6 @@ static void ComputeColors( shaderStage_t *pStage )
 				fog_t		*fog;
 				unsigned	colorInt;
 
-				fog = tr.world->fogs + tess.fogNum;
-
 #if 0
 				if ( r_useGlFog->integer ) {
 					Com_Memset( tess.svars.colors, tr.identityLightByte, tess.numVertexes * 4 );
@@ -928,10 +929,16 @@ static void ComputeColors( shaderStage_t *pStage )
 				}
 #endif
 
-				if ( fog->originalBrushNumber < 0 ) {
-					colorInt = backEnd.refdef.fogColorInt;
+				if ( tess.shader->isSky ) {
+					colorInt = tr.skyFogColorInt;
 				} else {
-					colorInt = fog->colorInt;
+					fog = tr.world->fogs + tess.fogNum;
+
+					if ( fog->originalBrushNumber < 0 ) {
+						colorInt = backEnd.refdef.fogColorInt;
+					} else {
+						colorInt = fog->colorInt;
+					}
 				}
 
 				for ( i = 0; i < tess.numVertexes; i++ ) {
@@ -1191,7 +1198,7 @@ void SetIteratorFog( void ) {
 		return;
 	}
 
-	if ( tess.fogNum && ( tess.shader->fogPass || ( tess.shader->sort > SS_OPAQUE && tess.shader->sort < SS_BLEND0 && tr.world && tess.fogNum == tr.world->globalFog ) ) ) {
+	if ( tess.fogNum && ( tess.shader->fogPass || ( tess.shader->sort > SS_OPAQUE && tess.shader->sort < SS_BLEND0 && R_IsGlobalFog( tess.fogNum ) ) ) ) {
 		RB_Fog( tess.fogNum );
 	} else {
 		R_FogOff();
@@ -1372,7 +1379,7 @@ void RB_StageIteratorGeneric( void )
 	//
 	// now do fog
 	//
-	if ( tess.fogNum && ( tess.shader->fogPass || ( tess.shader->sort > SS_OPAQUE && tr.world && tess.fogNum == tr.world->globalFog ) ) ) {
+	if ( tess.fogNum && ( tess.shader->fogPass || ( tess.shader->sort > SS_OPAQUE && R_IsGlobalFog( tess.fogNum ) ) ) ) {
 		RB_FogPass();
 	}
 
@@ -1464,7 +1471,7 @@ void RB_StageIteratorVertexLitTexture( void )
 	//
 	// now do fog
 	//
-	if ( tess.fogNum && ( tess.shader->fogPass || ( tess.shader->sort > SS_OPAQUE && tr.world && tess.fogNum == tr.world->globalFog ) ) ) {
+	if ( tess.fogNum && ( tess.shader->fogPass || ( tess.shader->sort > SS_OPAQUE && R_IsGlobalFog( tess.fogNum ) ) ) ) {
 		RB_FogPass();
 	}
 
@@ -1576,7 +1583,7 @@ void RB_StageIteratorLightmappedMultitexture( void ) {
 	//
 	// now do fog
 	//
-	if ( tess.fogNum && ( tess.shader->fogPass || ( tess.shader->sort > SS_OPAQUE && tr.world && tess.fogNum == tr.world->globalFog ) ) ) {
+	if ( tess.fogNum && ( tess.shader->fogPass || ( tess.shader->sort > SS_OPAQUE && R_IsGlobalFog( tess.fogNum ) ) ) ) {
 		RB_FogPass();
 	}
 

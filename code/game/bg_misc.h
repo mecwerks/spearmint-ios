@@ -81,9 +81,6 @@ Suite 120, Rockville, Maryland 20850 USA.
 #define	CS_MUSIC				2
 #define	CS_MESSAGE				3		// from the map worldspawn's message field
 #define	CS_MOTD					4		// g_motd string for server message of the day
-/* bg_public.h
-	ZTM: NOTE: Server expects CS_WARMUP as 5.
-*/
 #define	CS_WARMUP				5		// server time when the match will be restarted
 #define	CS_SCORES1				6
 #define	CS_SCORES2				7
@@ -900,6 +897,15 @@ typedef enum {
 	TEAMTASK_ESCORT,
 	TEAMTASK_CAMP
 } teamtask_t;
+
+//flag status
+typedef enum {
+	FLAG_ATBASE = 0,
+	FLAG_TAKEN,			// CTF
+	FLAG_TAKEN_RED,		// One Flag CTF
+	FLAG_TAKEN_BLUE,	// One Flag CTF
+	FLAG_DROPPED
+} flagStatus_t;
 
 // means of death
 typedef enum {

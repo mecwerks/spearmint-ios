@@ -371,7 +371,7 @@ void	*VM_ExplicitArgPtr( vm_t *vm, intptr_t intValue );
 #define	VMA(x) VM_ArgPtr(args[x])
 #define	VMF(x)	IntAsFloat((int)args[x])
 
-void VM_ClearMemoryTags( void );
+void VM_ClearMemoryTags( vm_t *vm );
 intptr_t VM_ExplicitAlloc( vm_t *vm, int size, const char *tag );
 intptr_t VM_Alloc( int size, const char *tag );
 
@@ -627,13 +627,13 @@ char	**FS_ListFiles( const char *directory, const char *extension, int *numfiles
 // if extension is "/", only subdirectories will be returned
 // the returned files will not include any directories or /
 
-void	FS_SortFileList(char **filelist, int numfiles);
-
 void	FS_FreeFileList( char **list );
 
 qboolean FS_FileExists( const char *file );
 
 qboolean FS_CreatePath (char *OSPath);
+
+int FS_PathCmp( const char *s1, const char *s2 );
 
 int FS_FindVM(void **startSearch, char *found, int foundlen, const char *name, int enableDll);
 
@@ -908,7 +908,8 @@ typedef enum {
 	TAG_BOTLIB,
 	TAG_RENDERER,
 	TAG_SMALL,
-	TAG_STATIC
+	TAG_STATIC,
+	TAG_GAME
 } memtag_t;
 
 /*
