@@ -183,6 +183,11 @@ Suite 120, Rockville, Maryland 20850 USA.
 #define MACOS_X
 #endif
 
+// removes compiler warnings
+#ifdef OS_STRING
+#undef OS_STRING
+#endif
+
 #define OS_STRING "ios"
 #define ID_INLINE inline
 #define PATH_SEP '/'
