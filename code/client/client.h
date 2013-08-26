@@ -32,7 +32,6 @@ Suite 120, Rockville, Maryland 20850 USA.
 #include "../qcommon/q_shared.h"
 #include "../qcommon/qcommon.h"
 #include "../renderercommon/tr_public.h"
-#include "../ui/ui_public.h"
 #include "keys.h"
 #include "snd_public.h"
 #include "../cgame/cg_public.h"
@@ -48,7 +47,7 @@ Suite 120, Rockville, Maryland 20850 USA.
 #endif
 
 // Lower this define to change max supported local clients for client/renderer,
-// cgame/ui get max from client when they are initialized.
+// cgame gets max from client when it's initialized.
 #ifndef CL_MAX_SPLITVIEW
 #	ifdef IOS
 #		define CL_MAX_SPLITVIEW 1
@@ -112,6 +111,7 @@ extern int g_console_field_width;
 typedef struct {
 	int			mouseDx[2], mouseDy[2];	// added to by mouse events
 	int			mouseIndex;
+	int			mouseFlags;				// MOUSE_CGAME, MOUSE_CLIENT, ...
 
 } calc_t;
 
@@ -337,7 +337,6 @@ typedef struct {
 	qboolean	rendererStarted;
 	qboolean	soundStarted;
 	qboolean	soundRegistered;
-	qboolean	uiStarted;
 	qboolean	cgameStarted;
 
 	int			framecount;
@@ -386,7 +385,6 @@ int cl_joyscale_y[2];
 //=============================================================================
 
 extern	vm_t			*cgvm;	// interface to cgame dll or vm
-extern	vm_t			*uivm;	// interface to ui dll or vm
 extern	refexport_t		re;		// interface to refresh .dll
 
 
@@ -502,6 +500,9 @@ void CL_VerifyCode( void );
 int Key_StringToKeynum( char *str );
 char *Key_KeynumToString (int keynum);
 
+int Mouse_GetState( int localClientNum );
+void Mouse_SetState( int localClientNum, int state );
+
 //
 // cl_parse.c
 //
@@ -601,12 +602,6 @@ void CL_CGameRendering( stereoFrame_t stereo );
 void CL_SetCGameTime( void );
 void CL_FirstSnapshot( void );
 void CL_ShaderStateChanged(void);
-
-//
-// cl_ui.c
-//
-void CL_InitUI( void );
-void CL_ShutdownUI( void );
 int Key_GetCatcher( void );
 void Key_SetCatcher( int catcher );
 void LAN_LoadCachedServers( void );

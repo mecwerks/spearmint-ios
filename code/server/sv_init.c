@@ -531,9 +531,6 @@ void SV_SpawnServer( char *server, qboolean killBots ) {
 		}
 	}
 
-	// clear pak references
-	FS_ClearPakReferences(0);
-
 	// toggle the server bit so clients can detect that a
 	// server has changed
 	svs.snapFlagServerBit ^= SNAPFLAG_SERVERCOUNT;
@@ -868,6 +865,8 @@ void SV_Shutdown( char *finalmsg ) {
 #ifdef DEDICATED
 	Com_ShutdownRef();
 #endif
+
+	MSG_ShutdownNetFields();
 
 	// free current level
 	SV_ClearServer();

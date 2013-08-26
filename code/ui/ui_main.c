@@ -111,6 +111,7 @@ static void UI_ParseTeamInfo(const char *teamFile);
 static const char *UI_SelectedMap(int index, int *actual);
 static const char *UI_SelectedHead(int index, int *actual);
 static int UI_GetIndexFromSelection(int actual);
+static void UI_DrawCinematic(int handle, float x, float y, float w, float h);
 
 int ProcessNewUI( int command, int arg0, int arg1, int arg2, int arg3, int arg4, int arg5, int arg6 );
 
@@ -127,75 +128,16 @@ vmCvar_t  ui_debug;
 vmCvar_t  ui_initialized;
 vmCvar_t  ui_teamArenaFirstRun;
 
-void _UI_Init( qboolean inGameLoad, int maxSplitView );
-void _UI_Shutdown( void );
-void _UI_KeyEvent( int key, qboolean down );
-void _UI_MouseEvent( int localClientNum, int dx, int dy, qboolean absolute );
-int _UI_MousePosition( int localClientNum );
-void _UI_SetMousePosition( int localClientNum, int x, int y );
-void _UI_Refresh( int realtime );
-qboolean _UI_IsFullscreen( void );
-Q_EXPORT intptr_t vmMain( int command, int arg0, int arg1, int arg2, int arg3, int arg4, int arg5, int arg6, int arg7, int arg8, int arg9, int arg10, int arg11  ) {
-  switch ( command ) {
-	  case UI_GETAPIVERSION:
-		  return ( UI_API_MAJOR_VERSION << 16) | ( UI_API_MINOR_VERSION & 0xFFFF );
-
-	  case UI_INIT:
-		  _UI_Init(arg0, arg1);
-		  return 0;
-
-	  case UI_SHUTDOWN:
-		  _UI_Shutdown();
-		  return 0;
-
-	  case UI_KEY_EVENT:
-		  _UI_KeyEvent( arg0, arg1 );
-		  return 0;
-
-	  case UI_MOUSE_EVENT:
-		  _UI_MouseEvent( arg0, arg1, arg2, arg3 );
-		  return 0;
-
-	  case UI_MOUSE_POSITION:
-		  return _UI_MousePosition( arg0 );
-
-	  case UI_SET_MOUSE_POSITION:
-		  _UI_SetMousePosition( arg0, arg1, arg2 );
-		  return 0;
-
-	  case UI_REFRESH:
-		  _UI_Refresh( arg0 );
-		  return 0;
-
-	  case UI_IS_FULLSCREEN:
-		  return _UI_IsFullscreen();
-
-	  case UI_SET_ACTIVE_MENU:
-		  _UI_SetActiveMenu( arg0 );
-		  return 0;
-
-	  case UI_CONSOLE_COMMAND:
-		  return UI_ConsoleCommand(arg0);
-
-	  case UI_DRAW_CONNECT_SCREEN:
-		  UI_DrawConnectScreen( arg0 );
-		  return 0;
-
-	  case UI_WANTSBINDKEYS:
-		  return Display_WantsBindKeys();
-	}
-
-	return -1;
+qboolean UI_WantsBindKeys( void ) {
+	return Display_WantsBindKeys();
 }
-
-
 
 void AssetCache( void ) {
 	int n;
 	//if (Assets.textFont == NULL) {
 	//}
 	//Assets.background = trap_R_RegisterShaderNoMip( ASSET_BACKGROUND );
-	//Com_Printf("Menu Size: %i bytes\n", sizeof(Menus));
+	//Com_Printf("Menu Size: %i bytes\n", sizeof(uiInfo.uiDC.Menus));
 	uiInfo.uiDC.Assets.gradientBar = trap_R_RegisterShaderNoMip( ASSET_GRADIENTBAR );
 	uiInfo.uiDC.Assets.fxBasePic = trap_R_RegisterShaderNoMip( ART_FX_BASE );
 	uiInfo.uiDC.Assets.fxPic[0] = trap_R_RegisterShaderNoMip( ART_FX_RED );
@@ -246,35 +188,6 @@ UI_ClearClipRegion
 */
 void UI_ClearClipRegion( void ) {
 	trap_R_SetClipRegion( NULL );
-}
-
-void _UI_DrawSides(float x, float y, float w, float h, float size) {
-	UI_AdjustFrom640( &x, &y, &w, &h );
-	size *= uiInfo.uiDC.xscale;
-	trap_R_DrawStretchPic( x, y, size, h, 0, 0, 0, 0, uiInfo.uiDC.whiteShader );
-	trap_R_DrawStretchPic( x + w - size, y, size, h, 0, 0, 0, 0, uiInfo.uiDC.whiteShader );
-}
-
-void _UI_DrawTopBottom(float x, float y, float w, float h, float size) {
-	UI_AdjustFrom640( &x, &y, &w, &h );
-	size *= uiInfo.uiDC.yscale;
-	trap_R_DrawStretchPic( x, y, w, size, 0, 0, 0, 0, uiInfo.uiDC.whiteShader );
-	trap_R_DrawStretchPic( x, y + h - size, w, size, 0, 0, 0, 0, uiInfo.uiDC.whiteShader );
-}
-/*
-================
-UI_DrawRect
-
-Coordinates are 640*480 virtual values
-=================
-*/
-void _UI_DrawRect( float x, float y, float width, float height, float size, const float *color ) {
-	trap_R_SetColor( color );
-
-  _UI_DrawTopBottom(x, y, width, height, size);
-  _UI_DrawSides(x, y, width, height, size);
-
-	trap_R_SetColor( NULL );
 }
 
 int Text_Width(const char *text, float scale, int limit) {
@@ -424,6 +337,32 @@ void Text_Paint(float x, float y, float scale, vec4_t color, const char *text, f
     }
 	  trap_R_SetColor( NULL );
   }
+}
+
+// used by cgame/cg_info.c
+void UI_DrawProportionalString( int x, int y, const char* str, int style, vec4_t color ) {
+	int width;
+	float scale;
+
+	scale = ui_bigFont.value;
+
+	switch( style & UI_FORMATMASK ) {
+		case UI_CENTER:
+			width = Text_Width( str, scale, 0 );
+			x -= width / 2;
+			break;
+
+		case UI_RIGHT:
+			width = Text_Width( str, scale, 0 );
+			x -= width;
+			break;
+
+		case UI_LEFT:
+		default:
+			break;
+	}
+
+	Text_Paint( x, y, scale, color, str, 0, 0, ( style & UI_DROPSHADOW ) ? ITEM_TEXTSTYLE_SHADOWED : 0 );
 }
 
 void Text_PaintWithCursor(float x, float y, float scale, vec4_t color, const char *text, int cursorPos, char cursor, int limit, int style) {
@@ -589,11 +528,11 @@ void UI_ShowPostGame(qboolean newHigh) {
 	trap_Cvar_SetValue( "cg_cameraOrbit", 0 );
 	trap_Cvar_SetValue( "cg_thirdPerson", 0 );
 	uiInfo.soundHighScore = newHigh;
-  _UI_SetActiveMenu(UIMENU_POSTGAME);
+	UI_SetActiveMenu(UIMENU_POSTGAME);
 }
 /*
 =================
-_UI_Refresh
+UI_Refresh
 =================
 */
 
@@ -608,7 +547,7 @@ int frameCount = 0;
 int startTime;
 
 #define	UI_FPS_FRAMES	4
-void _UI_Refresh( int realtime )
+void UI_Refresh( int realtime )
 {
 	static int index;
 	static int	previousTimes[UI_FPS_FRAMES];
@@ -616,6 +555,8 @@ void _UI_Refresh( int realtime )
 	//if ( !( trap_Key_GetCatcher() & KEYCATCH_UI ) ) {
 	//	return;
 	//}
+
+	Init_Display(&uiInfo.uiDC);
 
 	uiInfo.uiDC.frameTime = realtime - uiInfo.uiDC.realTime;
 	uiInfo.uiDC.realTime = realtime;
@@ -638,6 +579,15 @@ void _UI_Refresh( int realtime )
 
 
 	UI_UpdateCvars();
+
+	if ( UI_IsFullscreen() ) {
+		// wide and narrow aspect ratios screens need to have the sides cleared
+		if ( cgs.screenXBias || cgs.screenYBias ) {
+			trap_R_SetColor( g_color_table[0] );
+			trap_R_DrawStretchPic( 0, 0, cgs.glconfig.vidWidth, cgs.glconfig.vidHeight, 0, 0, 0, 0, uiInfo.uiDC.whiteShader );
+			trap_R_SetColor( NULL );
+		}
+	}
 
 	if (Menu_Count() > 0) {
 		// paint all the menus
@@ -669,10 +619,10 @@ void _UI_Refresh( int realtime )
 
 /*
 =================
-_UI_Shutdown
+UI_Shutdown
 =================
 */
-void _UI_Shutdown( void ) {
+void UI_Shutdown( void ) {
 	trap_LAN_SaveCachedServers();
 }
 
@@ -890,7 +840,7 @@ void UI_ParseMenu(const char *menuFile) {
 		//	break;
 		//}
 
-		//if ( menuCount == MAX_MENUS ) {
+		//if ( uiInfo.uiDC.menuCount == MAX_MENUS ) {
 		//	Com_Printf( "Too many menus!\n" );
 		//	break;
 		//}
@@ -949,6 +899,8 @@ void UI_LoadMenus(const char *menuFile, qboolean reset) {
 
 	start = trap_Milliseconds();
 
+	Init_Display(&uiInfo.uiDC);
+
 	handle = trap_PC_LoadSource( menuFile, NULL );
 	if (!handle) {
 		Com_Printf( S_COLOR_YELLOW "menu file not found: %s, using default\n", menuFile );
@@ -991,10 +943,18 @@ void UI_LoadMenus(const char *menuFile, qboolean reset) {
 
 void UI_Load(void) {
 	char lastName[1024];
-  menuDef_t *menu = Menu_GetFocused();
-	char *menuSet = UI_Cvar_VariableString("ui_menuFiles");
+	menuDef_t *menu;
+	char *menuSet;
+
+	Init_Display(&uiInfo.uiDC);
+
+	menu = Menu_GetFocused();
+	menuSet = UI_Cvar_VariableString("ui_menuFiles");
+
 	if (menu && menu->window.name) {
-		strcpy(lastName, menu->window.name);
+		Q_strncpyz(lastName, menu->window.name,sizeof(lastName));
+	} else {
+		lastName[0] = '\0';
 	}
 	if (menuSet == NULL || menuSet[0] == '\0') {
 		menuSet = "ui/menus.txt";
@@ -1010,8 +970,11 @@ void UI_Load(void) {
 #endif
 
 	UI_LoadMenus(menuSet, qtrue);
+	UI_LoadMenus("ui/ingame.txt", qfalse);
 	Menus_CloseAll();
-	Menus_ActivateByName(lastName);
+	if ( lastName[0] ) {
+		Menus_ActivateByName(lastName);
+	}
 
 }
 
@@ -1142,8 +1105,7 @@ static void UI_DrawClanCinematic(rectDef_t *rect, float scale, vec4_t color) {
 			}
 			if (uiInfo.teamList[i].cinematic >= 0) {
 			  trap_CIN_RunCinematic(uiInfo.teamList[i].cinematic);
-				trap_CIN_SetExtents(uiInfo.teamList[i].cinematic, rect->x, rect->y, rect->w, rect->h);
-	 			trap_CIN_DrawCinematic(uiInfo.teamList[i].cinematic);
+			  UI_DrawCinematic(uiInfo.teamList[i].cinematic, rect->x, rect->y, rect->w, rect->h);
 			} else {
 			  	trap_R_SetColor( color );
 				UI_DrawHandlePic( rect->x, rect->y, rect->w, rect->h, uiInfo.teamList[i].teamIcon_Metal);
@@ -1164,8 +1126,7 @@ static void UI_DrawPreviewCinematic(rectDef_t *rect, float scale, vec4_t color) 
 		uiInfo.previewMovie = trap_CIN_PlayCinematic(va("%s.roq", uiInfo.movieList[uiInfo.movieIndex]), 0, 0, 0, 0, (CIN_loop | CIN_silent) );
 		if (uiInfo.previewMovie >= 0) {
 		  trap_CIN_RunCinematic(uiInfo.previewMovie);
-			trap_CIN_SetExtents(uiInfo.previewMovie, rect->x, rect->y, rect->w, rect->h);
- 			trap_CIN_DrawCinematic(uiInfo.previewMovie);
+		  UI_DrawCinematic(uiInfo.previewMovie, rect->x, rect->y, rect->w, rect->h);
 		} else {
 			uiInfo.previewMovie = -2;
 		}
@@ -1266,8 +1227,7 @@ static void UI_DrawMapCinematic(rectDef_t *rect, float scale, vec4_t color, qboo
 		}
 		if (uiInfo.mapList[map].cinematic >= 0) {
 		  trap_CIN_RunCinematic(uiInfo.mapList[map].cinematic);
-		  trap_CIN_SetExtents(uiInfo.mapList[map].cinematic, rect->x, rect->y, rect->w, rect->h);
- 			trap_CIN_DrawCinematic(uiInfo.mapList[map].cinematic);
+		  UI_DrawCinematic(uiInfo.mapList[map].cinematic, rect->x, rect->y, rect->w, rect->h);
 		} else {
 			uiInfo.mapList[map].cinematic = -2;
 		}
@@ -1342,8 +1302,7 @@ static void UI_DrawNetMapPreview(rectDef_t *rect, float scale, vec4_t color) {
 static void UI_DrawNetMapCinematic(rectDef_t *rect, float scale, vec4_t color) {
 	if (uiInfo.serverStatus.currentServerCinematic >= 0) {
 	  trap_CIN_RunCinematic(uiInfo.serverStatus.currentServerCinematic);
-	  trap_CIN_SetExtents(uiInfo.serverStatus.currentServerCinematic, rect->x, rect->y, rect->w, rect->h);
- 	  trap_CIN_DrawCinematic(uiInfo.serverStatus.currentServerCinematic);
+	  UI_DrawCinematic(uiInfo.serverStatus.currentServerCinematic, rect->x, rect->y, rect->w, rect->h);
 	} else {
 		UI_DrawNetMapPreview(rect, scale, color);
 	}
@@ -1901,15 +1860,15 @@ static void UI_DrawGLInfo(rectDef_t *rect, float scale, vec4_t color, int textSt
 	const char *lines[64];
 	int y, numLines, i;
 
-	Text_Paint(rect->x + 2, rect->y, scale, color, va("VENDOR: %s", uiInfo.uiDC.glconfig.vendor_string), 0, 30, textStyle);
-	Text_Paint(rect->x + 2, rect->y + 15, scale, color, va("VERSION: %s: %s", uiInfo.uiDC.glconfig.version_string,uiInfo.uiDC.glconfig.renderer_string), 0, 30, textStyle);
-	Text_Paint(rect->x + 2, rect->y + 30, scale, color, va ("PIXELFORMAT: color(%d-bits) Z(%d-bits) stencil(%d-bits)", uiInfo.uiDC.glconfig.colorBits, uiInfo.uiDC.glconfig.depthBits, uiInfo.uiDC.glconfig.stencilBits), 0, 30, textStyle);
+	Text_Paint(rect->x + 2, rect->y, scale, color, va("VENDOR: %s", cgs.glconfig.vendor_string), 0, 30, textStyle);
+	Text_Paint(rect->x + 2, rect->y + 15, scale, color, va("VERSION: %s: %s", cgs.glconfig.version_string,cgs.glconfig.renderer_string), 0, 30, textStyle);
+	Text_Paint(rect->x + 2, rect->y + 30, scale, color, va ("PIXELFORMAT: color(%d-bits) Z(%d-bits) stencil(%d-bits)", cgs.glconfig.colorBits, cgs.glconfig.depthBits, cgs.glconfig.stencilBits), 0, 30, textStyle);
 
 	// build null terminated extension strings
   // TTimo: https://zerowing.idsoftware.com/bugzilla/show_bug.cgi?id=399
   // in TA this was not directly crashing, but displaying a nasty broken shader right in the middle
   // brought down the string size to 1024, there's not much that can be shown on the screen anyway
-	Q_strncpyz(buff, uiInfo.uiDC.glconfig.extensions_string, 1024);
+	Q_strncpyz(buff, cgs.glconfig.extensions_string, 1024);
 	eptr = buff;
 	y = rect->y + 45;
 	numLines = 0;
@@ -3151,6 +3110,19 @@ static void UI_Update(const char *name) {
 	}
 }
 
+void UI_ForceMenuOff (void) {
+	trap_Mouse_SetState( 0, ( trap_Mouse_GetState( 0 ) & ~MOUSE_CGAME ) | MOUSE_CLIENT );
+	trap_Key_SetCatcher( trap_Key_GetCatcher() & ~KEYCATCH_UI );
+	trap_Cvar_SetValue( "cl_paused", 0 );
+	Menus_CloseAll();
+}
+
+void UI_EnterMenu (void) {
+	trap_Mouse_SetState( 0, ( trap_Mouse_GetState( 0 ) & ~MOUSE_CLIENT ) | MOUSE_CGAME );
+	trap_Key_SetCatcher( KEYCATCH_UI );
+	trap_Cvar_SetValue( "cl_paused", 1 );
+}
+
 static void UI_RunMenuScript(char **args) {
 	const char *name, *name2;
 	char buff[1024];
@@ -3327,13 +3299,12 @@ static void UI_RunMenuScript(char **args) {
 			trap_Cvar_SetValue( "ui_singlePlayerActive", 0 );
 			trap_Cmd_ExecuteText( EXEC_NOW, "quit");
 		} else if (Q_stricmp(name, "Controls") == 0) {
-			trap_Cvar_SetValue( "cl_paused", 1 );
-			trap_Key_SetCatcher( KEYCATCH_UI );
+			UI_EnterMenu();
 			Menus_CloseAll();
 			Menus_ActivateByName("setup_menu2");
 		} else if (Q_stricmp(name, "Leave") == 0) {
 			trap_Cmd_ExecuteText( EXEC_APPEND, "disconnect\n" );
-			trap_Key_SetCatcher( KEYCATCH_UI );
+			UI_EnterMenu();
 			Menus_CloseAll();
 			Menus_ActivateByName("main");
 		} else if (Q_stricmp(name, "ServerSort") == 0) {
@@ -3351,9 +3322,7 @@ static void UI_RunMenuScript(char **args) {
 		} else if (Q_stricmp(name, "SkirmishStart") == 0) {
 			UI_StartSkirmish(qfalse);
 		} else if (Q_stricmp(name, "closeingame") == 0) {
-			trap_Key_SetCatcher( trap_Key_GetCatcher() & ~KEYCATCH_UI );
-			trap_Cvar_SetValue( "cl_paused", 0 );
-			Menus_CloseAll();
+			UI_ForceMenuOff();
 		} else if (Q_stricmp(name, "voteMap") == 0) {
 			if (ui_currentNetMap.integer >=0 && ui_currentNetMap.integer < uiInfo.mapCount) {
 				trap_Cmd_ExecuteText( EXEC_APPEND, va("callvote map %s\n",uiInfo.mapList[ui_currentNetMap.integer].mapLoadName) );
@@ -3454,9 +3423,7 @@ static void UI_RunMenuScript(char **args) {
 						trap_Cmd_ExecuteText( EXEC_APPEND, "\n" );
 					}
 				}
-				trap_Key_SetCatcher( trap_Key_GetCatcher() & ~KEYCATCH_UI );
-				trap_Cvar_SetValue( "cl_paused", 0 );
-				Menus_CloseAll();
+				UI_ForceMenuOff();
 			}
 		} else if (Q_stricmp(name, "voiceOrdersTeam") == 0) {
 			const char *orders;
@@ -3466,9 +3433,7 @@ static void UI_RunMenuScript(char **args) {
 					trap_Cmd_ExecuteText( EXEC_APPEND, orders );
 					trap_Cmd_ExecuteText( EXEC_APPEND, "\n" );
 				}
-				trap_Key_SetCatcher( trap_Key_GetCatcher() & ~KEYCATCH_UI );
-				trap_Cvar_SetValue( "cl_paused", 0 );
-				Menus_CloseAll();
+				UI_ForceMenuOff();
 			}
 		} else if (Q_stricmp(name, "voiceOrders") == 0) {
 			const char *orders;
@@ -3479,9 +3444,7 @@ static void UI_RunMenuScript(char **args) {
 					trap_Cmd_ExecuteText( EXEC_APPEND, va(buff, uiInfo.teamClientNums[selectedPlayer]) );
 					trap_Cmd_ExecuteText( EXEC_APPEND, "\n" );
 				}
-				trap_Key_SetCatcher( trap_Key_GetCatcher() & ~KEYCATCH_UI );
-				trap_Cvar_SetValue( "cl_paused", 0 );
-				Menus_CloseAll();
+				UI_ForceMenuOff();
 			}
 		} else if (Q_stricmp(name, "glCustom") == 0) {
 			trap_Cvar_SetValue( "ui_glCustom", 4 );
@@ -3823,9 +3786,6 @@ static void UI_SortServerStatusInfo( serverStatusInfo_t *info ) {
 	int i, j, index;
 	char *tmp1, *tmp2;
 
-	// FIXME: if "gamename" == "baseq3" or "missionpack" then
-	// replace the gametype number by FFA, CTF etc.
-	//
 	index = 0;
 	for (i = 0; serverStatusCvars[i].name; i++) {
 		for (j = 0; j < info->numLines; j++) {
@@ -4840,12 +4800,10 @@ static void UI_ParseGameInfo(const char *teamFile) {
 static void UI_Pause(qboolean b) {
 	if (b) {
 		// pause the game and set the ui keycatcher
-		trap_Cvar_SetValue( "cl_paused", 1 );
-		trap_Key_SetCatcher( KEYCATCH_UI );
+		UI_EnterMenu();
 	} else {
 		// unpause the game and clear the ui keycatcher
-		trap_Key_SetCatcher( trap_Key_GetCatcher() & ~KEYCATCH_UI );
-		trap_Cvar_SetValue( "cl_paused", 0 );
+		UI_ForceMenuOff();
 	}
 }
 
@@ -4856,6 +4814,7 @@ static int UI_OwnerDraw_Width(int ownerDraw) {
 #endif
 
 static int UI_PlayCinematic(const char *name, float x, float y, float w, float h) {
+	UI_AdjustFrom640( &x, &y, &w, &h );
   return trap_CIN_PlayCinematic(name, x, y, w, h, (CIN_loop | CIN_silent));
 }
 
@@ -4887,6 +4846,7 @@ static void UI_StopCinematic(int handle) {
 }
 
 static void UI_DrawCinematic(int handle, float x, float y, float w, float h) {
+	UI_AdjustFrom640( &x, &y, &w, &h );
 	trap_CIN_SetExtents(handle, x, y, w, h);
   trap_CIN_DrawCinematic(handle);
 }
@@ -4973,7 +4933,7 @@ static void UI_BuildQ3Model_List( void )
 UI_Init
 =================
 */
-void _UI_Init( qboolean inGameLoad, int maxSplitView ) {
+void UI_Init( qboolean inGameLoad, int maxSplitView ) {
 	const char *menuSet;
 
 	uiInfo.maxSplitView = Com_Clamp(1, MAX_SPLITVIEW, maxSplitView);
@@ -4981,22 +4941,6 @@ void _UI_Init( qboolean inGameLoad, int maxSplitView ) {
 
 	UI_RegisterCvars();
 	UI_InitMemory();
-
-	// cache redundant calulations
-	trap_GetGlconfig( &uiInfo.uiDC.glconfig );
-
-	// for 640x480 virtualized screen
-	uiInfo.uiDC.yscale = uiInfo.uiDC.glconfig.vidHeight * (1.0/480.0);
-	uiInfo.uiDC.xscale = uiInfo.uiDC.glconfig.vidWidth * (1.0/640.0);
-	if ( uiInfo.uiDC.glconfig.vidWidth * 480 > uiInfo.uiDC.glconfig.vidHeight * 640 ) {
-		// wide screen
-		uiInfo.uiDC.bias = 0.5 * ( uiInfo.uiDC.glconfig.vidWidth - ( uiInfo.uiDC.glconfig.vidHeight * (640.0/480.0) ) );
-	}
-	else {
-		// no wide screen
-		uiInfo.uiDC.bias = 0;
-	}
-
 
   //UI_Load();
 	uiInfo.uiDC.registerShaderNoMip = &trap_R_RegisterShaderNoMip;
@@ -5009,9 +4953,9 @@ void _UI_Init( qboolean inGameLoad, int maxSplitView ) {
 	uiInfo.uiDC.registerModel = &trap_R_RegisterModel;
 	uiInfo.uiDC.modelBounds = &trap_R_ModelBounds;
 	uiInfo.uiDC.fillRect = &UI_FillRect;
-	uiInfo.uiDC.drawRect = &_UI_DrawRect;
-	uiInfo.uiDC.drawSides = &_UI_DrawSides;
-	uiInfo.uiDC.drawTopBottom = &_UI_DrawTopBottom;
+	uiInfo.uiDC.drawRect = &CG_DrawRect;
+	uiInfo.uiDC.drawSides = &CG_DrawSides;
+	uiInfo.uiDC.drawTopBottom = &CG_DrawTopBottom;
 	uiInfo.uiDC.clearScene = &trap_R_ClearScene;
 	uiInfo.uiDC.addRefEntityToScene = &trap_R_AddRefEntityToScene;
 	uiInfo.uiDC.renderScene = &trap_R_RenderScene;
@@ -5120,7 +5064,9 @@ void _UI_Init( qboolean inGameLoad, int maxSplitView ) {
 UI_KeyEvent
 =================
 */
-void _UI_KeyEvent( int key, qboolean down ) {
+void UI_KeyEvent( int key, qboolean down ) {
+
+	Init_Display(&uiInfo.uiDC);
 
   if (Menu_Count() > 0) {
     menuDef_t *menu = Menu_GetFocused();
@@ -5131,8 +5077,7 @@ void _UI_KeyEvent( int key, qboolean down ) {
 				Menu_HandleKey(menu, key, down );
 			}
 		} else {
-			trap_Key_SetCatcher( trap_Key_GetCatcher() & ~KEYCATCH_UI );
-			trap_Cvar_SetValue( "cl_paused", 0 );
+			UI_ForceMenuOff();
 		}
   }
 
@@ -5146,7 +5091,7 @@ void _UI_KeyEvent( int key, qboolean down ) {
 UI_MouseEvent
 =================
 */
-void _UI_MouseEvent( int localClientNum, int dx, int dy, qboolean absolute )
+void UI_MouseEvent( int localClientNum, int dx, int dy, qboolean absolute )
 {
 	if (localClientNum != 0) {
 		// ui currently only supports one cursor
@@ -5170,6 +5115,8 @@ void _UI_MouseEvent( int localClientNum, int dx, int dy, qboolean absolute )
 	else if (uiInfo.uiDC.cursory > SCREEN_HEIGHT)
 		uiInfo.uiDC.cursory = SCREEN_HEIGHT;
 
+	Init_Display(&uiInfo.uiDC);
+
   if (Menu_Count() > 0) {
     //menuDef_t *menu = Menu_GetFocused();
     //Menu_HandleMouseMove(menu, uiInfo.uiDC.cursorx, uiInfo.uiDC.cursory);
@@ -5183,15 +5130,14 @@ void _UI_MouseEvent( int localClientNum, int dx, int dy, qboolean absolute )
 UI_MousePosition
 =================
 */
-int _UI_MousePosition( int localClientNum )
+int UI_MousePosition( int localClientNum )
 {
 	if (localClientNum != 0) {
 		// ui currently only supports one cursor
 		return 0;
 	}
 
-	return (int)rint( uiInfo.uiDC.cursorx * uiInfo.uiDC.xscale ) |
-			(int)rint( uiInfo.uiDC.cursory * uiInfo.uiDC.yscale ) << 16;
+	return uiInfo.unscaledCursorX | ( uiInfo.unscaledCursorY << 16 );
 }
 
 /*
@@ -5199,15 +5145,28 @@ int _UI_MousePosition( int localClientNum )
 UI_SetMousePosition
 =================
 */
-void _UI_SetMousePosition( int localClientNum, int x, int y )
+void UI_SetMousePosition( int localClientNum, int x, int y )
 {
+	float ax, ay, aw, ah;
+
 	if (localClientNum != 0) {
 		// ui currently only supports one cursor
 		return;
 	}
 
-	uiInfo.uiDC.cursorx = x / uiInfo.uiDC.xscale;
-	uiInfo.uiDC.cursory = y / uiInfo.uiDC.yscale;
+	uiInfo.unscaledCursorX = x;
+	uiInfo.unscaledCursorY = y;
+
+	ax = 0;
+	ay = 0;
+	aw = 1;
+	ah = 1;
+	UI_AdjustFrom640( &ax, &ay, &aw, &ah );
+
+	uiInfo.uiDC.cursorx = uiInfo.unscaledCursorX / aw - ax;
+	uiInfo.uiDC.cursory = uiInfo.unscaledCursorY / ah - ay;
+
+	Init_Display(&uiInfo.uiDC);
 
 	if( Menu_Count( ) > 0 ) {
 		Display_MouseMove( NULL, uiInfo.uiDC.cursorx, uiInfo.uiDC.cursory );
@@ -5223,8 +5182,10 @@ void UI_LoadNonIngame( void ) {
 	uiInfo.inGameLoad = qfalse;
 }
 
-void _UI_SetActiveMenu( uiMenuCommand_t menu ) {
+void UI_SetActiveMenu( uiMenuCommand_t menu ) {
 	char buf[256];
+
+	Init_Display(&uiInfo.uiDC);
 
 	// this should be the ONLY way the menu system is brought up
 	// enusure minumum menu data is cached
@@ -5233,14 +5194,12 @@ void _UI_SetActiveMenu( uiMenuCommand_t menu ) {
 		v[0] = v[1] = v[2] = 0;
 	  switch ( menu ) {
 	  case UIMENU_NONE:
-			trap_Key_SetCatcher( trap_Key_GetCatcher() & ~KEYCATCH_UI );
-			trap_Cvar_SetValue( "cl_paused", 0 );
-			Menus_CloseAll();
+			UI_ForceMenuOff();
 
 		  return;
 	  case UIMENU_MAIN:
 			trap_Cvar_SetValue( "sv_killserver", 1 );
-			trap_Key_SetCatcher( KEYCATCH_UI );
+			UI_EnterMenu();
 			//trap_S_StartLocalSound( trap_S_RegisterSound("sound/misc/menu_background.wav", qfalse) , CHAN_LOCAL_SOUND );
 			//trap_S_StartBackgroundTrack("sound/misc/menu_background.wav", NULL);
 			if (uiInfo.inGameLoad) {
@@ -5258,12 +5217,12 @@ void _UI_SetActiveMenu( uiMenuCommand_t menu ) {
 			}
 		  return;
 	  case UIMENU_TEAM:
-			trap_Key_SetCatcher( KEYCATCH_UI );
+			UI_EnterMenu();
       Menus_ActivateByName("team");
 		  return;
 	  case UIMENU_POSTGAME:
 			trap_Cvar_SetValue( "sv_killserver", 1 );
-			trap_Key_SetCatcher( KEYCATCH_UI );
+			UI_EnterMenu();
 			if (uiInfo.inGameLoad) {
 				UI_LoadNonIngame();
 			}
@@ -5271,8 +5230,7 @@ void _UI_SetActiveMenu( uiMenuCommand_t menu ) {
 			Menus_ActivateByName("endofgame");
 		  return;
 	  case UIMENU_INGAME:
-			trap_Cvar_SetValue( "cl_paused", 1 );
-			trap_Key_SetCatcher( KEYCATCH_UI );
+			UI_EnterMenu();
 			UI_BuildPlayerList();
 			Menus_CloseAll();
 			Menus_ActivateByName("ingame");
@@ -5281,7 +5239,9 @@ void _UI_SetActiveMenu( uiMenuCommand_t menu ) {
   }
 }
 
-qboolean _UI_IsFullscreen( void ) {
+qboolean UI_IsFullscreen( void ) {
+	Init_Display(&uiInfo.uiDC);
+
 	return Menus_AnyFullScreenVisible();
 }
 
@@ -5817,8 +5777,6 @@ void UI_RegisterCvars( void ) {
 
 	trap_Cvar_Register( NULL, "g_redTeam", DEFAULT_REDTEAM_NAME, CVAR_ARCHIVE | CVAR_SYSTEMINFO );
 	trap_Cvar_Register( NULL, "g_blueTeam", DEFAULT_BLUETEAM_NAME, CVAR_ARCHIVE | CVAR_SYSTEMINFO );
-
-	BG_RegisterClientCvars(uiInfo.maxSplitView);
 }
 
 /*

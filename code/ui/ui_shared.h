@@ -78,11 +78,7 @@ Suite 120, Rockville, Maryland 20850 USA.
 #define CURSOR_ARROW				0x00000002
 #define CURSOR_SIZER				0x00000004
 
-#ifdef CGAME
-#define STRING_POOL_SIZE 128*1024
-#else
-#define STRING_POOL_SIZE 384*1024
-#endif
+#define STRING_POOL_SIZE (384+128)*1024
 #define MAX_STRING_HANDLES 4096
 
 #define MAX_SCRIPT_ARGS 12
@@ -377,9 +373,6 @@ typedef struct {
 	void (*drawCinematic)(int handle, float x, float y, float w, float h);
 	void (*runCinematicFrame)(int handle);
 
-  float			yscale;
-  float			xscale;
-  float			bias;
   int				realTime;
   int				frameTime;
 	int				cursorx;
@@ -388,11 +381,13 @@ typedef struct {
 
   cachedAssets_t Assets;
 
-	glconfig_t glconfig;
 	qhandle_t	whiteShader;
   qhandle_t gradientImage;
   qhandle_t cursor;
 	float FPS;
+
+	menuDef_t		Menus[MAX_MENUS];	// defined menus
+	int				menuCount;
 
 } displayContextDef_t;
 

@@ -31,6 +31,8 @@ Suite 120, Rockville, Maryland 20850 USA.
 #include "../qcommon/q_shared.h"
 #include "../renderercommon/tr_types.h"
 #include "../game/bg_misc.h"
+#include "../client/keycodes.h"
+#include "../ui/ui_public.h"
 #include "cg_public.h"
 #include "cg_syscalls.h"
 
@@ -607,6 +609,8 @@ typedef struct {
 #define MAX_SPAWN_VARS_CHARS    2048
  
 typedef struct {
+	qboolean	connected;			// connected to a server
+	
 	int			clientFrame;		// incremented each frame
 
 	qboolean	demoPlayback;
@@ -742,9 +746,6 @@ typedef struct {
 // stored in the clientInfo_t, itemInfo_t, weaponInfo_t, and powerupInfo_t
 typedef struct {
 	qhandle_t	charsetShader;
-	qhandle_t	charsetProp;
-	qhandle_t	charsetPropGlow;
-	qhandle_t	charsetPropB;
 	qhandle_t	whiteShader;
 
 #ifdef MISSIONPACK
@@ -1229,19 +1230,14 @@ extern	vmCvar_t		cg_gun_frame;
 extern	vmCvar_t		cg_gun_x;
 extern	vmCvar_t		cg_gun_y;
 extern	vmCvar_t		cg_gun_z;
-extern	vmCvar_t		cg_drawGun[MAX_SPLITVIEW];
 extern	vmCvar_t		cg_viewsize;
 extern	vmCvar_t		cg_tracerChance;
 extern	vmCvar_t		cg_tracerWidth;
 extern	vmCvar_t		cg_tracerLength;
-extern	vmCvar_t		cg_autoswitch[MAX_SPLITVIEW];
 extern	vmCvar_t		cg_ignore;
 extern	vmCvar_t		cg_simpleItems;
 extern	vmCvar_t		cg_fov;
 extern	vmCvar_t		cg_zoomFov;
-extern	vmCvar_t		cg_thirdPersonRange[MAX_SPLITVIEW];
-extern	vmCvar_t		cg_thirdPersonAngle[MAX_SPLITVIEW];
-extern	vmCvar_t		cg_thirdPerson[MAX_SPLITVIEW];
 extern	vmCvar_t		cg_splitviewVertical;
 extern	vmCvar_t		cg_lagometer;
 extern	vmCvar_t		cg_drawAttacker;
@@ -1286,11 +1282,10 @@ extern	vmCvar_t		cg_voipShowMeter;
 extern	vmCvar_t		cg_voipShowCrosshairMeter;
 extern	vmCvar_t		cg_consoleLatency;
 extern	vmCvar_t		cg_drawShaderInfo;
+extern	vmCvar_t		ui_stretch;
 #ifdef MISSIONPACK
 extern	vmCvar_t		cg_redTeamName;
 extern	vmCvar_t		cg_blueTeamName;
-extern	vmCvar_t		cg_currentSelectedPlayer[MAX_SPLITVIEW];
-extern	vmCvar_t		cg_currentSelectedPlayerName[MAX_SPLITVIEW];
 extern	vmCvar_t		cg_singlePlayer;
 extern	vmCvar_t		cg_enableDust;
 extern	vmCvar_t		cg_enableBreath;
@@ -1298,6 +1293,22 @@ extern	vmCvar_t		cg_singlePlayerActive;
 extern  vmCvar_t		cg_recordSPDemo;
 extern  vmCvar_t		cg_recordSPDemoName;
 extern	vmCvar_t		cg_obeliskRespawnDelay;
+#endif
+
+extern	vmCvar_t		cg_color1[MAX_SPLITVIEW];
+extern	vmCvar_t		cg_color2[MAX_SPLITVIEW];
+extern	vmCvar_t		cg_handicap[MAX_SPLITVIEW];
+extern	vmCvar_t		cg_teamtask[MAX_SPLITVIEW];
+extern	vmCvar_t		cg_teampref[MAX_SPLITVIEW];
+extern	vmCvar_t		cg_autoswitch[MAX_SPLITVIEW];
+extern	vmCvar_t		cg_drawGun[MAX_SPLITVIEW];
+extern	vmCvar_t		cg_thirdPersonRange[MAX_SPLITVIEW];
+extern	vmCvar_t		cg_thirdPersonAngle[MAX_SPLITVIEW];
+extern	vmCvar_t		cg_thirdPerson[MAX_SPLITVIEW];
+
+#ifdef MISSIONPACK
+extern	vmCvar_t		cg_currentSelectedPlayer[MAX_SPLITVIEW];
+extern	vmCvar_t		cg_currentSelectedPlayerName[MAX_SPLITVIEW];
 #endif
 
 //

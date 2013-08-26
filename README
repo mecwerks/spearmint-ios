@@ -240,7 +240,7 @@ New cvars
                                       holds custom pk3 files for your server
   sv_banFile                        - Name of the file that is used for storing
                                       the server bans
-  sv_public							- controls infomation sent to master server
+  sv_public                         - controls infomation sent to master server
                                       and game server browsers
                                        1: send info to masters and game browsers
                                        0: send info to game browsers
@@ -297,7 +297,7 @@ New cvars
                                       cl_aviMotionJpeg is enabled
   r_mode -2                         - This new video mode automatically uses the
                                       desktop resolution.
-  r_zfar							- sets z far for testing global fog
+  r_zfar                            - sets z far for testing global fog
                                       distances, requires cheats to be enabled
   r_forceSunScale                   - override sunShader scale when more than 0
 
@@ -332,10 +332,14 @@ New cvars
   r_shaderlod                       - used for if-endifs in shaders
                                       "if shaderlod 0.45" .. "endif"
                                        check if r_shaderlod > 0.45
+  r_forceWindowIcon32               - use low resolution 32x32 window icon,
+                                      windowicon32.ext instead of windowicon.ext
 
   g_playerCapsule                   - use capsule instead of box for player
                                       collision. each player has it set at spawn
                                       allowing mix of capsule and box in game
+
+  ui_stretch                        - stretch menus to fill wide/narrow screens
 
 
 New commands
@@ -381,6 +385,7 @@ Removed cvars
   com_basegame            - replaced manually setting basegame dirs with loading
                             them from gameconfig.txt in fs_game dir
   fs_basegame             - see above
+  vm_ui                   - ui VM has been merged into cgame VM
 
 
 Removed commands
@@ -395,7 +400,7 @@ Using shared libraries instead of qvm
   To force Spearmint to use shared libraries instead of qvms run it with the
   following parameters:
 
-    +set sv_pure 0 +set vm_cgame 0 +set vm_game 0 +set vm_ui 0
+    +set sv_pure 0 +set vm_cgame 0 +set vm_game 0
 
 Using Quake III Arena Demo Data Files
   Copy demoq3/pak0.pk3 from the demo installer to your baseq3 directory. The

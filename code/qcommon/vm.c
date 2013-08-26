@@ -81,7 +81,6 @@ VM_Init
 void VM_Init( void ) {
 	Cvar_Get( "vm_cgame", "0", CVAR_ARCHIVE );
 	Cvar_Get( "vm_game", "0", CVAR_ARCHIVE );
-	Cvar_Get( "vm_ui", "0", CVAR_ARCHIVE );
 
 	vm_minQvmHunkKB = Cvar_Get( "vm_minQvmHunkKB", "48", CVAR_ARCHIVE );
 	Cvar_CheckRange( vm_minQvmHunkKB, 0, 24 * 1024, qtrue );
@@ -1126,7 +1125,7 @@ intptr_t VM_ExplicitAlloc( vm_t *vm, int size, const char *tag ) {
 			if ( vmMemoryTags[i].vm != vm && !( vm->dllHandle && vmMemoryTags[i].vm->dllHandle ) ) {
 				continue;
 			}
-			// ZTM: FIXME: don't allow game vm to reference pointers in cgame or ui vm as are non-persistant
+			// ZTM: FIXME: don't allow game vm to reference pointers in cgame vm as they are non-persistant
 			if ( vmMemoryTags[i].size == size && strcmp( tag, vmMemoryTags[i].tag ) == 0 ) {
 				return vmMemoryTags[i].pointer;
 			}

@@ -138,9 +138,9 @@ char *Sys_ConsoleInput(void)
 }
 
 #ifdef DEDICATED
-#	define PID_FILENAME PRODUCT_NAME "_server.pid"
+#	define PID_FILENAME "server.pid"
 #else
-#	define PID_FILENAME PRODUCT_NAME ".pid"
+#	define PID_FILENAME "client.pid"
 #endif
 
 /*
@@ -154,7 +154,7 @@ static char *Sys_PIDFileName( void )
 	const char *homePath = Sys_DefaultHomePath( );
 
 	if( *homePath != '\0' )
-		return va( "%s/%s", homePath, PID_FILENAME );
+		return va( "%s/%s/%s", homePath, FS_GetCurrentGameDir(), PID_FILENAME );
 #endif
 	return NULL;
 }

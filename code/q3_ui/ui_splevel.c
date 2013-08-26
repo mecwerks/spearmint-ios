@@ -997,7 +997,6 @@ UI_SPLevelMenu_f
 =================
 */
 void UI_SPLevelMenu_f( void ) {
-	trap_Key_SetCatcher( KEYCATCH_UI );
 	uis.menusp = 0;
 	UI_SPLevelMenu();
 }

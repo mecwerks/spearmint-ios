@@ -1665,7 +1665,6 @@ qboolean Hunk_CheckMark( void ) {
 }
 
 void CL_ShutdownCGame( void );
-void CL_ShutdownUI( void );
 void SV_ShutdownGameProgs( void );
 
 /*
@@ -1679,7 +1678,6 @@ void Hunk_Clear( void ) {
 
 #ifndef DEDICATED
 	CL_ShutdownCGame();
-	CL_ShutdownUI();
 #endif
 	SV_ShutdownGameProgs();
 #ifndef DEDICATED
@@ -2546,8 +2544,12 @@ void Com_ExecuteCfg(void)
 	if(!Com_SafeMode())
 	{
 		// skip the q3config.cfg and autoexec.cfg if "safe" is on the command line
-		Cbuf_ExecuteText(EXEC_NOW, "exec " Q3CONFIG_CFG "\n");
-		Cbuf_Execute();
+		// and only execute q3config.cfg if it exists in current fs_homepath + fs_gamedir
+		if (FS_FileExists(Q3CONFIG_CFG))
+		{
+			Cbuf_ExecuteText(EXEC_NOW, "exec " Q3CONFIG_CFG "\n");
+			Cbuf_Execute();
+		}
 		Cbuf_ExecuteText(EXEC_NOW, "exec autoexec.cfg\n");
 		Cbuf_Execute();
 	}
@@ -2853,9 +2855,11 @@ void Com_Init( char *commandLine ) {
 
 	if( Sys_WritePIDFile( ) ) {
 #ifndef DEDICATED
-		const char *message = "The last time " PRODUCT_NAME " ran, "
+		char message[1024];
+
+		Com_sprintf( message, sizeof (message), "The last time %s ran, "
 			"it didn't exit properly. This may be due to inappropriate video "
-			"settings. Would you like to start with \"safe\" video settings?";
+			"settings. Would you like to start with \"safe\" video settings?", com_productName->string );
 
 		if( Sys_Dialog( DT_YES_NO, message, "Abnormal Exit" ) == DR_YES ) {
 			Cvar_Set( "com_abnormalExit", "1" );
@@ -3228,7 +3232,7 @@ int Com_ModifyMsec( int msec ) {
 		// clients of remote servers do not want to clamp time, because
 		// it would skew their view of the server's time temporarily
 
-		if (com_sv_running->integer && msec > 500)
+		if ( ( ( com_sv_running->integer && com_dedicated->integer ) || com_developer->integer ) && msec > 500 )
 			Com_Printf( "Hitch warning: %i msec frame time\n", msec );
 
 		clampTime = 5000;

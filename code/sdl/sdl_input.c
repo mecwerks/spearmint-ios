@@ -418,9 +418,9 @@ IN_GetUIMousePosition
 */
 static void IN_GetUIMousePosition( int localClientNum, int *x, int *y )
 {
-	if( uivm )
+	if( cgvm )
 	{
-		int pos = VM_Call( uivm, UI_MOUSE_POSITION, localClientNum );
+		int pos = VM_Call( cgvm, CG_MOUSE_POSITION, localClientNum );
 		*x = Com_Clamp(0, cls.glconfig.vidWidth - 1, pos & 0xFFFF);
 		*y = Com_Clamp(0, cls.glconfig.vidHeight - 1, ( pos >> 16 ) & 0xFFFF);
 	}
@@ -438,9 +438,9 @@ IN_SetUIMousePosition
 */
 static void IN_SetUIMousePosition( int localClientNum, int x, int y )
 {
-	if( uivm )
+	if( cgvm )
 	{
-		VM_Call( uivm, UI_SET_MOUSE_POSITION, localClientNum, x, y );
+		VM_Call( cgvm, CG_SET_MOUSE_POSITION, localClientNum, x, y );
 	}
 }
 
@@ -1148,7 +1148,7 @@ void IN_Frame( void )
 
 	// If not DISCONNECTED (main menu) or ACTIVE (in game), we're loading
 	loading = ( clc.state != CA_DISCONNECTED && clc.state != CA_ACTIVE );
-	cursorShowing = Key_GetCatcher() & KEYCATCH_UI;
+	cursorShowing = !( Mouse_GetState( 0 ) & MOUSE_CLIENT );
 
 	if( !Cvar_VariableIntegerValue("r_fullscreen") && ( Key_GetCatcher( ) & KEYCATCH_CONSOLE ) )
 	{

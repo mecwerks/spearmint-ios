@@ -47,6 +47,40 @@ void IN_VoipRecordUp(void)
 #endif
 
 /*
+====================
+Mouse_GetState
+====================
+*/
+int Mouse_GetState( int localClientNum ) {
+	calc_t *lc;
+
+	if ( localClientNum < 0 || localClientNum >= CL_MAX_SPLITVIEW) {
+		return 0;
+	}
+
+	lc = &cl.localClients[localClientNum];
+
+	return lc->mouseFlags;
+}
+
+/*
+====================
+Mouse_SetState
+====================
+*/
+void Mouse_SetState( int localClientNum, int state ) {
+	calc_t *lc;
+
+	if ( localClientNum < 0 || localClientNum >= CL_MAX_SPLITVIEW) {
+		return;
+	}
+
+	lc = &cl.localClients[localClientNum];
+
+	lc->mouseFlags = state;
+}
+
+/*
 =================
 CL_MouseEvent
 =================
@@ -58,18 +92,19 @@ void CL_MouseEvent( int localClientNum, int dx, int dy, int time, qboolean absol
 		return;
 	}
 
-	if ( Key_GetCatcher( ) & KEYCATCH_UI ) {
-#ifdef IOS
-		VM_Call(uivm, UI_MOUSE_EVENT, localClientNum, dx, dy, absolute);
-#else
-		VM_Call(uivm, UI_MOUSE_EVENT, localClientNum, dx, dy, qfalse);
-#endif
-	} else if (Key_GetCatcher( ) & KEYCATCH_CGAME) {
-		VM_Call(cgvm, CG_MOUSE_EVENT, localClientNum, dx, dy);
-	} else {
-		lc = &cl.localClients[localClientNum];
+	lc = &cl.localClients[localClientNum];
+
+	if ( lc->mouseFlags & MOUSE_CLIENT ) {
 		lc->mouseDx[lc->mouseIndex] += dx;
 		lc->mouseDy[lc->mouseIndex] += dy;
+	}
+
+	if ( lc->mouseFlags & MOUSE_CGAME ) {
+#ifdef IOS
+                VM_Call(uivm, CG_MOUSE_EVENT, localClientNum, dx, dy, absolute);
+#else
+		VM_Call(cgvm, CG_MOUSE_EVENT, localClientNum, dx, dy, qfalse);
+#endif
 	}
 }
 

@@ -38,43 +38,6 @@ Suite 120, Rockville, Maryland 20850 USA.
 uiStatic_t		uis;
 qboolean		m_entersound;		// after a frame, so caching won't disrupt the sound
 
-void QDECL Com_Error( int level, const char *error, ... ) {
-	va_list		argptr;
-	char		text[1024];
-
-	va_start (argptr, error);
-	Q_vsnprintf (text, sizeof(text), error, argptr);
-	va_end (argptr);
-
-	trap_Error( text );
-}
-
-void QDECL Com_Printf( const char *msg, ... ) {
-	va_list		argptr;
-	char		text[1024];
-
-	va_start (argptr, msg);
-	Q_vsnprintf (text, sizeof(text), msg, argptr);
-	va_end (argptr);
-
-	trap_Print( va("%s", text) );
-}
-
-void QDECL Com_DPrintf( const char *msg, ... ) {
-	va_list		argptr;
-	char		text[1024];
-
-	if (!trap_Cvar_VariableValue("developer")) {
-		return;			// don't confuse non-developers with techie stuff...
-	}
-
-	va_start (argptr, msg);
-	Q_vsnprintf (text, sizeof(text), msg, argptr);
-	va_end (argptr);
-
-	trap_Print( text );
-}
-
 /*
 =================
 UI_ClampCvar
@@ -159,6 +122,7 @@ void UI_PushMenu( menuframework_s *menu )
 
 	m_entersound = qtrue;
 
+	trap_Mouse_SetState( 0, ( trap_Mouse_GetState( 0 ) & ~MOUSE_CLIENT ) | MOUSE_CGAME );
 	trap_Key_SetCatcher( KEYCATCH_UI );
 
 	// force first available item to have focus
@@ -204,6 +168,7 @@ void UI_ForceMenuOff (void)
 	uis.menusp     = 0;
 	uis.activemenu = NULL;
 
+	trap_Mouse_SetState( 0, ( trap_Mouse_GetState( 0 ) & ~MOUSE_CGAME ) | MOUSE_CLIENT );
 	trap_Key_SetCatcher( trap_Key_GetCatcher() & ~KEYCATCH_UI );
 	trap_Cvar_SetValue( "cl_paused", 0 );
 }
@@ -392,6 +357,8 @@ static void UI_DrawBannerString2( int x, int y, const char* str, vec4_t color )
 	float	ay;
 	float	aw;
 	float	ah;
+	float	agapwidth;
+	float	aspacewidth;
 	float	frow;
 	float	fcol;
 	float	fwidth;
@@ -400,15 +367,21 @@ static void UI_DrawBannerString2( int x, int y, const char* str, vec4_t color )
 	// draw the colored text
 	trap_R_SetColor( color );
 	
-	ax = x * uis.xscale + uis.bias;
-	ay = y * uis.yscale;
+	ax = x;
+	ay = y;
+	agapwidth = PROPB_GAP_WIDTH;
+	ah = PROPB_HEIGHT;
+	UI_AdjustFrom640( &ax, &ay, &agapwidth, &ah );
+
+	aspacewidth = PROPB_SPACE_WIDTH;
+	UI_AdjustFrom640( NULL, NULL, &aspacewidth, NULL );
 
 	s = str;
 	while ( *s )
 	{
 		ch = *s & 127;
 		if ( ch == ' ' ) {
-			ax += ((float)PROPB_SPACE_WIDTH + (float)PROPB_GAP_WIDTH)* uis.xscale;
+			aw = aspacewidth;
 		}
 		else if ( ch >= 'A' && ch <= 'Z' ) {
 			ch -= 'A';
@@ -416,11 +389,12 @@ static void UI_DrawBannerString2( int x, int y, const char* str, vec4_t color )
 			frow = (float)propMapB[ch][1] / 256.0f;
 			fwidth = (float)propMapB[ch][2] / 256.0f;
 			fheight = (float)PROPB_HEIGHT / 256.0f;
-			aw = (float)propMapB[ch][2] * uis.xscale;
-			ah = (float)PROPB_HEIGHT * uis.yscale;
+			aw = (float)propMapB[ch][2];
+			UI_AdjustFrom640( NULL, NULL, &aw, NULL );
 			trap_R_DrawStretchPic( ax, ay, aw, ah, fcol, frow, fcol+fwidth, frow+fheight, uis.charsetPropB );
-			ax += (aw + (float)PROPB_GAP_WIDTH * uis.xscale);
 		}
+
+		ax += (aw + agapwidth);
 		s++;
 	}
 
@@ -502,6 +476,8 @@ static void UI_DrawProportionalString2( int x, int y, const char* str, vec4_t co
 	float	ay;
 	float	aw = 0;
 	float	ah;
+	float	agapwidth;
+	float	aspacewidth;
 	float	frow;
 	float	fcol;
 	float	fwidth;
@@ -510,27 +486,33 @@ static void UI_DrawProportionalString2( int x, int y, const char* str, vec4_t co
 	// draw the colored text
 	trap_R_SetColor( color );
 	
-	ax = x * uis.xscale + uis.bias;
-	ay = y * uis.yscale;
+	ax = x;
+	ay = y;
+	agapwidth = PROP_GAP_WIDTH * sizeScale;
+	ah = PROP_HEIGHT * sizeScale;
+	UI_AdjustFrom640( &ax, &ay, &agapwidth, &ah );
+
+	aspacewidth = PROP_SPACE_WIDTH * sizeScale;
+	UI_AdjustFrom640( NULL, NULL, &aspacewidth, NULL );
 
 	s = str;
 	while ( *s )
 	{
 		ch = *s & 127;
 		if ( ch == ' ' ) {
-			aw = (float)PROP_SPACE_WIDTH * uis.xscale * sizeScale;
+			aw = aspacewidth;
 		}
 		else if ( propMap[ch][2] != -1 ) {
 			fcol = (float)propMap[ch][0] / 256.0f;
 			frow = (float)propMap[ch][1] / 256.0f;
 			fwidth = (float)propMap[ch][2] / 256.0f;
 			fheight = (float)PROP_HEIGHT / 256.0f;
-			aw = (float)propMap[ch][2] * uis.xscale * sizeScale;
-			ah = (float)PROP_HEIGHT * uis.yscale * sizeScale;
+			aw = (float)propMap[ch][2] * sizeScale;
+			UI_AdjustFrom640( NULL, NULL, &aw, NULL );
 			trap_R_DrawStretchPic( ax, ay, aw, ah, fcol, frow, fcol+fwidth, frow+fheight, charset );
 		}
 
-		ax += (aw + (float)PROP_GAP_WIDTH * uis.xscale * sizeScale);
+		ax += (aw + agapwidth);
 		s++;
 	}
 
@@ -701,10 +683,12 @@ static void UI_DrawString2( int x, int y, const char* str, vec4_t color, int cha
 	// draw the colored text
 	trap_R_SetColor( color );
 	
-	ax = x * uis.xscale + uis.bias;
-	ay = y * uis.yscale;
-	aw = charw * uis.xscale;
-	ah = charh * uis.yscale;
+	ax = x;
+	ay = y;
+	aw = charw;
+	ah = charh;
+
+	UI_AdjustFrom640( &ax, &ay, &aw, &ah );
 
 	s = str;
 	while ( *s )
@@ -875,7 +859,7 @@ void UI_SetActiveMenu( uiMenuCommand_t menu ) {
 UI_KeyEvent
 =================
 */
-void UI_KeyEvent( int key, int down ) {
+void UI_KeyEvent( int key, qboolean down ) {
 	sfxHandle_t		s;
 
 	if (!uis.activemenu) {
@@ -904,7 +888,7 @@ void UI_MouseEvent( int localClientNum, int dx, int dy, qboolean absolute )
 {
 	int				i;
 	menucommon_s*	m;
-	float			biasScaled = uis.bias / uis.xscale;
+	float			ax, ay, aw, ah;
 
 	if (localClientNum != 0) {
 		// q3_ui currently only supports one cursor
@@ -915,22 +899,31 @@ void UI_MouseEvent( int localClientNum, int dx, int dy, qboolean absolute )
 		return;
 	
 	// update mouse screen position
-	if (absolute) uis.cursorx = dx;
-	else uis.cursorx += dx;
+	if (absolute) uis.unscaledCursorX = dx;
+	else uis.unscaledCursorX += dx;
 
-	if (uis.cursorx < -biasScaled)
-		uis.cursorx = -biasScaled;
-	else if (uis.cursorx > SCREEN_WIDTH+biasScaled)
-		uis.cursorx = SCREEN_WIDTH+biasScaled;
+	if (uis.unscaledCursorX < 0)
+		uis.unscaledCursorX = 0;
+	else if (uis.unscaledCursorX > cgs.glconfig.vidWidth)
+		uis.unscaledCursorX = cgs.glconfig.vidWidth;
 
-	if (absolute) uis.cursory = dy;
-	else uis.cursory += dy;
-	
-	if (uis.cursory < 0)
-		uis.cursory = 0;
-	else if (uis.cursory > SCREEN_HEIGHT)
-		uis.cursory = SCREEN_HEIGHT;
-	
+	if (absolute) uis.unscaledCursorY = dy;
+        else uis.unscaledCursorY += dy;
+
+	if (uis.unscaledCursorY < 0)
+		uis.unscaledCursorY = 0;
+	else if (uis.unscaledCursorY > cgs.glconfig.vidHeight)
+		uis.unscaledCursorY = cgs.glconfig.vidHeight;
+
+	ax = 0;
+	ay = 0;
+	aw = 1;
+	ah = 1;
+	UI_AdjustFrom640( &ax, &ay, &aw, &ah );
+
+	uis.cursorx = uis.unscaledCursorX / aw - ax;
+	uis.cursory = uis.unscaledCursorY / ah - ay;
+
 	// region test the active menu items
 	
 	for (i=0; i<uis.activemenu->nitems; i++)
@@ -982,8 +975,7 @@ int UI_MousePosition( int localClientNum )
 		return 0;
 	}
 
-	return (int)rint( uis.cursorx * uis.xscale + uis.bias ) |
-			(int)rint( uis.cursory * uis.yscale ) << 16;
+	return (int)uis.unscaledCursorX | ( (int)uis.unscaledCursorY << 16 );
 }
 
 /*
@@ -998,8 +990,8 @@ void UI_SetMousePosition( int localClientNum, int x, int y )
 		return;
 	}
 
-	uis.cursorx = x / uis.xscale - (uis.bias / uis.xscale);
-	uis.cursory = y / uis.yscale;
+	uis.unscaledCursorX = x;
+	uis.unscaledCursorY = y;
 
 	UI_MouseEvent(localClientNum, 0, 0, qfalse);
 }
@@ -1139,22 +1131,6 @@ void UI_Init( qboolean inGameLoad, int maxSplitView ) {
 
 	UI_InitGameinfo();
 
-	// cache redundant calulations
-	trap_GetGlconfig( &uis.glconfig );
-
-	// for 640x480 virtualized screen
-	uis.xscale = uis.glconfig.vidWidth * (1.0/640.0);
-	uis.yscale = uis.glconfig.vidHeight * (1.0/480.0);
-	if ( uis.glconfig.vidWidth * 480 > uis.glconfig.vidHeight * 640 ) {
-		// wide screen
-		uis.bias = 0.5 * ( uis.glconfig.vidWidth - ( uis.glconfig.vidHeight * (640.0/480.0) ) );
-		uis.xscale = uis.yscale;
-	}
-	else {
-		// no wide screen
-		uis.bias = 0;
-	}
-
 	// initialize the menu system
 	Menu_Cache();
 
@@ -1170,11 +1146,7 @@ Adjusted for resolution and screen aspect ratio
 ================
 */
 void UI_AdjustFrom640( float *x, float *y, float *w, float *h ) {
-	// expect valid pointers
-	*x = *x * uis.xscale + uis.bias;
-	*y *= uis.yscale;
-	*w *= uis.xscale;
-	*h *= uis.yscale;
+	CG_AdjustFrom640( x, y, w, h );
 }
 
 void UI_DrawNamedPic( float x, float y, float width, float height, const char *picname ) {
@@ -1279,6 +1251,13 @@ void UI_Refresh( int realtime )
 	{
 		if (uis.activemenu->fullscreen)
 		{
+			// wide and narrow aspect ratios screens need to have the sides cleared
+			if ( cgs.screenXBias || cgs.screenYBias ) {
+				trap_R_SetColor( g_color_table[0] );
+				trap_R_DrawStretchPic( 0, 0, cgs.glconfig.vidWidth, cgs.glconfig.vidHeight, 0, 0, 0, 0, uis.whiteShader );
+				trap_R_SetColor( NULL );
+			}
+
 			// draw the background
 			if( uis.activemenu->showlogo ) {
 				UI_DrawHandlePic( 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, uis.menuBackShader );

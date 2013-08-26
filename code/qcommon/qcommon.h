@@ -109,6 +109,7 @@ void MSG_ReadDeltaUsercmdKey( msg_t *msg, int key, usercmd_t *from, usercmd_t *t
 
 void MSG_SetNetFields( vmNetField_t *vmEntityFields, int numEntityFields, int entityStateSize,
 					   vmNetField_t *vmPlayerFields, int numPlayerFields, int playerStateSize );
+void MSG_ShutdownNetFields( void );
 
 void MSG_WriteDeltaEntity( msg_t *msg, sharedEntityState_t *from, sharedEntityState_t *to,
 						   qboolean force );
@@ -592,11 +593,6 @@ issues.
 ==============================================================
 */
 
-// referenced flags
-// these are in loop specific order so don't change the order
-#define FS_GENERAL_REF	0x01
-#define FS_UI_REF		0x02
-#define FS_CGAME_REF	0x04
 // number of id paks that will never be autodownloaded from baseq3/missionpack
 #define NUM_ID_PAKS		9
 #define NUM_TA_PAKS		4
@@ -719,9 +715,6 @@ const char *FS_ReferencedPakNames( void );
 const char *FS_ReferencedPakChecksums( void );
 // Returns a space separated string containing the checksums of all referenced pk3 files.
 // The server will send this to the clients so they can check which files should be auto-downloaded.
-
-void FS_ClearPakReferences( int flags );
-// clears referenced booleans on loaded pk3s
 
 void FS_PureServerSetReferencedPaks( const char *pakSums, const char *pakNames );
 void FS_PureServerSetLoadedPaks( const char *pakSums, const char *pakNames );
@@ -919,7 +912,6 @@ server vm
 server clipmap
 ---mark---
 renderer initialization (shaders, etc)
-UI vm
 cgame vm
 renderer map
 renderer models
@@ -1093,11 +1085,6 @@ void SV_PacketEvent( netadr_t from, msg_t *msg );
 int SV_FrameMsec(void);
 qboolean SV_GameCommand( void );
 int SV_SendQueuedPackets(void);
-
-//
-// UI interface
-//
-qboolean UI_GameCommand( void );
 
 /*
 ==============================================================

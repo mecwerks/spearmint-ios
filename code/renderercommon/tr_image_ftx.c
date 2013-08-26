@@ -27,36 +27,71 @@ terms, you may contact in writing id Software LLC, c/o ZeniMax Media Inc.,
 Suite 120, Rockville, Maryland 20850 USA.
 ===========================================================================
 */
-//
-#ifndef __UI_PUBLIC_H__
-#define __UI_PUBLIC_H__
 
-#include "../cgame/cg_public.h"
+#include "tr_common.h"
 
-// UI functions used by cgame
+typedef struct {
+	int width, height, hasTranparency;
+} FtxHeader;
 
-void	UI_Init( qboolean inGameLoad, int maxSplitView );
-void	UI_Shutdown( void );
+void R_LoadFTX ( const char *name, byte **pic, int *width, int *height)
+{
+	unsigned	numPixels;
+	byte	*buf_p;
+	union {
+		byte *b;
+		void *v;
+	} buffer;
+	FtxHeader	ftx_header;
+	byte		*ftx_rgba;
+	int length;
 
-void	UI_KeyEvent( int key, qboolean down );
-void	UI_MouseEvent( int localClientNum, int dx, int dy, qboolean absolute );
-int		UI_MousePosition( int localClientNum );
-void	UI_SetMousePosition( int localClientNum, int x, int y );
+	*pic = NULL;
 
-qboolean UI_IsFullscreen( void );
+	if(width)
+		*width = 0;
+	if(height)
+		*height = 0;
 
-void	UI_Refresh( int time );
-void	UI_SetActiveMenu( uiMenuCommand_t menu );
-qboolean UI_ConsoleCommand( int realTime );
+	//
+	// load the file
+	//
+	length = ri.FS_ReadFile ( ( char * ) name, &buffer.v);
+	if ( !buffer.b || length < 0 ) {
+		return;
+	}
 
-void	UI_DrawConnectScreen( qboolean overlay );
-// if !overlay, the background will be drawn, otherwise it will be
-// overlayed over whatever the cgame has drawn.
-// a GetClientState syscall will be made to get the current strings
+	if ( length < sizeof (FtxHeader) )
+	{
+		ri.Error( ERR_DROP, "LoadFTX: header too short (%s)", name );
+	}
 
-qboolean UI_WantsBindKeys( void );
+	buf_p = buffer.b;
 
-// used by cg_info.c
-void UI_DrawProportionalString( int x, int y, const char* str, int style, vec4_t color );
+	ftx_header = *(FtxHeader*)buf_p;
+	ftx_header.width = LittleLong(ftx_header.width);
+	ftx_header.height = LittleLong(ftx_header.height);
+	ftx_header.hasTranparency = LittleLong(ftx_header.hasTranparency);
 
-#endif
+	buf_p += sizeof (FtxHeader);
+
+	numPixels = ftx_header.width * ftx_header.height * 4;
+
+	if ( ftx_header.width <= 0 || ftx_header.height <= 0 || numPixels > 0x7FFFFFFF )
+	{
+		ri.Error (ERR_DROP, "LoadFTX: %s has an invalid image size", name);
+	}
+
+	ftx_rgba = ri.Malloc (numPixels);
+
+	Com_Memcpy( ftx_rgba, buf_p, numPixels );
+
+	if (width)
+		*width = ftx_header.width;
+	if (height)
+		*height = ftx_header.height;
+
+	*pic = ftx_rgba;
+
+	ri.FS_FreeFile (buffer.v);
+}
