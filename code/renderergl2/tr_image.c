@@ -102,14 +102,6 @@ void GL_TextureMode( const char *string ) {
 		}
 	}
 
-	// hack to prevent trilinear from being set on voodoo,
-	// because their driver freaks...
-	if ( i == 5 && glConfig.hardwareType == GLHW_3DFX_2D3D ) {
-		ri.Printf( PRINT_ALL, "Refusing to set trilinear on a voodoo.\n" );
-		i = 3;
-	}
-
-
 	if ( i == 6 ) {
 		ri.Printf (PRINT_ALL, "bad filter name\n");
 		return;
@@ -416,7 +408,9 @@ static void RGBAtoNormal(const byte *in, byte *out, int width, int height, qbool
 
 		for (x = 0; x < width; x++)
 		{
-			*outbyte = (inbyte[0] >> 2) + (inbyte[1] >> 1) + (inbyte[2] >> 2);
+			byte result = (inbyte[0] >> 2) + (inbyte[1] >> 1) + (inbyte[2] >> 2);
+			result = result * result / 255; // Make linear
+			*outbyte = result;
 			max = MAX(max, *outbyte);
 			outbyte += 4;
 			inbyte  += 4;
@@ -1864,7 +1858,7 @@ static GLenum RawImage_GetFormat(const byte *data, int numPixels, qboolean light
 			}
 		}
 
-		if (glRefConfig.texture_srgb && (flags & IMGFLAG_SRGB))
+		if (glRefConfig.textureSrgb && (flags & IMGFLAG_SRGB))
 		{
 			switch(internalFormat)
 			{
@@ -2057,7 +2051,7 @@ static void Upload32( byte *data, int width, int height, imgType_t type, imgFlag
 	}
 
 	// Convert to RGB if sRGB textures aren't supported in hardware
-	if (!glRefConfig.texture_srgb && (flags & IMGFLAG_SRGB))
+	if (!glRefConfig.textureSrgb && (flags & IMGFLAG_SRGB))
 	{
 		byte *in = data;
 		int c = width * height;
@@ -2286,12 +2280,21 @@ image_t *R_CreateImage( const char *name, byte *pic, int width, int height, imgT
 
 	if (image->flags & IMGFLAG_CUBEMAP)
 	{
-		GL_BindCubemap(image);
+		GL_Bind(image);
 		qglTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 		qglTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 		qglTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
-		qglTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-		qglTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+
+		if (image->flags & IMGFLAG_MIPMAP)
+		{
+			qglTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+			qglTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+		}
+		else
+		{
+			qglTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+			qglTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		}
 
 		qglTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X, 0, GL_RGBA8, width, height, 0, GL_BGRA, GL_UNSIGNED_BYTE, pic);
 		qglTexImage2D(GL_TEXTURE_CUBE_MAP_NEGATIVE_X, 0, GL_RGBA8, width, height, 0, GL_BGRA, GL_UNSIGNED_BYTE, pic);
@@ -2299,6 +2302,9 @@ image_t *R_CreateImage( const char *name, byte *pic, int width, int height, imgT
 		qglTexImage2D(GL_TEXTURE_CUBE_MAP_NEGATIVE_Y, 0, GL_RGBA8, width, height, 0, GL_BGRA, GL_UNSIGNED_BYTE, pic);
 		qglTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_Z, 0, GL_RGBA8, width, height, 0, GL_BGRA, GL_UNSIGNED_BYTE, pic);
 		qglTexImage2D(GL_TEXTURE_CUBE_MAP_NEGATIVE_Z, 0, GL_RGBA8, width, height, 0, GL_BGRA, GL_UNSIGNED_BYTE, pic);
+
+		if (image->flags & IMGFLAG_MIPMAP)
+			qglGenerateMipmapEXT(GL_TEXTURE_CUBE_MAP);
 
 		image->uploadWidth = width;
 		image->uploadHeight = height;
@@ -2626,6 +2632,7 @@ image_t	*R_FindImageFile( const char *name, imgType_t type, imgFlags_t flags )
 			normalPic = ri.Malloc(width * height * 4);
 			RGBAtoNormal(pic, normalPic, width, height, flags & IMGFLAG_CLAMPTOEDGE);
 
+#if 1
 			// Brighten up the original image to work with the normal map
 			RGBAtoYCoCgA(pic, pic, width, height);
 			for (y = 0; y < height; y++)
@@ -2641,6 +2648,61 @@ image_t	*R_FindImageFile( const char *name, imgType_t type, imgFlags_t flags )
 				}
 			}
 			YCoCgAtoRGBA(pic, pic, width, height);
+#else
+			// Blur original image's luma to work with the normal map
+			{
+				byte *blurPic;
+
+				RGBAtoYCoCgA(pic, pic, width, height);
+				blurPic = ri.Malloc(width * height);
+
+				for (y = 1; y < height - 1; y++)
+				{
+					byte *picbyte  = pic     + y * width * 4;
+					byte *blurbyte = blurPic + y * width;
+
+					picbyte += 4;
+					blurbyte += 1;
+
+					for (x = 1; x < width - 1; x++)
+					{
+						int result;
+
+						result = *(picbyte - (width + 1) * 4) + *(picbyte - width * 4) + *(picbyte - (width - 1) * 4) +
+						         *(picbyte -          1  * 4) + *(picbyte            ) + *(picbyte +          1  * 4) +
+						         *(picbyte + (width - 1) * 4) + *(picbyte + width * 4) + *(picbyte + (width + 1) * 4);
+
+						result /= 9;
+
+						*blurbyte = result;
+						picbyte += 4;
+						blurbyte += 1;
+					}
+				}
+
+				// FIXME: do borders
+
+				for (y = 1; y < height - 1; y++)
+				{
+					byte *picbyte  = pic     + y * width * 4;
+					byte *blurbyte = blurPic + y * width;
+
+					picbyte += 4;
+					blurbyte += 1;
+
+					for (x = 1; x < width - 1; x++)
+					{
+						picbyte[0] = *blurbyte;
+						picbyte += 4;
+						blurbyte += 1;
+					}
+				}
+
+				ri.Free(blurPic);
+
+				YCoCgAtoRGBA(pic, pic, width, height);
+			}
+#endif
 
 			R_CreateImage( normalName, normalPic, normalWidth, normalHeight, IMGTYPE_NORMAL, normalFlags, 0 );
 			ri.Free( normalPic );	
@@ -2898,6 +2960,9 @@ void R_CreateBuiltinImages( void ) {
 	Com_Memset( data, 255, sizeof( data ) );
 	tr.whiteImage = R_CreateImage("*white", (byte *)data, 8, 8, IMGTYPE_COLORALPHA, IMGFLAG_NONE, 0);
 
+	Com_Memset( data, 128, sizeof( data ) );
+	tr.greyImage = R_CreateImage("*grey", (byte *)data, 8, 8, IMGTYPE_COLORALPHA, IMGFLAG_NONE, GL_RGBA8);
+
 	if (r_dlightMode->integer >= 2)
 	{
 		for( x = 0; x < MAX_DLIGHTS; x++)
@@ -2930,7 +2995,7 @@ void R_CreateBuiltinImages( void ) {
 
 	if (glRefConfig.framebufferObject)
 	{
-		int width, height, hdrFormat;
+		int width, height, hdrFormat, rgbFormat;
 
 		if(glRefConfig.textureNonPowerOfTwo)
 		{
@@ -2947,19 +3012,15 @@ void R_CreateBuiltinImages( void ) {
 		if (r_hdr->integer && glRefConfig.framebufferObject && glRefConfig.textureFloat)
 			hdrFormat = GL_RGB16F_ARB;
 
+		rgbFormat = GL_RGBA8;
+
 		tr.renderImage = R_CreateImage("_render", NULL, width, height, IMGTYPE_COLORALPHA, IMGFLAG_NO_COMPRESSION | IMGFLAG_CLAMPTOEDGE, hdrFormat);
 
 		if (r_drawSunRays->integer)
-			tr.sunRaysImage = R_CreateImage("*sunRays", NULL, width, height, IMGTYPE_COLORALPHA, IMGFLAG_NO_COMPRESSION | IMGFLAG_CLAMPTOEDGE, GL_RGBA8);
+			tr.sunRaysImage = R_CreateImage("*sunRays", NULL, width, height, IMGTYPE_COLORALPHA, IMGFLAG_NO_COMPRESSION | IMGFLAG_CLAMPTOEDGE, rgbFormat);
 
 		if (r_softOverbright->integer)
-		{
-			int format;
-
-			format = GL_RGBA8;
-
-			tr.screenScratchImage = R_CreateImage("*screenScratch", NULL, width, height, IMGTYPE_COLORALPHA, IMGFLAG_NO_COMPRESSION | IMGFLAG_CLAMPTOEDGE, format);
-		}
+			tr.screenScratchImage = R_CreateImage("*screenScratch", NULL, width, height, IMGTYPE_COLORALPHA, IMGFLAG_NO_COMPRESSION | IMGFLAG_CLAMPTOEDGE, rgbFormat);
 
 		if (glRefConfig.framebufferObject)
 		{
@@ -3019,6 +3080,8 @@ void R_CreateBuiltinImages( void ) {
 		{
 			tr.sunShadowDepthImage[x] = R_CreateImage(va("*sunshadowdepth%i", x), NULL, r_shadowMapSize->integer, r_shadowMapSize->integer, IMGTYPE_COLORALPHA, IMGFLAG_NO_COMPRESSION | IMGFLAG_CLAMPTOEDGE, GL_DEPTH_COMPONENT24_ARB);
 		}
+
+		tr.renderCubeImage = R_CreateImage("*renderCube", NULL, CUBE_MAP_SIZE, CUBE_MAP_SIZE, IMGTYPE_COLORALPHA, IMGFLAG_NO_COMPRESSION | IMGFLAG_CLAMPTOEDGE | IMGFLAG_MIPMAP | IMGFLAG_CUBEMAP, rgbFormat);
 	}
 }
 
@@ -3188,7 +3251,7 @@ RE_RegisterSkin
 qhandle_t RE_RegisterSkin( const char *name ) {
 	qhandle_t	hSkin;
 	skin_t		*skin;
-	skinSurface_t	*surf;
+	skinSurface_t	*surf, *lastSurf;
 	union {
 		char *c;
 		void *v;
@@ -3208,12 +3271,16 @@ qhandle_t RE_RegisterSkin( const char *name ) {
 		return 0;
 	}
 
+	if ( !COM_CompareExtension( name, ".skin" ) ) {
+		ri.Printf( PRINT_DEVELOPER, "WARNING: RE_RegisterSkin ignoring '%s', must have \".skin\" extension\n", name );
+		return 0;
+	}
 
 	// see if the skin is already loaded
 	for ( hSkin = 1; hSkin < tr.numSkins ; hSkin++ ) {
 		skin = tr.skins[hSkin];
 		if ( !Q_stricmp( skin->name, name ) ) {
-			if( skin->numSurfaces == 0 ) {
+			if( !skin->surfaces ) {
 				return 0;		// default skin
 			}
 			return hSkin;
@@ -3229,17 +3296,9 @@ qhandle_t RE_RegisterSkin( const char *name ) {
 	skin = ri.Hunk_Alloc( sizeof( skin_t ), h_low );
 	tr.skins[hSkin] = skin;
 	Q_strncpyz( skin->name, name, sizeof( skin->name ) );
-	skin->numSurfaces = 0;
+	skin->surfaces = lastSurf = NULL;
 
 	R_IssuePendingRenderCommands();
-
-	// If not a .skin file, load as a single shader
-	if ( strcmp( name + strlen( name ) - 5, ".skin" ) ) {
-		skin->numSurfaces = 1;
-		skin->surfaces[0] = ri.Hunk_Alloc( sizeof(skin->surfaces[0]), h_low );
-		skin->surfaces[0]->shader = R_FindShader( name, LIGHTMAP_NONE, qtrue );
-		return hSkin;
-	}
 
 	// load and parse the skin file
     ri.FS_ReadFile( name, &text.v );
@@ -3267,7 +3326,7 @@ qhandle_t RE_RegisterSkin( const char *name ) {
 			SkipRestOfLine( &text_p );
 			continue;
 		}
-		
+
 		// skip RTCW/ET skin settings
 		if ( !Q_stricmpn( token, "md3_", 4 ) || !Q_stricmp( token, "playerscale" ) ) {
 			SkipRestOfLine( &text_p );
@@ -3278,17 +3337,24 @@ qhandle_t RE_RegisterSkin( const char *name ) {
 		token = COM_ParseExt2( &text_p, qfalse, ',' );
 		Q_strncpyz( shaderName, token, sizeof( shaderName ) );
 
-		surf = skin->surfaces[ skin->numSurfaces ] = ri.Hunk_Alloc( sizeof( *skin->surfaces[0] ), h_low );
+		surf = ri.Hunk_Alloc( sizeof( skinSurface_t ), h_low );
 		Q_strncpyz( surf->name, surfName, sizeof( surf->name ) );
 		surf->shader = R_FindShader( shaderName, LIGHTMAP_NONE, qtrue );
-		skin->numSurfaces++;
+
+		if ( !skin->surfaces ) {
+			skin->surfaces = surf;
+		} else if ( lastSurf ) {
+			lastSurf->next = surf;
+		}
+
+		lastSurf = surf;
 	}
 
 	ri.FS_FreeFile( text.v );
 
 
 	// never let a skin have 0 shaders
-	if ( skin->numSurfaces == 0 ) {
+	if ( !skin->surfaces ) {
 		return 0;		// use default skin
 	}
 
@@ -3309,9 +3375,6 @@ void	R_InitSkins( void ) {
 	// make the default skin have all default shaders
 	skin = tr.skins[0] = ri.Hunk_Alloc( sizeof( skin_t ), h_low );
 	Q_strncpyz( skin->name, "<default skin>", sizeof( skin->name )  );
-	skin->numSurfaces = 1;
-	skin->surfaces[0] = ri.Hunk_Alloc( sizeof( *skin->surfaces ), h_low );
-	skin->surfaces[0]->shader = tr.defaultShader;
 }
 
 /*
@@ -3332,8 +3395,9 @@ R_SkinList_f
 ===============
 */
 void	R_SkinList_f( void ) {
-	int			i, j;
+	int			i;
 	skin_t		*skin;
+	skinSurface_t *surf;
 
 	ri.Printf (PRINT_ALL, "------------------\n");
 
@@ -3341,9 +3405,9 @@ void	R_SkinList_f( void ) {
 		skin = tr.skins[i];
 
 		ri.Printf( PRINT_ALL, "%3i:%s\n", i, skin->name );
-		for ( j = 0 ; j < skin->numSurfaces ; j++ ) {
+		for ( surf = skin->surfaces ; surf ; surf = surf->next ) {
 			ri.Printf( PRINT_ALL, "       %s = %s\n", 
-				skin->surfaces[j]->name, skin->surfaces[j]->shader->name );
+				surf->name, surf->shader->name );
 		}
 	}
 	ri.Printf (PRINT_ALL, "------------------\n");

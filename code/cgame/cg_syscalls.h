@@ -48,6 +48,7 @@ float		trap_GetVoipPower( int clientNum );
 float		trap_GetVoipGain( int clientNum );
 qboolean	trap_GetVoipMute( int clientNum );
 qboolean	trap_GetVoipMuteAll( void );
+void		trap_Cmd_AutoComplete( const char *in, char *out, int outSize );
 
 
 // The glconfig_t will not change during the life of a cgame.
@@ -157,8 +158,9 @@ void		trap_R_AddRefEntityToScene( const refEntity_t *re );
 void		trap_R_AddPolyToScene( qhandle_t hShader , int numVerts, const polyVert_t *verts );
 void		trap_R_AddPolysToScene( qhandle_t hShader , int numVerts, const polyVert_t *verts, int numPolys );
 void        trap_R_AddPolyBufferToScene( polyBuffer_t* pPolyBuffer );
-void		trap_R_AddLightToScene( const vec3_t org, float intensity, float r, float g, float b );
-void		trap_R_AddAdditiveLightToScene( const vec3_t org, float intensity, float r, float g, float b );
+void		trap_R_AddLightToScene( const vec3_t org, float radius, float intensity, float r, float g, float b );
+void		trap_R_AddAdditiveLightToScene( const vec3_t org, float radius, float intensity, float r, float g, float b );
+void		trap_R_AddCoronaToScene( const vec3_t org, float r, float g, float b, float scale, int id, qboolean visible );
 int			trap_R_LightForPoint( vec3_t point, vec3_t ambientLight, vec3_t directedLight, vec3_t lightDir );
 void		trap_R_RenderScene( const refdef_t *fd );
 void		trap_R_SetColor( const float *rgba );	// NULL = 1,1,1,1
@@ -200,7 +202,7 @@ void		trap_S_UpdateEntityPosition( int entityNum, const vec3_t origin );
 void		trap_S_Respatialize( int entityNum, const vec3_t origin, vec3_t axis[3], int inwater, qboolean firstPerson );
 sfxHandle_t	trap_S_RegisterSound( const char *sample, qboolean compressed );		// returns buzz if not found
 int			trap_S_SoundDuration( sfxHandle_t handle );
-void		trap_S_StartBackgroundTrack( const char *intro, const char *loop );	// empty name stops music
+void		trap_S_StartBackgroundTrack( const char *intro, const char *loop, float volume, float loopVolume );	// empty name stops music
 void		trap_S_StopBackgroundTrack( void );
 
 void			trap_Key_KeynumToStringBuf( int keynum, char *buf, int buflen );

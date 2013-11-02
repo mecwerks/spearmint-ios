@@ -93,7 +93,6 @@ cvar_t	*cl_activeAction;
 cvar_t	*cl_motdString;
 
 cvar_t	*cl_allowDownload;
-cvar_t	*cl_conXOffset;
 cvar_t	*cl_inGameVideo;
 
 cvar_t	*cl_serverStatusResendTime;
@@ -104,6 +103,8 @@ cvar_t	*cl_lanForcePackets;
 cvar_t	*cl_guidServerUniq;
 
 cvar_t	*cl_consoleKeys;
+
+cvar_t	*cl_loadingScreenIndex;
 
 cvar_t	*cl_rate;
 
@@ -1469,10 +1470,6 @@ void CL_ClearState (void) {
 	DA_Free( &cl.parseEntities );
 
 	Com_Memset( &cl, 0, sizeof( cl ) );
-
-	for (index = 0; index < CL_MAX_SPLITVIEW; index++) {
-		cl.localClients[index].mouseFlags = MOUSE_CLIENT;
-	}
 }
 
 /*
@@ -1523,7 +1520,7 @@ static void CL_OldGame(void)
 	{
 		// change back to previous fs_game
 		cl_oldGameSet = qfalse;
-		Cvar_Set2("fs_game", cl_oldGame, qtrue);
+		Cvar_Set("fs_game", cl_oldGame);
 		FS_ConditionalRestart(qfalse);
 	}
 }
@@ -1542,9 +1539,6 @@ void CL_Disconnect( qboolean showMainMenu ) {
 	if ( !com_cl_running || !com_cl_running->integer ) {
 		return;
 	}
-
-	// shutting down the client so enter full screen ui mode
-	Cvar_Set("r_uiFullScreen", "1");
 
 	if ( clc.demorecording ) {
 		CL_StopRecord_f ();
@@ -1624,7 +1618,7 @@ void CL_Disconnect( qboolean showMainMenu ) {
 #endif
 
 	// Stop recording any video
-	if( CL_VideoRecording( ) ) {
+	if( clc.demoplaying && CL_VideoRecording( ) ) {
 		// Finish rendering current frame
 		SCR_UpdateScreen( );
 		CL_CloseAVI( );
@@ -1636,38 +1630,6 @@ void CL_Disconnect( qboolean showMainMenu ) {
 		CL_OldGame();
 	else
 		noGameRestart = qfalse;
-}
-
-
-/*
-===================
-CL_ForwardCommandToServer
-
-adds the current command line as a clientCommand
-things like godmode, noclip, etc, are commands directed to the server,
-so when they are typed in at the console, they will need to be forwarded.
-===================
-*/
-void CL_ForwardCommandToServer( const char *string ) {
-	char	*cmd;
-
-	cmd = Cmd_Argv(0);
-
-	// ignore key up commands
-	if ( cmd[0] == '-' ) {
-		return;
-	}
-
-	if ( clc.demoplaying || clc.state < CA_CONNECTED || cmd[0] == '+' ) {
-		Com_Printf ("Unknown command \"%s" S_COLOR_WHITE "\"\n", cmd);
-		return;
-	}
-
-	if ( Cmd_Argc() > 1 ) {
-		CL_AddReliableCommand(string, qfalse);
-	} else {
-		CL_AddReliableCommand(cmd, qfalse);
-	}
 }
 
 /*
@@ -2034,6 +1996,8 @@ void CL_Vid_Restart_f( void ) {
 		cls.cgameStarted = qfalse;
 		cls.soundRegistered = qfalse;
 
+		cls.drawnLoadingScreen = qfalse;
+
 		// unpause so the cgame definately gets a snapshot and renders a frame
 		Cvar_Set("cl_paused", "0");
 
@@ -2182,9 +2146,6 @@ void CL_DownloadsComplete( void ) {
 
 	// let the client game init and load data
 	clc.state = CA_LOADING;
-
-	// starting to load a map so we get out of full screen ui mode
-	Cvar_Set("r_uiFullScreen", "0");
 
 	// flush client memory and start loading stuff
 	// this will also (re)load the cgame vm
@@ -2533,6 +2494,8 @@ void CL_InitServerInfo( serverInfo_t *server, netadr_t *address ) {
 	server->game[0] = '\0';
 	server->gameType[0] = '\0';
 	server->netType = 0;
+	server->g_humanplayers = 0;
+	server->g_needpass = 0;
 }
 
 #define MAX_SERVERSPERPACKET	256
@@ -2993,7 +2956,6 @@ void CL_Frame ( int msec ) {
 			cls.realtime += cls.frametime;
 			SCR_UpdateScreen();
 			S_Update();
-			Con_RunConsole();
 			cls.framecount++;
 			return;
 		}
@@ -3010,7 +2972,7 @@ void CL_Frame ( int msec ) {
 	// if recording an avi, lock to a fixed fps
 	if ( CL_VideoRecording( ) && cl_aviFrameRate->integer && msec) {
 		// save the current screen
-		if ( clc.state == CA_ACTIVE || cl_forceavidemo->integer) {
+		if ( !clc.demoplaying || clc.state == CA_ACTIVE || cl_forceavidemo->integer ) {
 			CL_TakeVideoFrame( );
 
 			// fixed time for next frame'
@@ -3104,8 +3066,6 @@ void CL_Frame ( int msec ) {
 	// advance local effects for next frame
 	SCR_RunCinematic();
 
-	Con_RunConsole();
-
 	cls.framecount++;
 }
 
@@ -3116,18 +3076,27 @@ void CL_Frame ( int msec ) {
 ==========
 CL_DrawCenteredPic
 
-In widescreen, center shader.
+Draw shader at specified aspect scale to fit entirely on screen.
 ==========
 */
-void CL_DrawCenteredPic(qhandle_t hShader)
+void CL_DrawCenteredPic( qhandle_t hShader, float aspect )
 {
-	float x = 0, y = 0, w = SCREEN_WIDTH, h = SCREEN_HEIGHT;
+	float x, y, w, h;
 
-	SCR_AdjustFrom640( &x, &y, &w, &h );
-	// adjust for wide screens
-	if ( cls.glconfig.vidWidth * 480 > cls.glconfig.vidHeight * 640 ) {
-		x += 0.5 * ( cls.glconfig.vidWidth - ( cls.glconfig.vidHeight * 640 / 480 ) );
-		w -= ( cls.glconfig.vidWidth - ( cls.glconfig.vidHeight * 640 / 480 ) );
+	if ( cls.glconfig.vidWidth > cls.glconfig.vidHeight * aspect ) {
+		// wide screen
+		w = cls.glconfig.vidHeight * aspect;
+		h = cls.glconfig.vidHeight;
+
+		x = 0.5f * ( cls.glconfig.vidWidth - w );
+		y = 0;
+	} else {
+		// narrow screen
+		w = cls.glconfig.vidWidth;
+		h = cls.glconfig.vidWidth / aspect;
+
+		x = 0;
+		y = 0.5f * ( cls.glconfig.vidHeight - h );
 	}
 
 	re.DrawStretchPic( x, y, w, h, 0, 0, 1, 1, hShader );
@@ -3138,16 +3107,15 @@ void CL_DrawCenteredPic(qhandle_t hShader)
 CL_DrawLoadingScreenFrame
 ============
 */
-void CL_DrawLoadingScreenFrame( stereoFrame_t stereoFrame, qhandle_t hShader )
+void CL_DrawLoadingScreenFrame( stereoFrame_t stereoFrame, qhandle_t hShader, vec4_t color, float aspect )
 {
 	re.BeginFrame( stereoFrame );
 
-	// Need to draw extra stuff or screen is completely white for some shaders.
-	re.SetColor( g_color_table[0] );
+	re.SetColor( color );
 	re.DrawStretchPic( 0, 0, cls.glconfig.vidWidth, cls.glconfig.vidHeight, 0, 0, 0, 0, cls.whiteShader );
 	re.SetColor( NULL );
 
-	CL_DrawCenteredPic( hShader );
+	CL_DrawCenteredPic( hShader, aspect );
 }
 
 /*
@@ -3156,22 +3124,36 @@ CL_DrawLoadingScreen
 ============
 */
 void CL_DrawLoadingScreen( void ) {
+	int screenNum;
+	loadingScreen_t	*screen;
 	qhandle_t hShader;
+	vec4_t color;
 
-	// Q3A menu background logo
-	if (cls.glconfig.hardwareType == GLHW_RAGEPRO ) {
-		// the blend effect turns to shit with the normal 
-		hShader = re.RegisterShaderNoMip("menubackRagePro");
-	} else {
-		hShader = re.RegisterShaderNoMip("menuback");
+	if ( com_gameConfig.numLoadingScreens <= 0 ) {
+		return;
 	}
+
+	if ( cl_loadingScreenIndex->integer >= 0 ) {
+		screenNum = cl_loadingScreenIndex->integer % com_gameConfig.numLoadingScreens;
+	} else {
+		screenNum = 0;
+	}
+
+	Cvar_SetValue( "cl_loadingScreenIndex", screenNum + 1 );
+
+	screen = &com_gameConfig.loadingScreens[screenNum];
+
+	hShader = re.RegisterShaderNoMip( screen->shaderName );
+
+	VectorCopy( screen->color, color );
+	color[3] = 1.0f;
 
 	// if running in stereo, we need to draw the frame twice
 	if ( cls.glconfig.stereoEnabled || Cvar_VariableIntegerValue( "r_anaglyphMode" ) ) {
-		CL_DrawLoadingScreenFrame( STEREO_LEFT, hShader );
-		CL_DrawLoadingScreenFrame( STEREO_RIGHT, hShader );
+		CL_DrawLoadingScreenFrame( STEREO_LEFT, hShader, color, screen->aspect );
+		CL_DrawLoadingScreenFrame( STEREO_RIGHT, hShader, color, screen->aspect );
 	} else {
-		CL_DrawLoadingScreenFrame( STEREO_CENTER, hShader );
+		CL_DrawLoadingScreenFrame( STEREO_CENTER, hShader, color, screen->aspect );
 	}
 
 	if ( com_speeds->integer ) {
@@ -3197,12 +3179,6 @@ void CL_InitRenderer( void ) {
 		CL_DrawLoadingScreen();
 		cls.drawnLoadingScreen = qtrue;
 	}
-
-	// load character sets
-	cls.charSetShader = re.RegisterShader( "gfx/2d/bigchars" );
-	cls.consoleShader = re.RegisterShader( "console" );
-	g_console_field_width = cls.glconfig.vidWidth / SMALLCHAR_WIDTH - 2;
-	g_consoleField.widthInChars = g_console_field_width;
 }
 
 /*
@@ -3239,10 +3215,6 @@ void CL_StartHunkUsers( qboolean rendererOnly ) {
 	if ( !cls.soundRegistered ) {
 		cls.soundRegistered = qtrue;
 		S_BeginRegistration();
-	}
-
-	if( com_dedicated->integer ) {
-		return;
 	}
 
 	if ( !cls.cgameStarted ) {
@@ -3316,12 +3288,6 @@ void CL_Video_f( void )
 {
   char  filename[ MAX_OSPATH ];
   int   i, last;
-
-  if( !clc.demoplaying )
-  {
-    Com_Printf( "The video command can only be used when playing back demos\n" );
-    return;
-  }
 
   if( Cmd_Argc( ) == 2 )
   {
@@ -3483,7 +3449,6 @@ void CL_Init( void ) {
 	cl_cURLLib = Cvar_Get("cl_cURLLib", DEFAULT_CURL_LIB, CVAR_ARCHIVE);
 #endif
 
-	cl_conXOffset = Cvar_Get ("cl_conXOffset", "0", 0);
 #ifdef MACOS_X
 	// In game video is REALLY slow in Mac OS X right now due to driver slowness
 	cl_inGameVideo = Cvar_Get ("r_inGameVideo", "0", CVAR_ARCHIVE);
@@ -3511,6 +3476,8 @@ void CL_Init( void ) {
 	// ~ and `, as keys and characters
 	cl_consoleKeys = Cvar_Get( "cl_consoleKeys", "~ ` 0x7e 0x60", CVAR_ARCHIVE);
 
+	cl_loadingScreenIndex = Cvar_Get( "cl_loadingScreenIndex", "0", CVAR_ARCHIVE );
+
 	// select which local client (using bits) should join a server on connect
 	Cvar_Get ("cl_localClients", "1", 0 );
 
@@ -3534,7 +3501,7 @@ void CL_Init( void ) {
 	cl_voipVADThreshold = Cvar_Get ("cl_voipVADThreshold", "0.25", CVAR_ARCHIVE);
 
 	// This is a protocol version number.
-	cl_voip = Cvar_Get ("cl_voip", "1", CVAR_USERINFO_ALL | CVAR_ARCHIVE);
+	cl_voip = Cvar_Get ("cl_voip", "0", CVAR_USERINFO_ALL | CVAR_ARCHIVE);
 	Cvar_CheckRange( cl_voip, 0, 1, qtrue );
 #endif
 
@@ -3669,6 +3636,10 @@ void CL_Shutdown(char *finalmsg, qboolean disconnect, qboolean quit)
 
 	Com_Printf( "-----------------------\n" );
 
+}
+
+qboolean CL_ConnectedToServer( void ) {
+	return ( clc.state >= CA_CONNECTED );
 }
 
 static void CL_SetServerInfo(serverInfo_t *server, const char *info, int ping) {
@@ -3809,20 +3780,8 @@ void CL_ServerInfoPacket( netadr_t from, msg_t *msg ) {
 
 	// add this to the list
 	cls.numlocalservers = i+1;
-	cls.localServers[i].adr = from;
-	cls.localServers[i].clients = 0;
-	cls.localServers[i].hostName[0] = '\0';
-	cls.localServers[i].mapName[0] = '\0';
-	cls.localServers[i].maxClients = 0;
-	cls.localServers[i].maxPing = 0;
-	cls.localServers[i].minPing = 0;
-	cls.localServers[i].ping = -1;
-	cls.localServers[i].game[0] = '\0';
-	cls.localServers[i].gameType[0] = '\0';
-	cls.localServers[i].netType = from.type;
-	cls.localServers[i].g_humanplayers = 0;
-	cls.localServers[i].g_needpass = 0;
-									 
+	CL_InitServerInfo( &cls.localServers[i], &from );
+
 	Q_strncpyz( info, MSG_ReadString( msg ), MAX_INFO_STRING );
 	if (strlen(info)) {
 		if (info[strlen(info)-1] != '\n') {

@@ -147,6 +147,10 @@ int		trap_FS_Seek( fileHandle_t f, long offset, int origin ) {
 	return syscall( CG_FS_SEEK, f, offset, origin );
 }
 
+int		trap_FS_Tell( fileHandle_t f ) {
+	return syscall( CG_FS_TELL, f );
+}
+
 void	trap_FS_FCloseFile( fileHandle_t f ) {
 	syscall( CG_FS_FCLOSEFILE, f );
 }
@@ -299,8 +303,8 @@ int trap_S_SoundDuration( sfxHandle_t handle ) {
 	return syscall( CG_S_SOUNDDURATION, handle );
 }
 
-void	trap_S_StartBackgroundTrack( const char *intro, const char *loop ) {
-	syscall( CG_S_STARTBACKGROUNDTRACK, intro, loop );
+void	trap_S_StartBackgroundTrack( const char *intro, const char *loop, float volume, float loopVolume ) {
+	syscall( CG_S_STARTBACKGROUNDTRACK, intro, loop, PASSFLOAT( volume ), PASSFLOAT( loopVolume ) );
 }
 
 void	trap_S_StopBackgroundTrack( void ) {
@@ -355,12 +359,16 @@ void    trap_R_AddPolyBufferToScene( polyBuffer_t* pPolyBuffer ) {
 	syscall( CG_R_ADDPOLYBUFFERTOSCENE, pPolyBuffer );
 }
 
-void	trap_R_AddLightToScene( const vec3_t org, float intensity, float r, float g, float b ) {
-	syscall( CG_R_ADDLIGHTTOSCENE, org, PASSFLOAT(intensity), PASSFLOAT(r), PASSFLOAT(g), PASSFLOAT(b) );
+void	trap_R_AddLightToScene( const vec3_t org, float radius, float intensity, float r, float g, float b ) {
+	syscall( CG_R_ADDLIGHTTOSCENE, org, PASSFLOAT( radius ), PASSFLOAT( intensity ), PASSFLOAT( r ), PASSFLOAT( g ), PASSFLOAT( b ) );
 }
 
-void	trap_R_AddAdditiveLightToScene( const vec3_t org, float intensity, float r, float g, float b ) {
-	syscall( CG_R_ADDADDITIVELIGHTTOSCENE, org, PASSFLOAT(intensity), PASSFLOAT(r), PASSFLOAT(g), PASSFLOAT(b) );
+void	trap_R_AddAdditiveLightToScene( const vec3_t org, float radius,float intensity, float r, float g, float b ) {
+	syscall( CG_R_ADDADDITIVELIGHTTOSCENE, org, PASSFLOAT( radius ), PASSFLOAT(intensity), PASSFLOAT(r), PASSFLOAT(g), PASSFLOAT(b) );
+}
+
+void	trap_R_AddCoronaToScene( const vec3_t org, float r, float g, float b, float scale, int id, qboolean visible ) {
+	syscall( CG_R_ADDCORONATOSCENE, org, PASSFLOAT( r ), PASSFLOAT( g ), PASSFLOAT( b ), PASSFLOAT( scale ), id, visible  );
 }
 
 int		trap_R_LightForPoint( vec3_t point, vec3_t ambientLight, vec3_t directedLight, vec3_t lightDir ) {
@@ -468,6 +476,10 @@ qboolean trap_GetVoipMute( int clientNum ) {
 
 qboolean trap_GetVoipMuteAll( void ) {
 	return syscall(	CG_GET_VOIP_MUTE_ALL );
+}
+
+void		trap_Cmd_AutoComplete( const char *in, char *out, int outSize ) {
+	syscall( CG_CMD_AUTOCOMPLETE, in, out, outSize );
 }
 
 void		trap_GetGameState( gameState_t *gamestate ) {

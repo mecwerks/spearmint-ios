@@ -327,7 +327,7 @@ void G_FindTeams( void ) {
 
 	c = 0;
 	c2 = 0;
-	for ( i=1, e=g_entities+i ; i < level.num_entities ; i++,e++ ){
+	for ( i=MAX_CLIENTS, e=g_entities+i ; i < level.num_entities ; i++, e++ ) {
 		if (!e->inuse)
 			continue;
 		if (!e->team)
@@ -613,8 +613,6 @@ void G_ShutdownGame( int restart ) {
 	if ( trap_Cvar_VariableIntegerValue( "bot_enable" ) ) {
 		BotAIShutdown( restart );
 	}
-
-	G_UnregisterCommands( );
 }
 
 
@@ -687,7 +685,12 @@ int G_MapRestart( int levelTime, int restartTime ) {
 		delay = 5;
 	}
 
-	restartTime = levelTime + delay * 1000;
+	if ( delay > 0 ) {
+		restartTime = levelTime + delay * 1000;
+	} else {
+		restartTime = 0;
+	}
+
 	trap_SetConfigstring( CS_WARMUP, va( "%i", restartTime ) );
 	return restartTime;
 }

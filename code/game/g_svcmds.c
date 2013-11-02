@@ -328,8 +328,8 @@ void	Svcmd_EntityList_f (void) {
 	int			e;
 	gentity_t		*check;
 
-	check = g_entities+1;
-	for (e = 1; e < level.num_entities ; e++, check++) {
+	check = g_entities;
+	for (e = 0; e < level.num_entities ; e++, check++) {
 		if ( !check->inuse ) {
 			continue;
 		}
@@ -370,6 +370,9 @@ void	Svcmd_EntityList_f (void) {
 			break;
 		case ET_GRAPPLE:
 			G_Printf("ET_GRAPPLE          ");
+			break;
+		case ET_CORONA:
+			G_Printf("ET_CORONA           ");
 			break;
 		default:
 			G_Printf("%3i                 ", check->s.eType);
@@ -478,6 +481,7 @@ struct svcmd
   { "addbot", qfalse, Svcmd_AddBot_f },
   { "addip", qfalse, Svcmd_AddIP_f },
   { "botlist", qfalse, Svcmd_BotList_f },
+  { "botreport", qfalse, Svcmd_BotTeamplayReport_f },
   { "entityList", qfalse, Svcmd_EntityList_f },
   { "forceTeam", qfalse, Svcmd_ForceTeam_f },
   { "listip", qfalse, Svcmd_ListIPs_f },
@@ -525,17 +529,5 @@ void G_RegisterCommands( void )
 		if( svcmds[ i ].dedicated && !g_dedicated.integer )
 			continue;
 		trap_AddCommand( svcmds[ i ].cmd );
-	}
-}
-
-void G_UnregisterCommands( void )
-{
-	int i;
-
-	for( i = 0; i < numSvCmds; i++ )
-	{
-		if( svcmds[ i ].dedicated && !g_dedicated.integer )
-			continue;
-		trap_RemoveCommand( svcmds[ i ].cmd );
 	}
 }

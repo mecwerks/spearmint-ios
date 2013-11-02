@@ -70,7 +70,7 @@ typedef struct image_s {
 	int			frameUsed;			// for texture usage in frame statistics
 
 	int			internalFormat;
-	int			TMU;				// only needed for voodoo2
+	int			TMU;
 
 	imgType_t   type;
 	imgFlags_t  flags;
@@ -102,6 +102,14 @@ extern float	 vidRotation;
 #define FUNCTABLE_SIZE		1024
 #define FUNCTABLE_SIZE2		10
 #define FUNCTABLE_MASK		(FUNCTABLE_SIZE-1)
+
+// dlight flags
+#define REF_ADDITIVE_DLIGHT	0x01 // texture detail is lost tho when the lightmap is dark
+#define REF_GRID_DLIGHT		0x02 // affect dynamic light grid
+#define REF_SURFACE_DLIGHT	0x04 // affect world surfaces
+#define REF_DIRECTED_DLIGHT	0x08 // global directional light, origin should be interpreted as a normal vector
+#define REF_VERTEX_DLIGHT	0x10 // ET style spherical dlight using vertex light rendering
+#define REF_FORCE_DLIGHT	0x20 // force this dlight under all conditions
 
 //
 // cvars

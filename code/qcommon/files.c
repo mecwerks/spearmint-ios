@@ -180,7 +180,7 @@ or configs will never get loaded from disk!
 
 */
 
-#define MAX_GAMEDIRS 16 // max gamedirs a mod can have (read from gameconfig.txt)
+gameConfig_t com_gameConfig;
 
 // every time a new pk3 file is built, this checksum must be updated.
 // the easiest way to get it is to just run the game and see what it spits out
@@ -279,9 +279,9 @@ typedef struct qfile_us {
 typedef struct {
 	qfile_ut	handleFiles;
 	qboolean	handleSync;
-	int			baseOffset;
 	int			fileSize;
 	int			zipFilePos;
+	int			zipFileLen;
 	qboolean	zipFile;
 	qboolean	streamed;
 	char		name[MAX_ZPATH];
@@ -778,6 +778,10 @@ void FS_SV_Rename( const char *from, const char *to, qboolean safe ) {
 		Com_Error( ERR_FATAL, "Filesystem call made without initialization" );
 	}
 
+	if ( !from || !*from || !to || !*to || Q_stricmp( from, to ) == 0 ) {
+		return;
+	}
+
 	// don't let sound stutter
 	S_ClearSoundBuffer();
 
@@ -812,6 +816,10 @@ qboolean FS_Rename( const char *from, const char *to ) {
 		Com_Error( ERR_FATAL, "Filesystem call made without initialization" );
 	}
 
+	if ( !from || !*from || !to || !*to || Q_stricmp( from, to ) == 0 ) {
+		return qfalse;
+	}
+
 	// don't let sound stutter
 	S_ClearSoundBuffer();
 
@@ -844,6 +852,10 @@ on files returned by FS_FOpenFile...
 void FS_FCloseFile( fileHandle_t f ) {
 	if ( !fs_searchpaths ) {
 		Com_Error( ERR_FATAL, "Filesystem call made without initialization" );
+	}
+
+	if ( f < 1 || f >= MAX_FILE_HANDLES ) {
+		return;
 	}
 
 	if (fsh[f].zipFile == qtrue) {
@@ -1254,6 +1266,7 @@ long FS_FOpenFileReadDir(const char *filename, searchpath_t *search, fileHandle_
 					// open the file in the zip
 					unzOpenCurrentFile(fsh[*file].handleFiles.file.z);
 					fsh[*file].zipFilePos = pakFile->pos;
+					fsh[*file].zipFileLen = pakFile->len;
 
 					if(fs_debug->integer)
 					{
@@ -1564,7 +1577,7 @@ int FS_Delete( char *filename ) {
 		Com_Error( ERR_FATAL, "Filesystem call made without initialization\n" );
 	}
 
-	if ( !filename || filename[0] == 0 ) {
+	if ( !filename || !*filename ) {
 		return 0;
 	}
 
@@ -1607,7 +1620,7 @@ int FS_Read2( void *buffer, int len, fileHandle_t f ) {
 		Com_Error( ERR_FATAL, "Filesystem call made without initialization" );
 	}
 
-	if ( !f ) {
+	if ( f < 1 || f >= MAX_FILE_HANDLES ) {
 		return 0;
 	}
 	if (fsh[f].streamed) {
@@ -1631,7 +1644,11 @@ int FS_Read( void *buffer, int len, fileHandle_t f ) {
 		Com_Error( ERR_FATAL, "Filesystem call made without initialization" );
 	}
 
-	if ( !f ) {
+	if ( f < 1 || f >= MAX_FILE_HANDLES ) {
+		return 0;
+	}
+
+	if ( !buffer || len < 1 ) {
 		return 0;
 	}
 
@@ -1685,7 +1702,11 @@ int FS_Write( const void *buffer, int len, fileHandle_t h ) {
 		Com_Error( ERR_FATAL, "Filesystem call made without initialization" );
 	}
 
-	if ( !h ) {
+	if ( h < 1 || h >= MAX_FILE_HANDLES ) {
+		return 0;
+	}
+
+	if ( !buffer || len < 1 ) {
 		return 0;
 	}
 
@@ -1747,30 +1768,65 @@ int FS_Seek( fileHandle_t f, long offset, int origin ) {
 		return -1;
 	}
 
+	if ( f < 1 || f >= MAX_FILE_HANDLES ) {
+		return -1;
+	}
+
 	if (fsh[f].streamed) {
+		int r;
 		fsh[f].streamed = qfalse;
-		FS_Seek( f, offset, origin );
+		r = FS_Seek( f, offset, origin );
 		fsh[f].streamed = qtrue;
+		return r;
 	}
 
 	if (fsh[f].zipFile == qtrue) {
-		//FIXME: this is incomplete and really, really
-		//crappy (but better than what was here before)
+		//FIXME: this is really, really crappy
+		//(but better than what was here before)
 		byte	buffer[PK3_SEEK_BUFFER_SIZE];
-		int		remainder = offset;
+		int		remainder;
+		int		currentPosition = FS_FTell( f );
 
-		if( offset < 0 || origin == FS_SEEK_END ) {
-			Com_Error( ERR_FATAL, "Negative offsets and FS_SEEK_END not implemented "
-					"for FS_Seek on pk3 file contents" );
-			return -1;
+		// change negative offsets into FS_SEEK_SET
+		if ( offset < 0 ) {
+			switch( origin ) {
+				case FS_SEEK_END:
+					remainder = fsh[f].zipFileLen + offset;
+					break;
+
+				case FS_SEEK_CUR:
+					remainder = currentPosition + offset;
+					break;
+
+				case FS_SEEK_SET:
+				default:
+					remainder = 0;
+					break;
+			}
+
+			if ( remainder < 0 ) {
+				remainder = 0;
+			}
+
+			origin = FS_SEEK_SET;
+		} else {
+			if ( origin == FS_SEEK_END ) {
+				remainder = fsh[f].zipFileLen - currentPosition + offset;
+			} else {
+				remainder = offset;
+			}
 		}
 
 		switch( origin ) {
 			case FS_SEEK_SET:
+				if ( remainder == currentPosition ) {
+					return offset;
+				}
 				unzSetOffset(fsh[f].handleFiles.file.z, fsh[f].zipFilePos);
 				unzOpenCurrentFile(fsh[f].handleFiles.file.z);
 				//fallthrough
 
+			case FS_SEEK_END:
 			case FS_SEEK_CUR:
 				while( remainder > PK3_SEEK_BUFFER_SIZE ) {
 					FS_Read( buffer, PK3_SEEK_BUFFER_SIZE, f );
@@ -1778,12 +1834,10 @@ int FS_Seek( fileHandle_t f, long offset, int origin ) {
 				}
 				FS_Read( buffer, remainder, f );
 				return offset;
-				break;
 
 			default:
 				Com_Error( ERR_FATAL, "Bad origin in FS_Seek" );
 				return -1;
-				break;
 		}
 	} else {
 		FILE *file;
@@ -2459,6 +2513,14 @@ FS_GetFileList
 int	FS_GetFileList(  const char *path, const char *extension, char *listbuf, int bufsize ) {
 	int		nFiles, i, nTotal, nLen;
 	char **pFiles = NULL;
+
+	if ( !path || !listbuf || bufsize < 1 ) {
+		return 0;
+	}
+
+	if ( !extension ) {
+		extension = "";
+	}
 
 	*listbuf = 0;
 	nFiles = 0;
@@ -3506,21 +3568,31 @@ const char *FS_PortableHomePath(void) {
 
 /*
 ===================
-FS_LoadGameSearchPaths
+FS_LoadGameConfig
 
 Load additional search paths, from current search path
+
+Add gameDirs in forward search order
+
+Example: A mod for Quake III: Team Arena would have
+gameDirs[0]: missionpack
+gameDirs[1]: baseq3
 ===================
 */
-static qboolean FS_LoadGameSearchPaths( char gameDirs[MAX_GAMEDIRS][MAX_QPATH], int *pNumGameDirs ) {
+static qboolean FS_LoadGameConfig( gameConfig_t *config ) {
 	union {
 		char *c;
 		void *v;
 	} buffer;
 	int				len;
-	int				numGameDirs;
 	char			*text_p, *token;
+	qboolean		firstLine = qtrue;
+#ifndef DEDICATED
+	loadingScreen_t	*screen;
 
-	*pNumGameDirs = numGameDirs = 0;
+	// default to ioq3 defaultSound
+	Q_strncpyz( config->defaultSound, "sound/feedback/hit.wav", sizeof (config->defaultSound) );
+#endif
 
 	len = FS_ReadFile( "gameconfig.txt", &buffer.v );
 
@@ -3531,6 +3603,13 @@ static qboolean FS_LoadGameSearchPaths( char gameDirs[MAX_GAMEDIRS][MAX_QPATH], 
 	text_p = buffer.c;
 
 	while ( 1 ) {
+		if ( firstLine )
+			firstLine = qfalse;
+		else {
+			// skip the rest in case want to add additional options here later
+			SkipRestOfLine( &text_p );
+		}
+
 		token = COM_Parse( &text_p );
 		if ( !*token )
 			break;
@@ -3542,57 +3621,60 @@ static qboolean FS_LoadGameSearchPaths( char gameDirs[MAX_GAMEDIRS][MAX_QPATH], 
 
 			if ( FS_CheckDirTraversal( token ) ) {
 				Com_Printf( S_COLOR_YELLOW "WARNING: invalid gamedir %s in gameconfig.txt\n", token );
-				SkipRestOfLine( &text_p );
 				continue;
 			}
 
-			if ( numGameDirs >= MAX_GAMEDIRS ) {
+			if ( config->numGameDirs >= MAX_GAMEDIRS ) {
 				Com_Printf( "WARNING: Excessive game directories in gameconfig.txt (max is %d)\n", MAX_GAMEDIRS );
 			} else if ( Q_stricmp( fs_gamedirvar->string, token ) == 0 ) {
 				Com_Printf( "WARNING: Ignoring gamedir %s listed in gameconfig.txt (it's the current fs_game)\n", token );
 			} else {
-				Q_strncpyz( gameDirs[numGameDirs], token, MAX_QPATH );
-				numGameDirs++;
+				Q_strncpyz( config->gameDirs[config->numGameDirs], token, sizeof (config->gameDirs[0]) );
+				config->numGameDirs++;
+			}
+		} else if ( Q_stricmp( token, "defaultSound" ) == 0 ) {
+#ifndef DEDICATED
+			token = COM_ParseExt( &text_p, qfalse );
+			if ( !*token )
+				continue;
+
+			Q_strncpyz( config->defaultSound, token, sizeof (config->defaultSound) );
+#endif
+		} else if ( Q_stricmp( token, "addLoadingScreen" ) == 0 ) {
+#ifndef DEDICATED
+			// Example: addLoadingScreen menuback ( 0 0 0 ) 1.33333
+			token = COM_ParseExt( &text_p, qfalse );
+			if ( !*token )
+				continue;
+
+			if ( config->numLoadingScreens >= MAX_LOADINGSCREENS ) {
+				Com_Printf( "WARNING: Excessive loading screens in gameconfig.txt (max is %d)\n", MAX_LOADINGSCREENS );
+				continue;
 			}
 
-			// skip the rest in case want to add additional options here later
-			SkipRestOfLine( &text_p );
+			screen = &config->loadingScreens[ config->numLoadingScreens ];
+
+			config->numLoadingScreens++;
+
+			Q_strncpyz( screen->shaderName, token, sizeof (screen->shaderName) );
+
+			Parse1DMatrix( &text_p, 3, screen->color );
+
+			token = COM_ParseExt( &text_p, qfalse );
+			if ( !*token ) {
+				screen->aspect = 1;
+				continue;
+			}
+
+			screen->aspect = atof( token );
+#endif
 		} else {
-			// ignore unknown parms
-			SkipRestOfLine( &text_p );
+			Com_Printf("Unknown token '%s' in gameconfig.txt\n", token);
 		}
 	}
 
-	*pNumGameDirs = numGameDirs;
-
 	FS_FreeFile( buffer.v );
 	return qtrue;
-}
-
-/*
-================
-FS_GetGameSearchPath
-
-Add gameDirs in forward search order
-
-Example: A mod for Quake III: Team Arena would have
-gameDirs[0]: missionpack
-gameDirs[1]: baseq3
-================
-*/
-static void FS_GetGameSearchPath( const char *gamedir, char gameDirs[MAX_GAMEDIRS][MAX_QPATH], int *pNumGameDirs ) {
-	if ( FS_LoadGameSearchPaths( gameDirs, pNumGameDirs ) ) {
-		return;
-	}
-
-	Com_DPrintf("failed loading gameconfig.txt\n");
-
-	// Hack so Team Arena doesn't need gameconfig.txt
-	if ( Q_stricmp( gamedir, BASETA ) == 0 ) {
-		Com_Printf("HACK: Adding %s to search path for Team Arena...\n", BASEQ3);
-		Q_strncpyz( gameDirs[0], BASEQ3, MAX_QPATH );
-		*pNumGameDirs = 1;
-	}
 }
 
 // XXX
@@ -3635,8 +3717,6 @@ FS_Startup
 static void FS_Startup( qboolean quiet )
 {
 	const char	*homePath;
-	char		gameDirs[MAX_GAMEDIRS][MAX_QPATH];
-	int			numGameDirs;
 	char		description[MAX_QPATH];
 	int			i;
 
@@ -3666,15 +3746,26 @@ static void FS_Startup( qboolean quiet )
 	// load the game search paths so can load gameconfig.txt from a pk3.
 	FS_AddGame( fs_gamedirvar->string );
 
-	FS_GetGameSearchPath( fs_gamedirvar->string, gameDirs, &numGameDirs );
+	Com_Memset( &com_gameConfig, 0, sizeof (com_gameConfig) );
 
-	if ( numGameDirs > 0 ) {
+	if ( !FS_LoadGameConfig( &com_gameConfig ) ) {
+		Com_DPrintf("failed loading gameconfig.txt\n");
+
+		// Hack so Team Arena doesn't need gameconfig.txt
+		if ( Q_stricmp( fs_gamedirvar->string, BASETA ) == 0 ) {
+			Com_Printf("HACK: Adding %s to search path for Team Arena...\n", BASEQ3);
+			Q_strncpyz( com_gameConfig.gameDirs[0], BASEQ3, sizeof (com_gameConfig.gameDirs[0]) );
+			com_gameConfig.numGameDirs = 1;
+		}
+	}
+
+	if ( com_gameConfig.numGameDirs > 0 ) {
 		// hide fs_game path
 		FS_StashSearchPath();
 
 		// add extra gamedirs in reverse order
-		for ( i = numGameDirs-1; i >= 0; --i ) {
-			FS_AddGame( gameDirs[i] );
+		for ( i = com_gameConfig.numGameDirs-1; i >= 0; --i ) {
+			FS_AddGame( com_gameConfig.gameDirs[i] );
 		}
 
 		// put fs_game at the head of list
@@ -4296,6 +4387,9 @@ void FS_Restart( qboolean gameDirChanged ) {
 	}
 
 	if ( Q_stricmp(fs_gamedirvar->string, lastValidGame) ) {
+		Sys_RemovePIDFile( lastValidGame );
+		Sys_InitPIDFile( fs_gamedirvar->string );
+
 		// skip the q3config.cfg if "safe" is on the command line
 		// and only execute q3config.cfg if it exists in current fs_homepath + fs_gamedir
 		if ( !Com_SafeMode() && FS_FileExists( Q3CONFIG_CFG ) ) {
@@ -4348,6 +4442,10 @@ int		FS_FOpenFileByMode( const char *qpath, fileHandle_t *f, fsMode_t mode ) {
 	int		r;
 	qboolean	sync;
 
+	if ( !qpath || !*qpath ) {
+		return -1;
+	}
+
 	sync = qfalse;
 
 	switch( mode ) {
@@ -4355,6 +4453,9 @@ int		FS_FOpenFileByMode( const char *qpath, fileHandle_t *f, fsMode_t mode ) {
 			r = FS_FOpenFileRead( qpath, f, qtrue );
 			break;
 		case FS_WRITE:
+			if (!f) {
+				return -1;
+			}
 			*f = FS_FOpenFileWrite( qpath );
 			r = 0;
 			if (*f == 0) {
@@ -4364,6 +4465,9 @@ int		FS_FOpenFileByMode( const char *qpath, fileHandle_t *f, fsMode_t mode ) {
 		case FS_APPEND_SYNC:
 			sync = qtrue;
 		case FS_APPEND:
+			if (!f) {
+				return -1;
+			}
 			*f = FS_FOpenFileAppend( qpath );
 			r = 0;
 			if (*f == 0) {
@@ -4380,11 +4484,6 @@ int		FS_FOpenFileByMode( const char *qpath, fileHandle_t *f, fsMode_t mode ) {
 	}
 
 	if ( *f ) {
-		if (fsh[*f].zipFile == qtrue) {
-			fsh[*f].baseOffset = unztell(fsh[*f].handleFiles.file.z);
-		} else {
-			fsh[*f].baseOffset = ftell(fsh[*f].handleFiles.file.o);
-		}
 		fsh[*f].fileSize = r;
 		fsh[*f].streamed = qfalse;
 
@@ -4399,6 +4498,15 @@ int		FS_FOpenFileByMode( const char *qpath, fileHandle_t *f, fsMode_t mode ) {
 
 int		FS_FTell( fileHandle_t f ) {
 	int pos;
+
+	if ( !fs_searchpaths ) {
+		Com_Error( ERR_FATAL, "Filesystem call made without initialization" );
+	}
+
+	if ( f < 1 || f >= MAX_FILE_HANDLES ) {
+		return -1;
+	}
+
 	if (fsh[f].zipFile == qtrue) {
 		pos = unztell(fsh[f].handleFiles.file.z);
 	} else {

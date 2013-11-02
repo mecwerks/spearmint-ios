@@ -30,6 +30,7 @@ Suite 120, Rockville, Maryland 20850 USA.
 //
 // cg_main.c -- initialization and primary entry point for cgame
 #include "cg_local.h"
+#include "../ui/ui_public.h"
 
 #ifdef MISSIONPACK_HUD
 #include "../ui/ui_shared.h"
@@ -48,6 +49,7 @@ void CG_Ingame_Init( int serverMessageNum, int serverCommandSequence, int maxSpl
 void CG_Shutdown( void );
 void CG_Refresh( int serverTime, stereoFrame_t stereoView, qboolean demoPlayback, connstate_t state, int realTime );
 static char *CG_VoIPString( int localClientNum );
+void CG_DistributeKeyEvent( int key, qboolean down, unsigned time, connstate_t state );
 
 
 /*
@@ -74,12 +76,7 @@ Q_EXPORT intptr_t vmMain( int command, int arg0, int arg1, int arg2, int arg3, i
 		CG_Shutdown();
 		return 0;
 	case CG_CONSOLE_COMMAND:
-		{
-			qboolean found = UI_ConsoleCommand(arg0);
-			if ( !found && cg.connected )
-				found = CG_ConsoleCommand();
-			return found;
-		}
+		return CG_ConsoleCommand(arg0);
 	case CG_REFRESH:
 		CG_Refresh( arg0, arg1, arg2, arg3, arg4 );
 		return 0;
@@ -90,30 +87,7 @@ Q_EXPORT intptr_t vmMain( int command, int arg0, int arg1, int arg2, int arg3, i
 	case CG_VOIP_STRING:
 		return (intptr_t)CG_VoIPString(arg0);
 	case CG_KEY_EVENT:
-		{
-			int key = arg0;
-			qboolean down = arg1;
-
-			if ( key == K_ESCAPE && down && !( trap_Key_GetCatcher( ) & KEYCATCH_UI ) ) {
-				uiClientState_t cls;
-
-				trap_GetClientState( &cls );
-
-				if ( cls.connState == CA_ACTIVE && trap_GetDemoState() != DS_PLAYBACK ) {
-					UI_SetActiveMenu( UIMENU_INGAME );
-				}
-				else if ( cls.connState != CA_DISCONNECTED ) {
-					trap_Cmd_ExecuteText( EXEC_APPEND, "disconnect\n" );
-				}
-				return 0;
-			}
-		}
-
-		if ( cg.connected && ( trap_Key_GetCatcher( ) & KEYCATCH_CGAME ) ) {
-			CG_KeyEvent(arg0, arg1);
-		} else {
-			UI_KeyEvent(arg0, arg1);
-		}
+		CG_DistributeKeyEvent(arg0, arg1, arg2, arg3);
 		return 0;
 	case CG_MOUSE_EVENT:
 		if ( cg.connected && ( trap_Key_GetCatcher( ) & KEYCATCH_CGAME ) ) {
@@ -137,12 +111,15 @@ Q_EXPORT intptr_t vmMain( int command, int arg0, int arg1, int arg2, int arg3, i
 		CG_EventHandling(arg0);
 		return 0;
 	case CG_CONSOLE_TEXT:
-		CG_AddNotifyText();
+		CG_AddNotifyText(arg0, arg1);
+		return 0;
+	case CG_CONSOLE_CLOSE:
+		CG_CloseConsole();
 		return 0;
 	case CG_WANTSBINDKEYS:
 		return UI_WantsBindKeys();
 	case CG_CREATE_USER_CMD:
-		return (intptr_t)CG_CreateUserCmd(arg0, arg1, arg2, IntAsFloat(arg3), IntAsFloat(arg4));
+		return (intptr_t)CG_CreateUserCmd(arg0, arg1, arg2, IntAsFloat(arg3), IntAsFloat(arg4), arg5);
 	default:
 		CG_Error( "vmMain: unknown command %i", command );
 		break;
@@ -157,6 +134,11 @@ centity_t			cg_entities[MAX_GENTITIES];
 weaponInfo_t		cg_weapons[MAX_WEAPONS];
 itemInfo_t			cg_items[MAX_ITEMS];
 
+
+vmCvar_t	con_conspeed;
+vmCvar_t	con_autochat;
+vmCvar_t	con_autoclear;
+vmCvar_t	cg_dedicated;
 
 vmCvar_t	cg_railTrailTime;
 vmCvar_t	cg_centertime;
@@ -254,6 +236,10 @@ vmCvar_t	cg_voipShowMeter;
 vmCvar_t	cg_voipShowCrosshairMeter;
 vmCvar_t	cg_consoleLatency;
 vmCvar_t	cg_drawShaderInfo;
+vmCvar_t	cg_coronafardist;
+vmCvar_t	cg_coronas;
+vmCvar_t	cg_fovAspectAdjust;
+vmCvar_t	cg_fadeExplosions;
 vmCvar_t	ui_stretch;
 
 #ifdef MISSIONPACK
@@ -310,6 +296,11 @@ typedef struct {
 #define RANGE_FLOAT(min,max) min, max, qfalse
 
 static cvarTable_t cgameCvarTable[] = {
+	{ &con_conspeed, "scr_conspeed", "3", 0, RANGE_FLOAT(0.1, 100) },
+	{ &con_autochat, "con_autochat", "0", CVAR_ARCHIVE, RANGE_ALL },
+	{ &con_autoclear, "con_autoclear", "0", CVAR_ARCHIVE, RANGE_ALL },
+	{ &cg_dedicated, "dedicated", "0", 0, RANGE_ALL },
+
 	{ &cg_ignore, "cg_ignore", "0", 0, RANGE_ALL },	// used for debugging
 	{ &cg_zoomFov, "cg_zoomfov", "22.5", CVAR_ARCHIVE, RANGE_FLOAT(1, 160) },
 	{ &cg_fov, "cg_fov", "90", CVAR_ARCHIVE, RANGE_FLOAT(1, 160) },
@@ -424,6 +415,10 @@ static cvarTable_t cgameCvarTable[] = {
 	{ &cg_voipShowCrosshairMeter, "cg_voipShowCrosshairMeter", "1", CVAR_ARCHIVE, RANGE_BOOL },
 	{ &cg_consoleLatency, "cg_consoleLatency", "3000", CVAR_ARCHIVE, RANGE_ALL },
 	{ &cg_drawShaderInfo, "cg_drawShaderInfo", "0", 0, RANGE_BOOL },
+	{ &cg_coronafardist, "cg_coronafardist", "1536", CVAR_ARCHIVE, RANGE_ALL },
+	{ &cg_coronas, "cg_coronas", "1", CVAR_ARCHIVE, RANGE_INT( 0, 3 ) },
+	{ &cg_fovAspectAdjust, "cg_fovAspectAdjust", "1", CVAR_ARCHIVE, RANGE_BOOL },
+	{ &cg_fadeExplosions, "cg_fadeExplosions", "0", CVAR_ARCHIVE, RANGE_BOOL },
 //	{ &cg_pmove_fixed, "cg_pmove_fixed", "0", CVAR_USERINFO | CVAR_ARCHIVE, RANGE_BOOL }
 
 	{ &ui_stretch, "ui_stretch", "0", CVAR_ARCHIVE, RANGE_BOOL },
@@ -671,7 +666,7 @@ void CG_UpdateCvars( void ) {
 }
 
 int CG_CrosshairPlayer( int localClientNum ) {
-	if (localClientNum < 0 || localClientNum >= CG_MaxSplitView()) {
+	if (!cg.snap || localClientNum < 0 || localClientNum >= CG_MaxSplitView()) {
 		return -1;
 	}
 
@@ -683,7 +678,7 @@ int CG_CrosshairPlayer( int localClientNum ) {
 }
 
 int CG_LastAttacker( int localClientNum ) {
-	if (localClientNum < 0 || localClientNum >= CG_MaxSplitView()) {
+	if (!cg.snap || localClientNum < 0 || localClientNum >= CG_MaxSplitView()) {
 		return -1;
 	}
 
@@ -729,13 +724,14 @@ void CG_RemoveNotifyLine( cglc_t *localClient )
 CG_AddNotifyText
 =================
 */
-void CG_AddNotifyText( void ) {
+void CG_AddNotifyText( int realTime, qboolean restoredText ) {
 	char text[ MAX_CONSOLE_TEXT - 1 ];
 	char *buffer;
 	int bufferLen;
 	int lc;
 	cglc_t *localClient;
 	int localClientBits;
+	qboolean skipnotify = qfalse;
 
 	trap_LiteralArgs( text, sizeof ( text ) );
 
@@ -748,17 +744,30 @@ void CG_AddNotifyText( void ) {
 	}
 
 	buffer = text;
-	bufferLen = strlen( buffer );
+
+	// TTimo - prefix for text that shows up in console but not in notify
+	// backported from RTCW
+	if ( !Q_strncmp( buffer, "[skipnotify]", 12 ) ) {
+		skipnotify = qtrue;
+		buffer += 12;
+	}
+
+	CG_ConsolePrint( buffer );
+
+	if ( skipnotify || restoredText || ( trap_Key_GetCatcher() & KEYCATCH_CONSOLE ) ) {
+		return;
+	}
 
 	// [player #] perfix for text that only shows up in notify area for one local client
-	if ( bufferLen > 4 && !Q_strncmp( buffer, "[player ", 8 ) && isdigit(buffer[8]) && buffer[9] == ']' ) {
+	if ( !Q_strncmp( buffer, "[player ", 8 ) && isdigit(buffer[8]) && buffer[9] == ']' ) {
 		localClientBits = 1 << ( atoi( &buffer[8] ) - 1 );
 
 		buffer += 10;
-		bufferLen = strlen( buffer );
 	} else {
 		localClientBits = ~0;
 	}
+
+	bufferLen = strlen( buffer );
 
 	for ( lc = 0; lc < CG_MaxSplitView(); lc++ ) {
 		if ( !( localClientBits & ( 1 << lc ) ) ) {
@@ -914,11 +923,89 @@ const char *CG_Argv( int arg ) {
 
 /*
 ================
+CG_Cvar_VariableString
+================
+*/
+char *CG_Cvar_VariableString( const char *var_name ) {
+	static char	buffer[MAX_STRING_CHARS];
+
+	trap_Cvar_VariableStringBuffer( var_name, buffer, sizeof( buffer ) );
+
+	return buffer;
+}
+
+/*
+================
 CG_MaxSplitView
 ================
 */
 int CG_MaxSplitView(void) {
 	return cgs.maxSplitView;
+}
+
+//========================================================================
+
+/*
+=================
+CG_SetupDlightstyles
+=================
+*/
+void CG_SetupDlightstyles( void ) {
+	int i, j;
+	char        *str;
+	char        *token;
+	int entnum;
+	centity_t   *cent;
+
+	cg.lightstylesInited = qtrue;
+
+	for ( i = 1; i < MAX_DLIGHT_CONFIGSTRINGS; i++ ) {
+		str = (char *) CG_ConfigString( CS_DLIGHTS + i );
+		if ( !strlen( str ) ) {
+			break;
+		}
+
+		token = COM_Parse( &str );   // ent num
+		entnum = atoi( token );
+
+		if ( entnum < 0 || entnum >= MAX_GENTITIES ) {
+			continue;
+		}
+
+		cent = &cg_entities[entnum];
+
+		token = COM_Parse( &str );   // stylestring
+		Q_strncpyz( cent->dl_stylestring, token, sizeof( cent->dl_stylestring ) );
+
+		token = COM_Parse( &str );   // offset
+		cent->dl_frame      = atoi( token );
+		cent->dl_oldframe   = cent->dl_frame - 1;
+		if ( cent->dl_oldframe < 0 ) {
+			cent->dl_oldframe = strlen( cent->dl_stylestring );
+		}
+
+		token = COM_Parse( &str );   // sound id
+		cent->dl_sound = atoi( token );
+
+		token = COM_Parse( &str );   // attenuation
+		cent->dl_atten = atoi( token );
+
+		for ( j = 0; j < strlen( cent->dl_stylestring ); j++ ) {
+
+			cent->dl_stylestring[j] += cent->dl_atten;  // adjust character for attenuation/amplification
+
+			// clamp result
+			if ( cent->dl_stylestring[j] < 'a' ) {
+				cent->dl_stylestring[j] = 'a';
+			}
+			if ( cent->dl_stylestring[j] > 'z' ) {
+				cent->dl_stylestring[j] = 'z';
+			}
+		}
+
+		cent->dl_backlerp   = 0.0;
+		cent->dl_time       = cg.time;
+	}
 }
 
 //========================================================================
@@ -939,7 +1026,7 @@ static void CG_RegisterItemSounds( int itemNum ) {
 	item = &bg_itemlist[ itemNum ];
 
 	if( item->pickup_sound ) {
-		trap_S_RegisterSound( item->pickup_sound, qfalse );
+		cgs.media.itemPickupSounds[ itemNum ] = trap_S_RegisterSound( item->pickup_sound, qfalse );
 	}
 
 	// parse the space seperated precache string for other media
@@ -1184,6 +1271,7 @@ static void CG_RegisterSounds( void ) {
 	cgs.media.sfx_chghit = trap_S_RegisterSound( "sound/weapons/vulcan/wvulimpd.wav", qfalse );
 	cgs.media.sfx_chghitflesh = trap_S_RegisterSound( "sound/weapons/vulcan/wvulimpl.wav", qfalse );
 	cgs.media.sfx_chghitmetal = trap_S_RegisterSound( "sound/weapons/vulcan/wvulimpm.wav", qfalse );
+	cgs.media.sfx_chgstop = trap_S_RegisterSound( "sound/weapons/vulcan/wvulwind.wav", qfalse );
 	cgs.media.weaponHoverSound = trap_S_RegisterSound( "sound/weapons/weapon_hover.wav", qfalse );
 	cgs.media.kamikazeExplodeSound = trap_S_RegisterSound( "sound/items/kam_explode.wav", qfalse );
 	cgs.media.kamikazeImplodeSound = trap_S_RegisterSound( "sound/items/kam_implode.wav", qfalse );
@@ -1296,7 +1384,6 @@ static void CG_RegisterGraphics( void ) {
 	cgs.media.scoreboardTime = trap_R_RegisterShaderNoMip( "menu/tab/time.tga" );
 
 	cgs.media.smokePuffShader = trap_R_RegisterShader( "smokePuff" );
-	cgs.media.smokePuffRageProShader = trap_R_RegisterShader( "smokePuffRagePro" );
 	cgs.media.shotgunSmokePuffShader = trap_R_RegisterShader( "shotgunSmokePuff" );
 #ifdef MISSIONPACK
 	cgs.media.nailPuffShader = trap_R_RegisterShader( "nailtrail" );
@@ -1479,6 +1566,11 @@ static void CG_RegisterGraphics( void ) {
 
 	// register the inline models
 	cgs.numInlineModels = trap_CM_NumInlineModels();
+
+	if ( cgs.numInlineModels > MAX_SUBMODELS ) {
+		CG_Error( "MAX_SUBMODELS (%d) exceeded by %d", MAX_SUBMODELS, cgs.numInlineModels - MAX_SUBMODELS );
+	}
+
 	for ( i = 1 ; i < cgs.numInlineModels ; i++ ) {
 		char	name[10];
 		vec3_t			mins, maxs;
@@ -1660,7 +1752,7 @@ void CG_StartMusic( void ) {
 	Q_strncpyz( parm1, COM_Parse( &s ), sizeof( parm1 ) );
 	Q_strncpyz( parm2, COM_Parse( &s ), sizeof( parm2 ) );
 
-	trap_S_StartBackgroundTrack( parm1, parm2 );
+	trap_S_StartBackgroundTrack( parm1, parm2, 1.0f, 1.0f );
 }
 #ifdef MISSIONPACK_HUD
 char *CG_GetMenuBuffer(const char *filename) {
@@ -2341,9 +2433,12 @@ void CG_Init( qboolean inGameLoad, int maxSplitView ) {
 
 	CG_RegisterCvars();
 
+	CG_InitConsoleCommands();
+
 	// load a few needed things before we do any screen updates
 	cgs.media.charsetShader		= trap_R_RegisterShader( "gfx/2d/bigchars" );
 	cgs.media.whiteShader		= trap_R_RegisterShader( "white" );
+	cgs.media.consoleShader		= trap_R_RegisterShader( "console" );
 
 	// get the rendering configuration from the client system
 	trap_GetGlconfig( &cgs.glconfig );
@@ -2368,6 +2463,13 @@ void CG_Init( qboolean inGameLoad, int maxSplitView ) {
 		cgs.screenYScale = cgs.screenXScale;
 		// no wide screen
 		cgs.screenXBias = 0;
+	}
+
+	CG_ConsoleInit();
+
+	if ( cg_dedicated.integer ) {
+		trap_Key_SetCatcher( KEYCATCH_CONSOLE );
+		return;
 	}
 
 #ifdef MISSIONPACK_HUD
@@ -2405,14 +2507,13 @@ void CG_Ingame_Init( int serverMessageNum, int serverCommandSequence, int maxSpl
 			continue;
 		}
 
+		trap_Mouse_SetState( i, MOUSE_CLIENT );
 		trap_GetViewAngles( i, cg.localClients[i].viewangles );
 		CG_LocalClientAdded(i, clientNums[i]);
 	}
 
 	cgs.processedSnapshotNum = serverMessageNum;
 	cgs.serverCommandSequence = serverCommandSequence;
-
-	CG_InitConsoleCommands();
 
 	for (i = 0; i < CG_MaxSplitView(); i++) {
 		cg.localClients[i].weaponSelect = WP_MACHINEGUN;
@@ -2479,6 +2580,8 @@ void CG_Ingame_Init( int serverMessageNum, int serverCommandSequence, int maxSpl
 
 	CG_StartMusic();
 
+	cg.lightstylesInited = qfalse;
+
 	CG_LoadingString( "" );
 
 #ifdef MISSIONPACK
@@ -2488,6 +2591,8 @@ void CG_Ingame_Init( int serverMessageNum, int serverCommandSequence, int maxSpl
 	CG_ShaderStateChanged();
 
 	trap_S_ClearLoopingSounds( qtrue );
+
+	CG_RestoreSnapshot();
 }
 
 /*
@@ -2517,8 +2622,15 @@ Draw the frame
 */
 void CG_Refresh( int serverTime, stereoFrame_t stereoView, qboolean demoPlayback, connstate_t state, int realTime ) {
 
+	cg.realFrameTime = realTime - cg.realTime;
+	cg.realTime = realTime;
+
 	// update cvars
 	CG_UpdateCvars();
+
+	if ( !cg_dedicated.integer && state == CA_DISCONNECTED && !UI_IsFullscreen() ) {
+		UI_SetActiveMenu( UIMENU_MAIN );
+	}
 
 	if ( state >= CA_LOADING && !UI_IsFullscreen() ) {
 #ifdef MISSIONPACK_HUD
@@ -2527,7 +2639,7 @@ void CG_Refresh( int serverTime, stereoFrame_t stereoView, qboolean demoPlayback
 		CG_DrawActiveFrame( serverTime, stereoView, demoPlayback );
 	}
 
-	if ( state <= CA_LOADING || (trap_Key_GetCatcher() & KEYCATCH_UI) ) {
+	if ( ( state > CA_DISCONNECTED && state <= CA_LOADING ) || (trap_Key_GetCatcher() & KEYCATCH_UI) ) {
 		if ( ui_stretch.integer ) {
 			CG_SetScreenPlacement( PLACE_STRETCH, PLACE_STRETCH );
 		} else {
@@ -2539,6 +2651,193 @@ void CG_Refresh( int serverTime, stereoFrame_t stereoView, qboolean demoPlayback
 	// connecting clients will show the connection dialog
 	if ( state >= CA_CONNECTING && state < CA_ACTIVE ) {
 		UI_DrawConnectScreen( ( state >= CA_LOADING ) );
+	}
+
+	CG_RunConsole( state );
+}
+
+/*
+===================
+CG_BindUICommand
+
+Returns qtrue if bind command should be executed while user interface is shown
+===================
+*/
+static qboolean CG_BindUICommand( const char *cmd ) {
+	if ( trap_Key_GetCatcher( ) & KEYCATCH_CONSOLE )
+		return qfalse;
+
+	if ( !Q_stricmp( cmd, "toggleconsole" ) )
+		return qtrue;
+	if ( !Q_stricmp( cmd, "togglemenu" ) )
+		return qtrue;
+
+	return qfalse;
+}
+
+/*
+===================
+CG_ParseBinding
+
+Execute the commands in the bind string
+
+key up events only perform actions if the game key binding is
+a button command (leading + sign).  These will be processed even in
+console mode and menu mode, to keep the character from continuing
+an action started before a mode switch.
+
+===================
+*/
+void CG_ParseBinding( int key, qboolean down, unsigned time, connstate_t state, int keyCatcher )
+{
+	char buf[ MAX_STRING_CHARS ], *p = buf, *end;
+	qboolean allCommands, allowUpCmds;
+
+	if( state == CA_DISCONNECTED && keyCatcher == 0 )
+		return;
+
+	trap_Key_GetBindingBuf( key, buf, sizeof ( buf ) );
+
+	if( !buf[0] )
+		return;
+
+	// run all bind commands if console, ui, etc aren't reading keys
+	allCommands = ( keyCatcher == 0 );
+
+	// allow button up commands if in game even if key catcher is set
+	allowUpCmds = ( state != CA_DISCONNECTED );
+
+	while( 1 )
+	{
+		while( isspace( *p ) )
+			p++;
+		end = strchr( p, ';' );
+		if( end )
+			*end = '\0';
+		if( *p == '+' )
+		{
+			// button commands add keynum and time as parameters
+			// so that multiple sources can be discriminated and
+			// subframe corrected
+			if ( allCommands || ( allowUpCmds && !down ) ) {
+				char cmd[1024];
+				Com_sprintf( cmd, sizeof( cmd ), "%c%s %d %d\n",
+					( down ) ? '+' : '-', p + 1, key, time );
+				trap_Cmd_ExecuteText( EXEC_APPEND, cmd );
+			}
+		}
+		else if( down )
+		{
+			// normal commands only execute on key press
+			if ( allCommands || CG_BindUICommand( p ) ) {
+				trap_Cmd_ExecuteText( EXEC_APPEND, p );
+				trap_Cmd_ExecuteText( EXEC_APPEND, "\n" );
+			}
+		}
+		if( !end )
+			break;
+		p = end + 1;
+	}
+}
+
+/*
+================
+Message_Key
+
+In game talk message
+================
+*/
+void Message_Key( int key, qboolean down ) {
+	char	buffer[MAX_STRING_CHARS];
+
+	if ( !down ) {
+		return;
+	}
+
+	if ( key & K_CHAR_FLAG ) {
+		key &= ~K_CHAR_FLAG;
+		MField_CharEvent( &cg.messageField, key );
+		return;
+	}
+
+	if ( key == K_ESCAPE ) {
+		trap_Key_SetCatcher( trap_Key_GetCatcher( ) & ~KEYCATCH_MESSAGE );
+		MField_Clear( &cg.messageField );
+		return;
+	}
+
+	if ( key == K_ENTER || key == K_KP_ENTER ) {
+		if ( cg.messageField.buffer[0] && cg.connected ) {
+			Com_sprintf( buffer, sizeof ( buffer ), "%s %s\n", cg.messageCommand, cg.messageField.buffer );
+
+			trap_SendClientCommand( buffer );
+		}
+
+		trap_Key_SetCatcher( trap_Key_GetCatcher( ) & ~KEYCATCH_MESSAGE );
+		MField_Clear( &cg.messageField );
+		return;
+	}
+
+	MField_KeyDownEvent( &cg.messageField, key );
+}
+
+/*
+================
+CG_DistributeKeyEvent
+================
+*/
+void CG_DistributeKeyEvent( int key, qboolean down, unsigned time, connstate_t state ) {
+	int keyCatcher;
+
+	// console key is hardcoded, so the user can never unbind it
+	if( key == K_CONSOLE || ( key == K_ESCAPE && trap_Key_IsDown( K_SHIFT ) ) ) {
+		if ( down ) {
+			Con_ToggleConsole_f();
+		}
+		return;
+	}
+
+	// reduce redundent system calls
+	keyCatcher = trap_Key_GetCatcher( );
+
+	// keys can still be used for bound actions
+	if ( ( key < 128 || key == K_MOUSE1 ) &&
+		( trap_GetDemoState() == DS_PLAYBACK || state == CA_CINEMATIC ) && keyCatcher == 0 ) {
+
+		if ( cg_cameraMode.integer == 0 ) {
+			trap_Cvar_Set ("nextdemo","");
+			key = K_ESCAPE;
+		}
+	}
+
+	// escape is always handled special
+	if ( key == K_ESCAPE ) {
+		if ( down && !( keyCatcher & ( KEYCATCH_UI | KEYCATCH_CGAME | KEYCATCH_MESSAGE ) ) ) {
+			if ( state == CA_ACTIVE && trap_GetDemoState() != DS_PLAYBACK ) {
+				UI_SetActiveMenu( UIMENU_INGAME );
+			} else if ( state != CA_DISCONNECTED ) {
+				trap_Cmd_ExecuteText( EXEC_APPEND, "disconnect\n" );
+			}
+
+			return;
+		}
+
+		// skip console
+		keyCatcher &= ~KEYCATCH_CONSOLE;
+	} else {
+		// send the bound action
+		CG_ParseBinding( key, down, time, state, keyCatcher );
+	}
+
+	// distribute the key down event to the apropriate handler
+	if ( keyCatcher & KEYCATCH_CONSOLE ) {
+		Console_Key( key, down );
+	} else if ( keyCatcher & KEYCATCH_MESSAGE ) {
+		Message_Key( key, down );
+	} else if ( cg.connected && ( keyCatcher & KEYCATCH_CGAME ) ) {
+		CG_KeyEvent( key, down );
+	} else if ( keyCatcher & KEYCATCH_UI ) {
+		UI_KeyEvent( key, down );
 	}
 }
 

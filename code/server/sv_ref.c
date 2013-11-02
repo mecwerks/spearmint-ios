@@ -94,7 +94,8 @@ void R_Init( void ) {
 	tr.defaultShader = &localShader;
 
 	// dummy skin
-	localSkin.numSurfaces = 0;
+	Q_strncpyz(localSkin.name, "<default>", sizeof (localSkin.name));
+	localSkin.surfaces = NULL;
 
 	R_ModelInit();
 }
@@ -124,6 +125,10 @@ void RE_Shutdown( qboolean destroyWindow ) {
 }
 
 void RB_CheckOverflow( int verts, int indexes ) {
+
+}
+
+void R_AddEntDrawSurf( trRefEntity_t *ent, surfaceType_t *surface, shader_t *shader, int fogIndex, int dlightMap ) {
 
 }
 

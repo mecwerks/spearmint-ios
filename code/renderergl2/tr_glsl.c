@@ -79,6 +79,7 @@ static uniformInfo_t uniformsInfo[] =
 
 	{ "u_TextureMap", GLSL_INT },
 	{ "u_LevelsMap",  GLSL_INT },
+	{ "u_CubeMap",    GLSL_INT },
 
 	{ "u_ScreenImageMap", GLSL_INT },
 	{ "u_ScreenDepthMap", GLSL_INT },
@@ -113,6 +114,7 @@ static uniformInfo_t uniformsInfo[] =
 	{ "u_LightUp",       GLSL_VEC3 },
 	{ "u_LightRight",    GLSL_VEC3 },
 	{ "u_LightOrigin",   GLSL_VEC4 },
+	{ "u_ModelLightDir", GLSL_VEC3 },
 	{ "u_LightRadius",   GLSL_FLOAT },
 	{ "u_AmbientLight",  GLSL_VEC3 },
 	{ "u_DirectedLight", GLSL_VEC3 },
@@ -131,11 +133,12 @@ static uniformInfo_t uniformsInfo[] =
 	{ "u_VertexLerp"  , GLSL_FLOAT },
 	{ "u_MaterialInfo", GLSL_VEC2 },
 
-	{ "u_ViewInfo",    GLSL_VEC4 },
-	{ "u_ViewOrigin",  GLSL_VEC3 },
-	{ "u_ViewForward", GLSL_VEC3 },
-	{ "u_ViewLeft",    GLSL_VEC3 },
-	{ "u_ViewUp",      GLSL_VEC3 },
+	{ "u_ViewInfo",        GLSL_VEC4 },
+	{ "u_ViewOrigin",      GLSL_VEC3 },
+	{ "u_LocalViewOrigin", GLSL_VEC3 },
+	{ "u_ViewForward",     GLSL_VEC3 },
+	{ "u_ViewLeft",        GLSL_VEC3 },
+	{ "u_ViewUp",          GLSL_VEC3 },
 
 	{ "u_InvTexRes",           GLSL_VEC2 },
 	{ "u_AutoExposureMinMax",  GLSL_VEC2 },
@@ -144,7 +147,9 @@ static uniformInfo_t uniformsInfo[] =
 	{ "u_PrimaryLightOrigin",  GLSL_VEC4  },
 	{ "u_PrimaryLightColor",   GLSL_VEC3  },
 	{ "u_PrimaryLightAmbient", GLSL_VEC3  },
-	{ "u_PrimaryLightRadius",  GLSL_FLOAT }
+	{ "u_PrimaryLightRadius",  GLSL_FLOAT },
+
+	{ "u_Intensity", GLSL_FLOAT }
 };
 
 
@@ -301,11 +306,9 @@ static void GLSL_GetShaderHeader( GLenum shaderType, const GLcharARB *extra, cha
 								"#define alphaGen_t\n"
 								"#define AGEN_LIGHTING_SPECULAR %i\n"
 								"#define AGEN_PORTAL %i\n"
-								"#define AGEN_FRESNEL %i\n"
 								"#endif\n",
 								AGEN_LIGHTING_SPECULAR,
-								AGEN_PORTAL,
-								AGEN_FRESNEL));
+								AGEN_PORTAL));
 
 	Q_strcat(dest, size,
 							 va("#ifndef texenv_t\n"
@@ -914,8 +917,8 @@ void GLSL_InitGPUShaders(void)
 		if (i & GENERICDEF_USE_LIGHTMAP)
 			Q_strcat(extradefines, 1024, "#define USE_LIGHTMAP\n");
 
-		if (r_hdr->integer && !(glRefConfig.textureFloat && glRefConfig.halfFloatPixel))
-			Q_strcat(extradefines, 1024, "#define RGBE_LIGHTMAP\n");
+		if (r_hdr->integer && !(glRefConfig.textureFloat && glRefConfig.halfFloatPixel && r_floatLightmap->integer))
+			Q_strcat(extradefines, 1024, "#define RGBM_LIGHTMAP\n");
 
 		if (!GLSL_InitGPUShader(&tr.genericShader[i], "generic", attribs, qtrue, extradefines, qtrue, fallbackShader_generic_vp, fallbackShader_generic_fp))
 		{
@@ -1005,28 +1008,23 @@ void GLSL_InitGPUShaders(void)
 	for (i = 0; i < LIGHTDEF_COUNT; i++)
 	{
 		// skip impossible combos
-		if ((i & LIGHTDEF_USE_NORMALMAP) && !r_normalMapping->integer)
-			continue;
-
 		if ((i & LIGHTDEF_USE_PARALLAXMAP) && !r_parallaxMapping->integer)
-			continue;
-
-		if ((i & LIGHTDEF_USE_SPECULARMAP) && !r_specularMapping->integer)
 			continue;
 
 		if ((i & LIGHTDEF_USE_DELUXEMAP) && !r_deluxeMapping->integer)
 			continue;
 
+		if ((i & LIGHTDEF_USE_CUBEMAP) && !r_cubeMapping->integer)
+			continue;
+
 		if (!((i & LIGHTDEF_LIGHTTYPE_MASK) == LIGHTDEF_USE_LIGHTMAP) && (i & LIGHTDEF_USE_DELUXEMAP))
 			continue;
 
-		if (!(i & LIGHTDEF_USE_NORMALMAP) && (i & LIGHTDEF_USE_PARALLAXMAP))
-			continue;
-
-		//if (!((i & LIGHTDEF_LIGHTTYPE_MASK) == LIGHTDEF_USE_LIGHT_VECTOR))
 		if (!(i & LIGHTDEF_LIGHTTYPE_MASK))
 		{
 			if (i & LIGHTDEF_USE_SHADOWMAP)
+				continue;
+			if (i & LIGHTDEF_USE_CUBEMAP)
 				continue;
 		}
 
@@ -1034,8 +1032,11 @@ void GLSL_InitGPUShaders(void)
 
 		extradefines[0] = '\0';
 
-		if (r_normalAmbient->value > 0.003f)
-			Q_strcat(extradefines, 1024, va("#define r_normalAmbient %f\n", r_normalAmbient->value));
+		if (r_deluxeSpecular->value > 0.000001f)
+			Q_strcat(extradefines, 1024, va("#define r_deluxeSpecular %f\n", r_deluxeSpecular->value));
+
+		if (r_specularIsMetallic->value)
+			Q_strcat(extradefines, 1024, va("#define SPECULAR_IS_METALLIC\n"));
 
 		if (r_dlightMode->integer >= 2)
 			Q_strcat(extradefines, 1024, "#define USE_SHADOWMAP\n");
@@ -1045,8 +1046,8 @@ void GLSL_InitGPUShaders(void)
 			Q_strcat(extradefines, 1024, "#define SWIZZLE_NORMALMAP\n");
 		}
 
-		if (r_hdr->integer && !(glRefConfig.textureFloat && glRefConfig.halfFloatPixel))
-			Q_strcat(extradefines, 1024, "#define RGBE_LIGHTMAP\n");
+		if (r_hdr->integer && !(glRefConfig.textureFloat && glRefConfig.halfFloatPixel && r_floatLightmap->integer))
+			Q_strcat(extradefines, 1024, "#define RGBM_LIGHTMAP\n");
 
 		if (i & LIGHTDEF_LIGHTTYPE_MASK)
 		{
@@ -1073,7 +1074,7 @@ void GLSL_InitGPUShaders(void)
 			}
 		}
 
-		if ((i & LIGHTDEF_USE_NORMALMAP) && r_normalMapping->integer)
+		if (r_normalMapping->integer)
 		{
 			Q_strcat(extradefines, 1024, "#define USE_NORMALMAP\n");
 
@@ -1089,7 +1090,7 @@ void GLSL_InitGPUShaders(void)
 #endif
 		}
 
-		if ((i & LIGHTDEF_USE_SPECULARMAP) && r_specularMapping->integer)
+		if (r_specularMapping->integer)
 		{
 			Q_strcat(extradefines, 1024, "#define USE_SPECULARMAP\n");
 
@@ -1097,19 +1098,23 @@ void GLSL_InitGPUShaders(void)
 			{
 				case 1:
 				default:
-					Q_strcat(extradefines, 1024, "#define USE_TRIACE\n");
-					break;
-
-				case 2:
 					Q_strcat(extradefines, 1024, "#define USE_BLINN\n");
 					break;
 
+				case 2:
+					Q_strcat(extradefines, 1024, "#define USE_BLINN_FRESNEL\n");
+					break;
+
 				case 3:
-					Q_strcat(extradefines, 1024, "#define USE_COOK_TORRANCE\n");
+					Q_strcat(extradefines, 1024, "#define USE_MCAULEY\n");
 					break;
 
 				case 4:
-					Q_strcat(extradefines, 1024, "#define USE_TORRANCE_SPARROW\n");
+					Q_strcat(extradefines, 1024, "#define USE_GOTANDA\n");
+					break;
+
+				case 5:
+					Q_strcat(extradefines, 1024, "#define USE_LAZAROV\n");
 					break;
 			}
 		}
@@ -1119,6 +1124,9 @@ void GLSL_InitGPUShaders(void)
 
 		if ((i & LIGHTDEF_USE_PARALLAXMAP) && !(i & LIGHTDEF_ENTITY) && r_parallaxMapping->integer)
 			Q_strcat(extradefines, 1024, "#define USE_PARALLAXMAP\n");
+
+		if ((i & LIGHTDEF_USE_CUBEMAP))
+			Q_strcat(extradefines, 1024, "#define USE_CUBEMAP\n");
 
 		if (i & LIGHTDEF_USE_SHADOWMAP)
 		{
@@ -1142,7 +1150,7 @@ void GLSL_InitGPUShaders(void)
 			attribs |= ATTR_POSITION2 | ATTR_NORMAL2;
 
 #ifdef USE_VERT_TANGENT_SPACE
-			if (i & LIGHTDEF_USE_NORMALMAP && r_normalMapping->integer)
+			if (r_normalMapping->integer)
 			{
 				attribs |= ATTR_TANGENT2 | ATTR_BITANGENT2;
 			}
@@ -1163,6 +1171,7 @@ void GLSL_InitGPUShaders(void)
 		GLSL_SetUniformInt(&tr.lightallShader[i], UNIFORM_DELUXEMAP,   TB_DELUXEMAP);
 		GLSL_SetUniformInt(&tr.lightallShader[i], UNIFORM_SPECULARMAP, TB_SPECULARMAP);
 		GLSL_SetUniformInt(&tr.lightallShader[i], UNIFORM_SHADOWMAP,   TB_SHADOWMAP);
+		GLSL_SetUniformInt(&tr.lightallShader[i], UNIFORM_CUBEMAP,     TB_CUBEMAP);
 		qglUseProgramObjectARB(0);
 
 		GLSL_FinishGPUShader(&tr.lightallShader[i]);
@@ -1368,6 +1377,26 @@ void GLSL_InitGPUShaders(void)
 
 		numEtcShaders++;
 	}
+
+#if 0
+	attribs = ATTR_POSITION | ATTR_TEXCOORD;
+	extradefines[0] = '\0';
+
+	if (!GLSL_InitGPUShader(&tr.testcubeShader, "testcube", attribs, qtrue, extradefines, qtrue, NULL, NULL))
+	{
+		ri.Error(ERR_FATAL, "Could not load testcube shader!");
+	}
+
+	GLSL_InitUniforms(&tr.testcubeShader);
+
+	qglUseProgramObjectARB(tr.testcubeShader.program);
+	GLSL_SetUniformInt(&tr.testcubeShader, UNIFORM_TEXTUREMAP, TB_COLORMAP);
+	qglUseProgramObjectARB(0);
+
+	GLSL_FinishGPUShader(&tr.testcubeShader);
+
+	numEtcShaders++;
+#endif
 
 
 	endTime = ri.Milliseconds();
@@ -1677,7 +1706,7 @@ void GLSL_VertexAttribPointers(uint32_t attribBits)
 	// position/normal/tangent/bitangent are always set in case of animation
 	oldFrame = glState.vertexAttribsOldFrame;
 	newFrame = glState.vertexAttribsNewFrame;
-	animated = (oldFrame != newFrame) && (glState.vertexAttribsInterpolation > 0.0f);
+	animated = glState.vertexAnimation;
 	
 	if((attribBits & ATTR_POSITION) && (!(glState.vertexAttribPointersSet & ATTR_POSITION) || animated))
 	{
@@ -1810,7 +1839,6 @@ shaderProgram_t *GLSL_GetGenericShaderProgram(int stage)
 	{
 		case AGEN_LIGHTING_SPECULAR:
 		case AGEN_PORTAL:
-		case AGEN_FRESNEL:
 			shaderAttribs |= GENERICDEF_USE_RGBAGEN;
 			break;
 		default:
@@ -1827,7 +1855,7 @@ shaderProgram_t *GLSL_GetGenericShaderProgram(int stage)
 		shaderAttribs |= GENERICDEF_USE_DEFORM_VERTEXES;
 	}
 
-	if (glState.vertexAttribsInterpolation > 0.0f && backEnd.currentEntity && backEnd.currentEntity != &tr.worldEntity)
+	if (glState.vertexAnimation)
 	{
 		shaderAttribs |= GENERICDEF_USE_VERTEX_ANIMATION;
 	}

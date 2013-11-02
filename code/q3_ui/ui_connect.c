@@ -172,12 +172,10 @@ void UI_DrawConnectScreen( qboolean overlay ) {
 	uiClientState_t	cstate;
 	char			info[MAX_INFO_VALUE];
 
-	Menu_Cache();
-
 	if ( !overlay ) {
 		// draw the dialog background
-		UI_SetColor( color_white );
-		UI_DrawHandlePic( 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, uis.menuBackShader );
+		CG_ClearScreen();
+		CG_DrawPic( 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, uis.menuBackShader );
 	}
 
 	// see what information we should display
@@ -220,7 +218,7 @@ void UI_DrawConnectScreen( qboolean overlay ) {
 
 		Menu_AddItem( &s_ingame_menu, ( void * ) &s_customize_player_action );
 
-		MField_Draw( &passwordField );
+		UI_Field_Draw( &passwordField );
 	}
 #endif
 

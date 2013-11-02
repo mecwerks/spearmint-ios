@@ -229,7 +229,7 @@ void CG_DrawTopBottom(float x, float y, float w, float h, float size) {
 }
 /*
 ================
-UI_DrawRect
+CG_DrawRect
 
 Coordinates are 640*480 virtual values
 =================
@@ -243,6 +243,20 @@ void CG_DrawRect( float x, float y, float width, float height, float size, const
 	trap_R_SetColor( NULL );
 }
 
+/*
+================
+CG_ClearScreen
+
+Wide and narrow aspect ratios screens need to have the sides cleared.
+Used when drawing fullscreen 4:3 UI.
+=================
+*/
+void CG_ClearScreen( void ) {
+	trap_R_SetColor( g_color_table[0] );
+	trap_R_DrawStretchPic( 0, 0, cgs.glconfig.vidWidth, cgs.glconfig.vidHeight, 0, 0, 0, 0, cgs.media.whiteShader );
+	trap_R_SetColor( NULL );
+}
+
 
 
 /*
@@ -253,8 +267,44 @@ Coordinates are 640*480 virtual values
 =================
 */
 void CG_DrawPic( float x, float y, float width, float height, qhandle_t hShader ) {
+	float	s0;
+	float	s1;
+	float	t0;
+	float	t1;
+
+	if( width < 0 ) {	// flip about vertical
+		width  = -width;
+		s0 = 1;
+		s1 = 0;
+	}
+	else {
+		s0 = 0;
+		s1 = 1;
+	}
+
+	if( height < 0 ) {	// flip about horizontal
+		height  = -height;
+		t0 = 1;
+		t1 = 0;
+	}
+	else {
+		t0 = 0;
+		t1 = 1;
+	}
+
 	CG_AdjustFrom640( &x, &y, &width, &height );
-	trap_R_DrawStretchPic( x, y, width, height, 0, 0, 1, 1, hShader );
+	trap_R_DrawStretchPic( x, y, width, height, s0, t0, s1, t1, hShader );
+}
+
+/*
+================
+CG_DrawNamedPic
+
+Coordinates are 640*480 virtual values
+=================
+*/
+void CG_DrawNamedPic( float x, float y, float width, float height, const char *picname ) {
+	CG_DrawPic( x, y, width, height, trap_R_RegisterShaderNoMip( picname ) );
 }
 
 /*
@@ -335,7 +385,7 @@ Coordinates are at 640 by 480 virtual resolution
 ==================
 */
 void CG_DrawStringExt( int x, int y, const char *string, const float *setColor, 
-		qboolean forceColor, qboolean shadow, int charWidth, int charHeight, int maxChars ) {
+		int forceColor, qboolean shadow, int charWidth, int charHeight, int maxChars ) {
 	vec4_t		color;
 	const char	*s;
 	int			xx;
@@ -353,7 +403,7 @@ void CG_DrawStringExt( int x, int y, const char *string, const float *setColor,
 		xx = x;
 		cnt = 0;
 		while ( *s && cnt < maxChars) {
-			if ( Q_IsColorString( s ) ) {
+			if ( Q_IsColorString( s ) && forceColor != 2 ) {
 				s += 2;
 				continue;
 			}
@@ -371,13 +421,15 @@ void CG_DrawStringExt( int x, int y, const char *string, const float *setColor,
 	trap_R_SetColor( setColor );
 	while ( *s && cnt < maxChars) {
 		if ( Q_IsColorString( s ) ) {
-			if ( !forceColor ) {
+			if ( forceColor != 1 ) {
 				memcpy( color, g_color_table[ColorIndex(*(s+1))], sizeof( color ) );
 				color[3] = setColor[3];
 				trap_R_SetColor( color );
 			}
-			s += 2;
-			continue;
+			if ( forceColor != 2 ) {
+				s += 2;
+				continue;
+			}
 		}
 		CG_DrawChar( xx, y, charWidth, charHeight, *s );
 		xx += charWidth;
@@ -413,12 +465,12 @@ void CG_DrawSmallStringColor( int x, int y, const char *s, vec4_t color ) {
 
 /*
 =================
-CG_DrawStrlen
+CG_DrawStrlenEx
 
 Returns character count, skiping color escape codes
 =================
 */
-int CG_DrawStrlen( const char *str ) {
+int CG_DrawStrlenEx( const char *str, int maxchars ) {
 	const char *s = str;
 	int count = 0;
 
@@ -429,9 +481,24 @@ int CG_DrawStrlen( const char *str ) {
 			count++;
 			s++;
 		}
+
+		if ( maxchars > 0 && s - str >= maxchars ) {
+			break;
+		}
 	}
 
 	return count;
+}
+
+/*
+=================
+CG_DrawStrlen
+
+Returns character count, skiping color escape codes
+=================
+*/
+int CG_DrawStrlen( const char *str ) {
+	return CG_DrawStrlenEx( str, 0 );
 }
 
 /*

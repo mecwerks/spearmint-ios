@@ -32,6 +32,7 @@ Suite 120, Rockville, Maryland 20850 USA.
 #define __TR_TYPES_H
 
 
+#define MAX_CORONAS		32		// not really a reason to limit this other than trying to keep a reasonable count
 #define	MAX_DLIGHTS		32		// can't be increased, because bit flags are used on surfaces
 
 #define	REFENTITYNUM_BITS	12		// can't be increased without changing drawsurf bit packing
@@ -61,6 +62,9 @@ Suite 120, Rockville, Maryland 20850 USA.
 
 #define	RF_SHADOW_PLANE		0x0100		// use refEntity->shadowPlane
 #define	RF_WRAP_FRAMES		0x0200		// mod the model frames by the maxframes to allow continuous
+
+#define RF_FORCE_ENT_ALPHA	0x0400		// override shader alpha value and take the one from the entity
+#define	RF_RGB_TINT			0x0800		// override shader color values and take the ones from the entity
 
 // refdef flags
 #define RDF_NOWORLDMODEL	0x0001		// used for player configuration screen
@@ -202,26 +206,6 @@ typedef enum {
 	TC_S3TC_ARB  // this is for the GL_EXT_texture_compression_s3tc extension.
 } textureCompression_t;
 
-typedef enum {
-	GLDRV_ICD,					// driver is integrated with window system
-								// WARNING: there are tests that check for
-								// > GLDRV_ICD for minidriverness, so this
-								// should always be the lowest value in this
-								// enum set
-	GLDRV_STANDALONE,			// driver is a non-3Dfx standalone driver
-	GLDRV_VOODOO				// driver is a 3Dfx standalone driver
-} glDriverType_t;
-
-typedef enum {
-	GLHW_GENERIC,			// where everthing works the way it should
-	GLHW_3DFX_2D3D,			// Voodoo Banshee or Voodoo3, relevant since if this is
-							// the hardware type then there can NOT exist a secondary
-							// display adapter
-	GLHW_RIVA128,			// where you can't interpolate alpha
-	GLHW_RAGEPRO,			// where you can't modulate alpha on alpha textures
-	GLHW_PERMEDIA2			// where you don't have src*dst
-} glHardwareType_t;
-
 typedef struct {
 	char					renderer_string[MAX_STRING_CHARS];
 	char					vendor_string[MAX_STRING_CHARS];
@@ -232,9 +216,6 @@ typedef struct {
 	int						numTextureUnits;		// multitexture ability
 
 	int						colorBits, depthBits, stencilBits;
-
-	glDriverType_t			driverType;
-	glHardwareType_t		hardwareType;
 
 	qboolean				deviceSupportsGamma;
 	textureCompression_t	textureCompression;
@@ -254,12 +235,13 @@ typedef struct {
 
 	int						displayFrequency;
 
-	// synonymous with "does rendering consume the entire screen?", therefore
-	// a Voodoo or Voodoo2 will have this set to TRUE, as will a Win32 ICD that
-	// used CDS.
+	// synonymous with "does rendering consume the entire screen?"
 	qboolean				isFullscreen;
 	qboolean				stereoEnabled;
-	qboolean				smpActive;		// UNUSED, present for compatibility
 } glconfig_t;
+
+// Changing glconfig_t breaks VM compatibility.
+// The size is used to check at run-time to make sure you don't break it on accident.
+#define GLCONFIG_SIZE	35916
 
 #endif	// __TR_TYPES_H

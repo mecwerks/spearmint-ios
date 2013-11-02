@@ -11,6 +11,12 @@ equ floor						-8
 equ ceil						-9
 equ Q_acos						-10
 equ Q_asin						-11
+equ tan							-12
+equ atan						-13
+equ pow							-14
+equ exp							-15
+equ log							-16
+equ log10						-17
 
 equ trap_Print							-21
 equ trap_Error							-22
@@ -43,20 +49,21 @@ equ trap_FS_FOpenFile					-44
 equ trap_FS_Read						-45
 equ trap_FS_Write						-46
 equ trap_FS_Seek						-47
-equ trap_FS_FCloseFile					-48
-equ trap_FS_GetFileList					-49
-equ trap_FS_Delete						-50
-equ trap_FS_Rename						-51
+equ trap_FS_Tell						-48
+equ trap_FS_FCloseFile					-49
+equ trap_FS_GetFileList					-50
+equ trap_FS_Delete						-51
+equ trap_FS_Rename						-52
 
-equ trap_PC_AddGlobalDefine				-52
-equ trap_PC_RemoveAllGlobalDefines		-53
-equ trap_PC_LoadSource					-54
-equ trap_PC_FreeSource					-55
-equ trap_PC_ReadToken					-56
-equ trap_PC_UnreadToken					-57
-equ trap_PC_SourceFileAndLine			-58
+equ trap_PC_AddGlobalDefine				-53
+equ trap_PC_RemoveAllGlobalDefines		-54
+equ trap_PC_LoadSource					-55
+equ trap_PC_FreeSource					-56
+equ trap_PC_ReadToken					-57
+equ trap_PC_UnreadToken					-58
+equ trap_PC_SourceFileAndLine			-59
 
-equ trap_Alloc							-59
+equ trap_Alloc							-60
 
 
 equ	trap_GetClipboardData				-101
@@ -68,6 +75,7 @@ equ	trap_GetVoipPower					-106
 equ	trap_GetVoipGain					-107
 equ	trap_GetVoipMute					-108
 equ	trap_GetVoipMuteAll					-109
+equ	trap_Cmd_AutoComplete			-110
 
 equ	trap_GetGameState					-151
 equ	trap_GetCurrentSnapshotNumber		-152
@@ -116,30 +124,31 @@ equ	trap_R_ClearScene					-306
 equ	trap_R_AddRefEntityToScene			-307
 equ	trap_R_AddPolyToScene				-308
 equ	trap_R_AddLightToScene				-309
-equ	trap_R_RenderScene					-310
-equ	trap_R_SetColor						-311
-equ	trap_R_DrawStretchPic				-312
-equ	trap_R_LerpTag						-313
-equ trap_R_ModelBounds					-314
-equ trap_R_RemapShader					-315
-equ	trap_R_SetClipRegion				-316
-equ trap_R_DrawRotatedPic				-317
-equ trap_R_DrawStretchPicGradient		-318
-equ trap_R_Add2dPolys					-319
-equ	trap_R_AddPolysToScene				-320
-equ	trap_R_AddPolyBufferToScene			-321
+equ trap_R_AddAdditiveLightToScene		-310
+equ trap_R_AddCoronaToScene				-311
+equ	trap_R_RenderScene					-312
+equ	trap_R_SetColor						-313
+equ	trap_R_DrawStretchPic				-314
+equ	trap_R_LerpTag						-315
+equ trap_R_ModelBounds					-316
+equ trap_R_RemapShader					-317
+equ	trap_R_SetClipRegion				-318
+equ trap_R_DrawRotatedPic				-319
+equ trap_R_DrawStretchPicGradient		-320
+equ trap_R_Add2dPolys					-321
+equ	trap_R_AddPolysToScene				-322
+equ	trap_R_AddPolyBufferToScene			-323
 
 equ	trap_R_LoadWorldMap					-351
 equ trap_GetEntityToken					-352
 equ trap_R_LightForPoint				-353
 equ trap_R_inPVS						-354
-equ trap_R_AddAdditiveLightToScene		-355
-equ trap_R_GetGlobalFog					-356
-equ trap_R_GetViewFog					-357
-equ trap_R_SetSurfaceShader				-358
-equ trap_R_GetSurfaceShader				-359
-equ trap_R_GetShaderFromModel			-360
-equ trap_R_GetShaderName				-361
+equ trap_R_GetGlobalFog					-355
+equ trap_R_GetViewFog					-356
+equ trap_R_SetSurfaceShader				-357
+equ trap_R_GetSurfaceShader				-358
+equ trap_R_GetShaderFromModel			-359
+equ trap_R_GetShaderName				-360
 
 
 

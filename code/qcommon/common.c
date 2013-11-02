@@ -116,6 +116,10 @@ cvar_t	*com_renderer;
 static void	*rendererLib = NULL;
 #endif
 
+#ifndef DEDICATED
+cvar_t	*con_autochat;
+#endif
+
 #if idx64
 	int (*Q_VMftol)(void);
 #elif id386
@@ -487,10 +491,7 @@ void Com_StartupVariable( const char *match ) {
 		
 		if(!match || !strcmp(s, match))
 		{
-			if(Cvar_Flags(s) == CVAR_NONEXISTENT)
-				Cvar_Get(s, Cmd_Argv(2), CVAR_USER_CREATED);
-			else
-				Cvar_Set2(s, Cmd_Argv(2), qfalse);
+			Cvar_User_Set(s, Cmd_Argv(2));
 		}
 	}
 }
@@ -2851,21 +2852,13 @@ void Com_Init( char *commandLine ) {
 #endif
 		Cvar_Get("protocol", com_protocol->string, CVAR_ROM);
 
+#ifndef DEDICATED
+	con_autochat = Cvar_Get( "con_autochat", "0", CVAR_ARCHIVE );
+#endif
+
 	Sys_Init();
 
-	if( Sys_WritePIDFile( ) ) {
-#ifndef DEDICATED
-		char message[1024];
-
-		Com_sprintf( message, sizeof (message), "The last time %s ran, "
-			"it didn't exit properly. This may be due to inappropriate video "
-			"settings. Would you like to start with \"safe\" video settings?", com_productName->string );
-
-		if( Sys_Dialog( DT_YES_NO, message, "Abnormal Exit" ) == DR_YES ) {
-			Cvar_Set( "com_abnormalExit", "1" );
-		}
-#endif
-	}
+	Sys_InitPIDFile( FS_GetCurrentGameDir() );
 
 	// Pick a random port value
 	Com_RandomBytes( (byte*)&qport, sizeof(int) );
@@ -2895,9 +2888,6 @@ void Com_Init( char *commandLine ) {
 			}
 		}
 	}
-
-	// start in full screen ui mode
-	Cvar_Set("r_uiFullScreen", "1");
 
 	CL_StartHunkUsers( qfalse );
 
@@ -3682,8 +3672,8 @@ void Field_CompleteCommand( char *cmd,
 		completionString = Cmd_Argv( completionArgument - 1 );
 
 #ifndef DEDICATED
-	// Unconditionally add a '\' to the start of the buffer
-	if( completionField->buffer[ 0 ] &&
+	// Add a '\' to the start of the buffer if it might be sent as chat otherwise
+	if( con_autochat->integer && completionField->buffer[ 0 ] &&
 			completionField->buffer[ 0 ] != '\\' )
 	{
 		if( completionField->buffer[ 0 ] != '/' )

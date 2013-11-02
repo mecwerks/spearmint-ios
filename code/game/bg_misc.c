@@ -973,7 +973,7 @@ vmNetField_t	bg_entityStateFields[] =
 { NETF(maxs[1]), 0 },
 { NETF(maxs[2]), 0 },
 { NETF(powerups), MAX_POWERUPS },
-{ NETF(modelindex), 8 },
+{ NETF(modelindex), MODELINDEX_BITS },
 { NETF(otherEntityNum2), GENTITYNUM_BITS },
 { NETF(loopSound), 8 },
 { NETF(tokens), 8 },
@@ -981,7 +981,7 @@ vmNetField_t	bg_entityStateFields[] =
 { NETF(origin2[2]), 0 },
 { NETF(origin2[0]), 0 },
 { NETF(origin2[1]), 0 },
-{ NETF(modelindex2), 8 },
+{ NETF(modelindex2), MODELINDEX_BITS },
 { NETF(angles[0]), 0 },
 { NETF(time), 32 },
 { NETF(apos.trTime), 32 },
@@ -995,6 +995,8 @@ vmNetField_t	bg_entityStateFields[] =
 { NETF(angles2[0]), 0 },
 { NETF(angles2[2]), 0 },
 { NETF(constantLight), 32 },
+{ NETF(dl_intensity), 32 },
+{ NETF(density), 10},
 { NETF(frame), 16 }
 };
 

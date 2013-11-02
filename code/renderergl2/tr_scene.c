@@ -35,6 +35,9 @@ int			r_firstSceneDrawSurf;
 int			r_numdlights;
 int			r_firstSceneDlight;
 
+int			r_numcoronas;
+int			r_firstSceneCorona;
+
 int			r_numentities;
 int			r_firstSceneEntity;
 
@@ -61,6 +64,9 @@ void R_InitNextFrame( void ) {
 	r_numdlights = 0;
 	r_firstSceneDlight = 0;
 
+	r_numcoronas = 0;
+	r_firstSceneCorona = 0;
+
 	r_numentities = 0;
 	r_firstSceneEntity = 0;
 
@@ -82,6 +88,7 @@ RE_ClearScene
 */
 void RE_ClearScene( void ) {
 	r_firstSceneDlight = r_numdlights;
+	r_firstSceneCorona = r_numcoronas;
 	r_firstSceneEntity = r_numentities;
 	r_firstScenePoly = r_numpolys;
 	r_firstScenePolybuffer = r_numpolybuffers;
@@ -136,7 +143,7 @@ void R_AddPolygonSurfaces( void ) {
 
 	for ( i = 0, poly = tr.refdef.polys; i < tr.refdef.numPolys ; i++, poly++ ) {
 		sh = R_GetShaderByHandle( poly->hShader );
-		R_AddDrawSurf( ( void * )poly, sh, R_PolyFogNum( poly ), qfalse, qfalse );
+		R_AddDrawSurf( ( void * )poly, sh, R_PolyFogNum( poly ), qfalse, qfalse, 0 /*cubeMap*/  );
 	}
 }
 
@@ -181,13 +188,6 @@ void RE_AddPolyToScene( qhandle_t hShader, int numVerts, const polyVert_t *verts
 		
 		Com_Memcpy( poly->verts, &verts[numVerts*j], numVerts * sizeof( *verts ) );
 
-		if ( glConfig.hardwareType == GLHW_RAGEPRO ) {
-			poly->verts->modulate[0] = 255;
-			poly->verts->modulate[1] = 255;
-			poly->verts->modulate[2] = 255;
-			poly->verts->modulate[3] = 255;
-		}
-		// done.
 		r_numpolys++;
 		r_numpolyverts += numVerts;
 	}
@@ -239,7 +239,7 @@ void R_AddPolygonBufferSurfaces( void ) {
 	for ( i = 0, polybuffer = tr.refdef.polybuffers; i < tr.refdef.numPolyBuffers ; i++, polybuffer++ ) {
 		sh = R_GetShaderByHandle( polybuffer->pPolyBuffer->shader );
 
-		R_AddDrawSurf( ( void * )polybuffer, sh, R_PolyBufferFogNum( polybuffer ), qfalse, qfalse );
+		R_AddDrawSurf( ( void * )polybuffer, sh, R_PolyBufferFogNum( polybuffer ), qfalse, qfalse, 0 /*cubeMap*/  );
 	}
 }
 
@@ -310,29 +310,33 @@ RE_AddDynamicLightToScene
 
 =====================
 */
-void RE_AddDynamicLightToScene( const vec3_t org, float intensity, float r, float g, float b, int additive ) {
+void RE_AddDynamicLightToScene( const vec3_t org, float radius, float intensity, float r, float g, float b, int flags ) {
 	dlight_t	*dl;
 
-	if ( !tr.registered ) {
+	// early out
+	if ( !tr.registered || r_numdlights >= MAX_DLIGHTS || radius <= 0 || intensity <= 0 ) {
 		return;
 	}
-	if ( r_numdlights >= MAX_DLIGHTS ) {
-		return;
+
+	// RF, allow us to force some dlights under all circumstances
+	if ( !( flags & REF_FORCE_DLIGHT ) ) {
+		if ( r_dynamiclight->integer == 0 ) {
+			return;
+		}
 	}
-	if ( intensity <= 0 ) {
-		return;
-	}
-	// these cards don't have the correct blend mode
-	if ( glConfig.hardwareType == GLHW_RIVA128 || glConfig.hardwareType == GLHW_PERMEDIA2 ) {
-		return;
-	}
-	dl = &backEndData->dlights[r_numdlights++];
-	VectorCopy (org, dl->origin);
-	dl->radius = intensity;
-	dl->color[0] = r;
-	dl->color[1] = g;
-	dl->color[2] = b;
-	dl->additive = additive;
+
+	// set up a new dlight
+	dl = &backEndData->dlights[ r_numdlights++ ];
+	VectorCopy( org, dl->origin );
+	VectorCopy( org, dl->transformed );
+	dl->radius = radius;
+	dl->radiusInverseCubed = ( 1.0 / dl->radius );
+	dl->radiusInverseCubed = dl->radiusInverseCubed * dl->radiusInverseCubed * dl->radiusInverseCubed;
+	dl->intensity = intensity;
+	dl->color[ 0 ] = r;
+	dl->color[ 1 ] = g;
+	dl->color[ 2 ] = b;
+	dl->flags = flags;
 }
 
 /*
@@ -341,8 +345,8 @@ RE_AddLightToScene
 
 =====================
 */
-void RE_AddLightToScene( const vec3_t org, float intensity, float r, float g, float b ) {
-	RE_AddDynamicLightToScene( org, intensity, r, g, b, qfalse );
+void RE_AddLightToScene( const vec3_t org, float radius, float intensity, float r, float g, float b ) {
+	RE_AddDynamicLightToScene( org, radius, intensity, r, g, b, REF_GRID_DLIGHT | REF_SURFACE_DLIGHT );
 }
 
 /*
@@ -351,40 +355,38 @@ RE_AddAdditiveLightToScene
 
 =====================
 */
-void RE_AddAdditiveLightToScene( const vec3_t org, float intensity, float r, float g, float b ) {
-	RE_AddDynamicLightToScene( org, intensity, r, g, b, qtrue );
+void RE_AddAdditiveLightToScene( const vec3_t org, float radius, float intensity, float r, float g, float b ) {
+	RE_AddDynamicLightToScene( org, radius, intensity, r, g, b, REF_GRID_DLIGHT | REF_SURFACE_DLIGHT | REF_ADDITIVE_DLIGHT );
 }
 
 /*
-@@@@@@@@@@@@@@@@@@@@@
-RE_RenderScene
-
-Draw a 3D view into a part of the window, then return
-to 2D drawing.
-
-Rendering a scene may require multiple views to be rendered
-to handle mirrors,
-@@@@@@@@@@@@@@@@@@@@@
+==============
+RE_AddCoronaToScene
+==============
 */
-void RE_RenderScene( const refdef_t *fd ) {
-	viewParms_t		parms;
-	int				startTime;
+void RE_AddCoronaToScene( const vec3_t org, float r, float g, float b, float scale, int id, qboolean visible ) {
+	corona_t    *cor;
 
 	if ( !tr.registered ) {
 		return;
 	}
-	GLimp_LogComment( "====== RE_RenderScene =====\n" );
-
-	if ( r_norefresh->integer ) {
+	if ( r_numcoronas >= MAX_CORONAS ) {
 		return;
 	}
 
-	startTime = ri.Milliseconds();
+	cor = &backEndData->coronas[r_numcoronas++];
+	VectorCopy( org, cor->origin );
+	cor->color[0] = r;
+	cor->color[1] = g;
+	cor->color[2] = b;
+	cor->scale = scale;
+	cor->id = id;
+	cor->visible = visible;
+}
 
-	if (!tr.world && !( fd->rdflags & RDF_NOWORLDMODEL ) ) {
-		ri.Error (ERR_DROP, "R_RenderScene: NULL worldmodel");
-	}
 
+void RE_BeginScene(const refdef_t *fd)
+{
 	Com_Memcpy( tr.refdef.text, fd->text, sizeof( tr.refdef.text ) );
 
 	tr.refdef.x = fd->x;
@@ -538,6 +540,10 @@ void RE_RenderScene( const refdef_t *fd ) {
 
 	tr.refdef.num_dlights = r_numdlights - r_firstSceneDlight;
 	tr.refdef.dlights = &backEndData->dlights[r_firstSceneDlight];
+	tr.refdef.dlightBits = 0;
+
+	tr.refdef.num_coronas = r_numcoronas - r_firstSceneCorona;
+	tr.refdef.coronas = &backEndData->coronas[r_firstSceneCorona];
 
 	tr.refdef.numPolys = r_numpolys - r_firstScenePoly;
 	tr.refdef.polys = &backEndData->polys[r_firstScenePoly];
@@ -551,8 +557,7 @@ void RE_RenderScene( const refdef_t *fd ) {
 	// turn off dynamic lighting globally by clearing all the
 	// dlights if it needs to be disabled or if vertex lighting is enabled
 	if ( r_dynamiclight->integer == 0 ||
-		 r_vertexLight->integer == 1 ||
-		 glConfig.hardwareType == GLHW_PERMEDIA2 ) {
+		 r_vertexLight->integer == 1 ) {
 		tr.refdef.num_dlights = 0;
 	}
 
@@ -563,6 +568,50 @@ void RE_RenderScene( const refdef_t *fd ) {
 	// each scene / view.
 	tr.frameSceneNum++;
 	tr.sceneCount++;
+}
+
+
+void RE_EndScene()
+{
+	// the next scene rendered in this frame will tack on after this one
+	r_firstSceneDrawSurf = tr.refdef.numDrawSurfs;
+	r_firstSceneEntity = r_numentities;
+	r_firstSceneDlight = r_numdlights;
+	r_firstScenePoly = r_numpolys;
+	r_firstScenePolybuffer = r_numpolybuffers;
+}
+
+/*
+@@@@@@@@@@@@@@@@@@@@@
+RE_RenderScene
+
+Draw a 3D view into a part of the window, then return
+to 2D drawing.
+
+Rendering a scene may require multiple views to be rendered
+to handle mirrors,
+@@@@@@@@@@@@@@@@@@@@@
+*/
+void RE_RenderScene( const refdef_t *fd ) {
+	viewParms_t		parms;
+	int				startTime;
+
+	if ( !tr.registered ) {
+		return;
+	}
+	GLimp_LogComment( "====== RE_RenderScene =====\n" );
+
+	if ( r_norefresh->integer ) {
+		return;
+	}
+
+	startTime = ri.Milliseconds();
+
+	if (!tr.world && !( fd->rdflags & RDF_NOWORLDMODEL ) ) {
+		ri.Error (ERR_DROP, "R_RenderScene: NULL worldmodel");
+	}
+
+	RE_BeginScene(fd);
 
 	// SmileTheory: playing with shadow mapping
 	if (!( fd->rdflags & RDF_NOWORLDMODEL ) && tr.refdef.num_dlights && r_dlightMode->integer >= 2)
@@ -582,6 +631,21 @@ void RE_RenderScene( const refdef_t *fd ) {
 		R_RenderSunShadowMaps(fd, 0);
 		R_RenderSunShadowMaps(fd, 1);
 		R_RenderSunShadowMaps(fd, 2);
+	}
+
+	// playing with cube maps
+	// this is where dynamic cubemaps would be rendered
+	if (0) //(glRefConfig.framebufferObject && !( fd->rdflags & RDF_NOWORLDMODEL ))
+	{
+		int i, j;
+
+		for (i = 0; i < tr.numCubemaps; i++)
+		{
+			for (j = 0; j < 6; j++)
+			{
+				R_RenderCubemapSide(i, j, qtrue);
+			}
+		}
 	}
 
 	// setup view parms for the initial view
@@ -619,12 +683,7 @@ void RE_RenderScene( const refdef_t *fd ) {
 	if(!( fd->rdflags & RDF_NOWORLDMODEL ))
 		R_AddPostProcessCmd();
 
-	// the next scene rendered in this frame will tack on after this one
-	r_firstSceneDrawSurf = tr.refdef.numDrawSurfs;
-	r_firstSceneEntity = r_numentities;
-	r_firstSceneDlight = r_numdlights;
-	r_firstScenePoly = r_numpolys;
-	r_firstScenePolybuffer = r_numpolybuffers;
+	RE_EndScene();
 
 	tr.frontEndMsec += ri.Milliseconds() - startTime;
 }

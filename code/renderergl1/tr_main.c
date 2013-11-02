@@ -194,11 +194,6 @@ void RB_FogOn( void ) {
 		return;
 	}
 
-//	if(r_uiFullScreen->integer) {	// don't fog in the menu
-//		R_FogOff();
-//		return;
-//	}
-
 	if ( !r_useGlFog->integer ) {
 		return;
 	}
@@ -1371,22 +1366,39 @@ static void R_RadixSort( drawSurf_t *source, int size )
 
 /*
 =================
-R_AddDrawSurf
+R_AddEntDrawSurf
 =================
 */
-void R_AddDrawSurf( surfaceType_t *surface, shader_t *shader, 
+void R_AddEntDrawSurf( trRefEntity_t *ent, surfaceType_t *surface, shader_t *shader, 
 				   int fogIndex, int dlightMap ) {
 	int			index;
+	int			sortOrder;
+
+	if ( ent && ( ent->e.renderfx & RF_FORCE_ENT_ALPHA ) ) {
+		sortOrder = SS_BLEND0;
+	} else {
+		sortOrder = shader->sort;
+	}
 
 	// instead of checking for overflow, we just mask the index
 	// so it wraps around
 	index = tr.refdef.numDrawSurfs & DRAWSURF_MASK;
 	// the sort data is packed into a single 64 bit value so it can be
 	// compared quickly during the qsorting process
-	R_ComposeSort(&tr.refdef.drawSurfs[index], shader->sortedIndex, shader->sort,
+	R_ComposeSort(&tr.refdef.drawSurfs[index], shader->sortedIndex, sortOrder,
 					tr.shiftedEntityNum, fogIndex, dlightMap);
 	tr.refdef.drawSurfs[index].surface = surface;
 	tr.refdef.numDrawSurfs++;
+}
+
+/*
+=================
+R_AddDrawSurf
+=================
+*/
+void R_AddDrawSurf( surfaceType_t *surface, shader_t *shader, 
+				   int fogIndex, int dlightMap ) {
+	R_AddEntDrawSurf( NULL, surface, shader, fogIndex, dlightMap );
 }
 
 /*
@@ -1494,7 +1506,7 @@ void R_AddEntitySurfaces (void) {
 		  tr.currentEntityNum++ ) {
 		ent = tr.currentEntity = &tr.refdef.entities[tr.currentEntityNum];
 
-		ent->needDlights = qfalse;
+		ent->needDlights = 0;
 
 		// preshift the value we are going to OR into the drawsurf sort
 		tr.shiftedEntityNum = tr.currentEntityNum << QSORT_REFENTITYNUM_SHIFT;
@@ -1603,6 +1615,8 @@ void R_GenerateDrawSurfs( void ) {
 	}
 
 	R_SetupProjection(&tr.viewParms, r_zproj->value, qtrue);
+
+	R_CullDlights();
 
 	R_AddWorldSurfaces ();
 

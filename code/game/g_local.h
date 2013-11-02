@@ -185,6 +185,12 @@ struct gentity_s {
 
 	gitem_t		*item;			// for bonus items
 
+	// dlights
+	vec3_t		dl_color;
+	char		*dl_stylestring;
+	char		*dl_shader;
+	int			dl_atten;
+
 	// info for bots
 	qboolean	botvalid;
 	float		update_time;
@@ -395,6 +401,7 @@ typedef struct {
 	int			snd_fry;				// sound index for standing in lava
 
 	int			warmupModificationCount;	// for detecting if g_warmup is changed
+	int			botReportModificationCount;
 
 	// voting state
 	char		voteString[MAX_STRING_CHARS];
@@ -488,7 +495,8 @@ void SaveRegisteredItems( void );
 //
 // g_utils.c
 //
-int G_ModelIndex( char *name );
+int		G_FindConfigstringIndex( char *name, int start, int max, qboolean create );
+int		G_ModelIndex( char *name );
 int		G_SoundIndex( char *name );
 void	trap_SendServerCommand( int clientNum, char *cmd );
 void	G_TeamCommand( team_t team, char *cmd );
@@ -613,7 +621,6 @@ qboolean SpotWouldTelefrag( gentity_t *spot );
 //
 qboolean	ConsoleCommand( void );
 void G_RegisterCommands( void );
-void G_UnregisterCommands( void );
 void G_ProcessIPBans(void);
 qboolean G_FilterPacket (char *from);
 
@@ -716,6 +723,7 @@ int BotAISetupClient(int client, struct bot_settings_s *settings, qboolean resta
 int BotAIShutdownClient( int client, qboolean restart );
 int BotAIStartFrame( int time );
 void BotTestAAS(vec3_t origin);
+void Svcmd_BotTeamplayReport_f( void );
 
 #include "g_team.h" // teamplay specific stuff
 #include "g_syscalls.h"

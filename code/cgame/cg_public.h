@@ -102,8 +102,12 @@ typedef struct {
 #define SORT_HOST			0
 #define SORT_MAP			1
 #define SORT_CLIENTS		2
-#define SORT_GAME			3
+#define SORT_GAMETYPE		3
 #define SORT_PING			4
+#define SORT_HUMANS			5
+#define SORT_BOTS			6
+#define SORT_MAXCLIENTS		7
+#define SORT_GAMEDIR		8
 
 // server browser sources
 // TTimo: AS_MPLAYER is no longer used
@@ -170,6 +174,7 @@ typedef enum {
 	CG_FS_READ,
 	CG_FS_WRITE,
 	CG_FS_SEEK,
+	CG_FS_TELL,
 	CG_FS_FCLOSEFILE,
 	CG_FS_GETFILELIST,
 	CG_FS_DELETE,
@@ -196,6 +201,7 @@ typedef enum {
 	CG_GET_VOIP_GAIN,
 	CG_GET_VOIP_MUTE_CLIENT,
 	CG_GET_VOIP_MUTE_ALL,
+	CG_CMD_AUTOCOMPLETE,
 
 	// note: these were not originally available in ui
 	CG_GETGAMESTATE = 150,
@@ -244,6 +250,8 @@ typedef enum {
 	CG_R_ADDREFENTITYTOSCENE,
 	CG_R_ADDPOLYTOSCENE,
 	CG_R_ADDLIGHTTOSCENE,
+	CG_R_ADDADDITIVELIGHTTOSCENE,
+	CG_R_ADDCORONATOSCENE,
 	CG_R_RENDERSCENE,
 	CG_R_SETCOLOR,
 	CG_R_DRAWSTRETCHPIC,
@@ -262,7 +270,6 @@ typedef enum {
 	CG_GET_ENTITY_TOKEN,
 	CG_R_LIGHTFORPOINT,
 	CG_R_INPVS,
-	CG_R_ADDADDITIVELIGHTTOSCENE,
 	CG_R_GET_GLOBAL_FOG,
 	CG_R_GET_VIEW_FOG,
 	CG_R_SET_SURFACE_SHADER,
@@ -419,15 +426,20 @@ typedef enum {
 //	void (*CG_EventHandling)(int type);
 
 	CG_CONSOLE_TEXT,
-//	void (*CG_ConsoleText)( void );
+//	void (*CG_ConsoleText)( int realTime, qboolean restoredText );
 //	pass text that has been printed to the console to cgame
 //	use Cmd_Argc() / Cmd_Argv() to read it
+//	if restoredText is qtrue, text is being added from before cgame was loaded.
+
+	CG_CONSOLE_CLOSE,
+//	void Con_Close( void );
+//	force console to close, used before loading screens
 
 	CG_WANTSBINDKEYS,
 //	qboolean CG_WantsBindKeys( void );
 
 	CG_CREATE_USER_CMD
-//	usercmd_t *CG_CreateUserCmd( int localClientNum, int frameTime, int frameMsec, float mx, float my );
+//	usercmd_t *CG_CreateUserCmd( int localClientNum, int frameTime, int frameMsec, float mx, float my, qboolean anykeydown );
 
 } cgameExport_t;
 

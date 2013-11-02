@@ -59,7 +59,7 @@ void R_AddAnimSurfaces( trRefEntity_t *ent ) {
 	surface = (md4Surface_t *)( (byte *)lod + lod->ofsSurfaces );
 	for ( i = 0 ; i < lod->numSurfaces ; i++ ) {
 		shader = R_GetShaderByHandle( surface->shaderIndex );
-		R_AddDrawSurf( (void *)surface, shader, 0 /*fogNum*/, qfalse );
+		R_AddEntDrawSurf( ent, (void *)surface, shader, 0 /*fogNum*/, qfalse );
 		surface = (md4Surface_t *)( (byte *)surface + surface->ofsEnd );
 	}
 }
@@ -310,7 +310,8 @@ void R_MDRAddAnimSurfaces( trRefEntity_t *ent ) {
 	mdrLOD_t		*lod;
 	shader_t		*shader;
 	skin_t		*skin;
-	int				i, j;
+	skinSurface_t	*skinSurf;
+	int				i;
 	int				lodnum = 0;
 	int				fogNum = 0;
 	int				cull;
@@ -388,11 +389,11 @@ void R_MDRAddAnimSurfaces( trRefEntity_t *ent ) {
 			skin = R_GetSkinByHandle(ent->e.customSkin);
 			shader = tr.defaultShader;
 			
-			for(j = 0; j < skin->numSurfaces; j++)
+			for(skinSurf = skin->surfaces; skinSurf; skinSurf = skinSurf->next)
 			{
-				if (!strcmp(skin->surfaces[j]->name, surface->name))
+				if (!strcmp(skinSurf->name, surface->name))
 				{
-					shader = skin->surfaces[j]->shader;
+					shader = skinSurf->shader;
 					break;
 				}
 			}
@@ -424,7 +425,7 @@ void R_MDRAddAnimSurfaces( trRefEntity_t *ent ) {
 		}
 
 		if (!personalModel)
-			R_AddDrawSurf( (void *)surface, shader, fogNum, qfalse );
+			R_AddEntDrawSurf( ent, (void *)surface, shader, fogNum, qfalse );
 
 		surface = (mdrSurface_t *)( (byte *)surface + surface->ofsEnd );
 	}

@@ -591,16 +591,16 @@ static int CG_CalcFov( void ) {
 		}
 	}
 
-	// Do FOV Correction for some viewports
-	if ((cg.numViewports == 2) || (cg.numViewports == 3 && cg.viewport == 2)) {
-		if (cg_splitviewVertical.integer == 1) {
-			// Tall/narrow view
-			fov_x *= 0.6f; // 0.5 would be correct, but fov gets real small.
-		} else {
-			// Short/wide view
-			fov_x *= 1.4f; // 1.5 would be correct, but fov gets real big.
-		}
+	if ( cg_fovAspectAdjust.integer ) {
+		// Based on LordHavoc's code for Darkplaces
+		// http://www.quakeworld.nu/forum/topic/53/what-does-your-qw-look-like/page/30
+		const float baseAspect = 0.75f; // 3/4
+		const float aspect = (float)cg.refdef.width/(float)cg.refdef.height;
+		const float desiredFov = fov_x;
+
+		fov_x = atan( tan( desiredFov*M_PI / 360.0f ) * baseAspect*aspect )*360.0f / M_PI;
 	}
+
 	x = cg.refdef.width / tan( fov_x / 360 * M_PI );
 	fov_y = atan2( cg.refdef.height, x );
 	fov_y = fov_y * 360 / M_PI;
@@ -656,11 +656,6 @@ static void CG_DamageBlendBlob( void ) {
 	//if (cg.cameraMode) {
 	//	return;
 	//}
-
-	// ragePro systems can't fade blends, so don't obscure the screen
-	if ( cgs.glconfig.hardwareType == GLHW_RAGEPRO ) {
-		return;
-	}
 
 	maxTime = DAMAGE_TIME;
 	t = cg.time - cg.cur_lc->damageTime;
@@ -954,13 +949,17 @@ void CG_DrawActiveFrame( int serverTime, stereoFrame_t stereoView, qboolean demo
 	trap_R_ClearScene();
 
 	// set up cg.snap and possibly cg.nextSnap
-	CG_ProcessSnapshots();
+	CG_ProcessSnapshots( qfalse );
 
 	// if we haven't received any snapshots yet, all
 	// we can draw is the information screen
 	if ( !cg.snap || ( cg.snap->snapFlags & SNAPFLAG_NOT_ACTIVE ) ) {
 		CG_DrawInformation();
 		return;
+	}
+
+	if ( !cg.lightstylesInited ) {
+		CG_SetupDlightstyles();
 	}
 
 	// this counter will be bumped for every valid scene we generate

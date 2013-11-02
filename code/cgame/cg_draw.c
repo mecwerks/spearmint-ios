@@ -2603,6 +2603,60 @@ static void CG_DrawIntermission( void ) {
 
 /*
 =================
+CG_DrawBotInfo
+
+Draw info for bot that client is following.
+=================
+*/
+static qboolean CG_DrawBotInfo( int y ) {
+	const char	*info, *str, *leader, *carrying, *action;
+	int x;
+
+	if ( !(cg.cur_ps->pm_flags & PMF_FOLLOW) ) {
+		return qfalse;
+	}
+
+	info = CG_ConfigString( CS_BOTINFO + cg.cur_ps->clientNum );
+
+	if (!*info) {
+		return qfalse;
+	}
+
+	action = Info_ValueForKey(info, "a");
+
+	if ( *action ) {
+		x = 0.5 * ( 640 - BIGCHAR_WIDTH * CG_DrawStrlen( action ) );
+
+		CG_DrawBigString( x, y, action, 1.0F );
+
+		y += BIGCHAR_HEIGHT + 2;
+	}
+
+	leader = Info_ValueForKey(info, "l");
+
+	if ( *leader ) {
+		str = "bot is leader";
+		x = 0.5 * ( 640 - BIGCHAR_WIDTH * CG_DrawStrlen( str ) );
+
+		CG_DrawBigString( x, y, str, 1.0F );
+
+		y += BIGCHAR_HEIGHT + 2;
+	}
+
+	carrying = Info_ValueForKey(info, "c");
+
+	if ( *carrying ) {
+		str = va("bot carrying: %s", carrying);
+		x = 0.5 * ( 640 - BIGCHAR_WIDTH * CG_DrawStrlen( str ) );
+
+		CG_DrawBigString( x, y, str, 1.0F );
+	}
+
+	return qtrue;
+}
+
+/*
+=================
 CG_DrawFollow
 =================
 */
@@ -2629,6 +2683,8 @@ static qboolean CG_DrawFollow( void ) {
 	x = 0.5 * ( 640 - GIANT_WIDTH * CG_DrawStrlen( name ) );
 
 	CG_DrawStringExt( x, 40, name, color, qtrue, qtrue, GIANT_WIDTH, GIANT_HEIGHT, 0 );
+
+	CG_DrawBotInfo( 40 + GIANT_HEIGHT );
 
 	return qtrue;
 }
@@ -3218,6 +3274,23 @@ void CG_DrawDemoRecording( void ) {
 }
 
 /*
+=================
+CG_DrawMessageMode
+=================
+*/
+void CG_DrawMessageMode( void ) {
+	if ( !( trap_Key_GetCatcher( ) & KEYCATCH_MESSAGE ) ) {
+		return;
+	}
+
+	// draw the chat line
+	CG_DrawBigString( 8, 232, cg.messagePrompt, 1.0f );
+
+	MField_Draw( &cg.messageField, 8 + ( strlen( cg.messagePrompt ) * BIGCHAR_WIDTH ), 232,
+			BIGCHAR_WIDTH, BIGCHAR_HEIGHT, g_color_table[ColorIndex(COLOR_WHITE)] );
+}
+
+/*
 =====================
 CG_DrawScreen2D
 
@@ -3247,6 +3320,7 @@ void CG_DrawScreen2D( stereoFrame_t stereoView ) {
 	}
 
 	CG_DrawDemoRecording();
+	CG_DrawMessageMode();
 }
 
 
