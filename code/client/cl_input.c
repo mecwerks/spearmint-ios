@@ -101,7 +101,7 @@ void CL_MouseEvent( int localClientNum, int dx, int dy, int time, qboolean absol
 
 	if ( lc->mouseFlags & MOUSE_CGAME ) {
 #ifdef IOS
-                VM_Call(uivm, CG_MOUSE_EVENT, localClientNum, dx, dy, absolute);
+		VM_Call(cgvm, CG_MOUSE_EVENT, localClientNum, dx, dy, absolute);
 #else
 		VM_Call(cgvm, CG_MOUSE_EVENT, localClientNum, dx, dy, qfalse);
 #endif

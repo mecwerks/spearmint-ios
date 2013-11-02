@@ -256,7 +256,7 @@ GLimp_SetMode(float rotation)
 	glConfig.stencilBits = 0;
 	vidRotation = rotation;
 	
-	if (cls.uiStarted)
+	if (cls.cgameStarted)
 	{
 		cls.glconfig = glConfig;
 //#ifndef MOD_COMPATABILITY
