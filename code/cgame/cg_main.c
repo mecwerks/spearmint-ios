@@ -44,7 +44,7 @@ int redTeamNameModificationCount = -1;
 int blueTeamNameModificationCount = -1;
 #endif
 
-void CG_Init( qboolean inGameLoad, int maxSplitView );
+void CG_Init( qboolean inGameLoad, int maxSplitView, int playVideo );
 void CG_Ingame_Init( int serverMessageNum, int serverCommandSequence, int maxSplitView, int clientNum0, int clientNum1, int clientNum2, int clientNum3 );
 void CG_Shutdown( void );
 void CG_Refresh( int serverTime, stereoFrame_t stereoView, qboolean demoPlayback, connstate_t state, int realTime );
@@ -63,10 +63,12 @@ This must be the very first function compiled into the .q3vm file
 Q_EXPORT intptr_t vmMain( int command, int arg0, int arg1, int arg2, int arg3, int arg4, int arg5, int arg6, int arg7, int arg8, int arg9, int arg10, int arg11  ) {
 
 	switch ( command ) {
+	case CG_GETAPINAME:
+			return (intptr_t)CG_API_NAME;
 	case CG_GETAPIVERSION:
 		return ( CG_API_MAJOR_VERSION << 16) | ( CG_API_MINOR_VERSION & 0xFFFF );
 	case CG_INIT:
-		CG_Init( arg0, arg1 );
+		CG_Init( arg0, arg1, arg2 );
 		return 0;
 	case CG_INGAME_INIT:
 		CG_Ingame_Init( arg0, arg1, arg2, arg3, arg4, arg5, arg6 );
@@ -121,7 +123,7 @@ Q_EXPORT intptr_t vmMain( int command, int arg0, int arg1, int arg2, int arg3, i
 	case CG_CREATE_USER_CMD:
 		return (intptr_t)CG_CreateUserCmd(arg0, arg1, arg2, IntAsFloat(arg3), IntAsFloat(arg4), arg5);
 	default:
-		CG_Error( "vmMain: unknown command %i", command );
+		CG_Error( "cgame vmMain: unknown command %i", command );
 		break;
 	}
 	return -1;
@@ -240,6 +242,7 @@ vmCvar_t	cg_coronafardist;
 vmCvar_t	cg_coronas;
 vmCvar_t	cg_fovAspectAdjust;
 vmCvar_t	cg_fadeExplosions;
+vmCvar_t	cg_introPlayed;
 vmCvar_t	ui_stretch;
 
 #ifdef MISSIONPACK
@@ -354,7 +357,7 @@ static cvarTable_t cgameCvarTable[] = {
 	{ &cg_teamChatTime, "cg_teamChatTime", "3000", CVAR_ARCHIVE, RANGE_ALL },
 	{ &cg_teamChatHeight, "cg_teamChatHeight", "0", CVAR_ARCHIVE, RANGE_INT( 0, TEAMCHAT_HEIGHT ) },
 	{ &cg_forceModel, "cg_forceModel", "0", CVAR_ARCHIVE, RANGE_BOOL },
-	{ &cg_predictItems, "cg_predictItems", "1", CVAR_ARCHIVE, RANGE_BOOL },
+	{ &cg_predictItems, "cg_predictItems", "1", CVAR_ARCHIVE | CVAR_USERINFO_ALL, RANGE_BOOL },
 #ifdef MISSIONPACK
 	{ &cg_deferPlayers, "cg_deferPlayers", "0", CVAR_ARCHIVE, RANGE_BOOL },
 #else
@@ -421,6 +424,7 @@ static cvarTable_t cgameCvarTable[] = {
 	{ &cg_fadeExplosions, "cg_fadeExplosions", "0", CVAR_ARCHIVE, RANGE_BOOL },
 //	{ &cg_pmove_fixed, "cg_pmove_fixed", "0", CVAR_USERINFO | CVAR_ARCHIVE, RANGE_BOOL }
 
+	{ &cg_introPlayed, "com_introPlayed", "0", CVAR_ARCHIVE, RANGE_BOOL },
 	{ &ui_stretch, "ui_stretch", "0", CVAR_ARCHIVE, RANGE_BOOL },
 };
 
@@ -528,10 +532,6 @@ void CG_RegisterUserCvars( void ) {
 
 		trap_Cvar_Register( NULL, Com_LocalClientCvarName(i, "team_model"), teamModelNames[i], userInfo[i] | CVAR_ARCHIVE );
 		trap_Cvar_Register( NULL, Com_LocalClientCvarName(i, "team_headmodel"), teamHeadModelNames[i], userInfo[i] | CVAR_ARCHIVE );
-
-		// ZTM: TODO: Move this somewhere else so one can set teampref on CLI startup args?
-		// clear team preference if was previously set (only want it used for one game)
-		trap_Cvar_Set( Com_LocalClientCvarName(i, "teampref"), "" );
 	}
 }
 
@@ -1439,9 +1439,9 @@ static void CG_RegisterGraphics( void ) {
 		cgs.media.flagPoleModel = trap_R_RegisterModel( "models/flag2/flagpole.md3" );
 		cgs.media.flagFlapModel = trap_R_RegisterModel( "models/flag2/flagflap3.md3" );
 
-		cgs.media.redFlagFlapSkin = trap_R_RegisterSkin( "models/flag2/red.skin" );
-		cgs.media.blueFlagFlapSkin = trap_R_RegisterSkin( "models/flag2/blue.skin" );
-		cgs.media.neutralFlagFlapSkin = trap_R_RegisterSkin( "models/flag2/white.skin" );
+		CG_RegisterSkin( "models/flag2/red.skin", &cgs.media.redFlagFlapSkin, qfalse );
+		CG_RegisterSkin( "models/flag2/blue.skin", &cgs.media.blueFlagFlapSkin, qfalse );
+		CG_RegisterSkin( "models/flag2/white.skin", &cgs.media.neutralFlagFlapSkin, qfalse );
 
 		cgs.media.redFlagBaseModel = trap_R_RegisterModel( "models/mapobjects/flagbase/red_base.md3" );
 		cgs.media.blueFlagBaseModel = trap_R_RegisterModel( "models/mapobjects/flagbase/blue_base.md3" );
@@ -1468,8 +1468,8 @@ static void CG_RegisterGraphics( void ) {
 
 	if ( cgs.gametype == GT_HARVESTER || cg_buildScript.integer ) {
 		cgs.media.harvesterModel = trap_R_RegisterModel( "models/powerups/harvester/harvester.md3" );
-		cgs.media.harvesterRedSkin = trap_R_RegisterSkin( "models/powerups/harvester/red.skin" );
-		cgs.media.harvesterBlueSkin = trap_R_RegisterSkin( "models/powerups/harvester/blue.skin" );
+		CG_RegisterSkin( "models/powerups/harvester/red.skin", &cgs.media.harvesterRedSkin, qfalse );
+		CG_RegisterSkin( "models/powerups/harvester/blue.skin", &cgs.media.harvesterBlueSkin, qfalse );
 		cgs.media.harvesterNeutralModel = trap_R_RegisterModel( "models/powerups/obelisk/obelisk.md3" );
 	}
 
@@ -2336,7 +2336,7 @@ void CG_LoadHudMenu( void ) {
 	cgDC.drawSides = &CG_DrawSides;
 	cgDC.drawTopBottom = &CG_DrawTopBottom;
 	cgDC.clearScene = &trap_R_ClearScene;
-	cgDC.addRefEntityToScene = &trap_R_AddRefEntityToScene;
+	cgDC.addRefEntityToScene = &CG_AddRefEntityWithMinLight;
 	cgDC.renderScene = &trap_R_RenderScene;
 	cgDC.registerFont = &trap_R_RegisterFont;
 	cgDC.ownerDrawItem = &CG_OwnerDraw;
@@ -2418,7 +2418,7 @@ CG_Init
 Called after every cgame load, such as main menu, level change, or subsystem restart
 =================
 */
-void CG_Init( qboolean inGameLoad, int maxSplitView ) {
+void CG_Init( qboolean inGameLoad, int maxSplitView, int playVideo ) {
 
 	// clear everything
 	memset( &cgs, 0, sizeof( cgs ) );
@@ -2428,6 +2428,7 @@ void CG_Init( qboolean inGameLoad, int maxSplitView ) {
 	memset( cg_items, 0, sizeof(cg_items) );
 
 	cg.connected = inGameLoad;
+	cg.cinematicHandle = -1;
 
 	cgs.maxSplitView = Com_Clamp(1, MAX_SPLITVIEW, maxSplitView);
 
@@ -2439,6 +2440,7 @@ void CG_Init( qboolean inGameLoad, int maxSplitView ) {
 	cgs.media.charsetShader		= trap_R_RegisterShader( "gfx/2d/bigchars" );
 	cgs.media.whiteShader		= trap_R_RegisterShader( "white" );
 	cgs.media.consoleShader		= trap_R_RegisterShader( "console" );
+	cgs.media.nodrawShader		= trap_R_RegisterShaderEx( "nodraw", LIGHTMAP_NONE, qtrue );
 
 	// get the rendering configuration from the client system
 	trap_GetGlconfig( &cgs.glconfig );
@@ -2472,6 +2474,15 @@ void CG_Init( qboolean inGameLoad, int maxSplitView ) {
 		return;
 	}
 
+	// if the user didn't give any commands, run default action
+	if ( playVideo == 1 ) {
+		trap_Cmd_ExecuteText( EXEC_APPEND, "cinematic idlogo.RoQ\n" );
+		if( !cg_introPlayed.integer ) {
+			trap_Cvar_SetValue( "com_introPlayed", 1 );
+			trap_Cvar_Set( "nextmap", "cinematic intro.RoQ" );
+		}
+	}
+
 #ifdef MISSIONPACK_HUD
 	Init_Display(&cgDC);
 	String_Init();
@@ -2502,6 +2513,9 @@ void CG_Ingame_Init( int serverMessageNum, int serverCommandSequence, int maxSpl
 	clientNums[3] = clientNum3;
 
 	for (i = 0; i < CG_MaxSplitView(); i++) {
+		// clear team preference if was previously set (only want it used for one game)
+		trap_Cvar_Set( Com_LocalClientCvarName(i, "teampref"), "" );
+
 		if (clientNums[i] < 0 || clientNums[i] >= MAX_CLIENTS) {
 			cg.localClients[i].clientNum = -1;
 			continue;
@@ -2628,11 +2642,20 @@ void CG_Refresh( int serverTime, stereoFrame_t stereoView, qboolean demoPlayback
 	// update cvars
 	CG_UpdateCvars();
 
+	if ( state == CA_CINEMATIC && cg.cinematicHandle >= 0 ) {
+		CG_ClearScreen();
+		trap_CIN_DrawCinematic( cg.cinematicHandle );
+
+		if ( trap_CIN_RunCinematic( cg.cinematicHandle ) == FMV_EOF ) {
+			CG_StopCinematic_f();
+		}
+	}
+
 	if ( !cg_dedicated.integer && state == CA_DISCONNECTED && !UI_IsFullscreen() ) {
 		UI_SetActiveMenu( UIMENU_MAIN );
 	}
 
-	if ( state >= CA_LOADING && !UI_IsFullscreen() ) {
+	if ( state >= CA_LOADING && state != CA_CINEMATIC && !UI_IsFullscreen() ) {
 #ifdef MISSIONPACK_HUD
 		Init_Display(&cgDC);
 #endif
@@ -2815,6 +2838,8 @@ void CG_DistributeKeyEvent( int key, qboolean down, unsigned time, connstate_t s
 		if ( down && !( keyCatcher & ( KEYCATCH_UI | KEYCATCH_CGAME | KEYCATCH_MESSAGE ) ) ) {
 			if ( state == CA_ACTIVE && trap_GetDemoState() != DS_PLAYBACK ) {
 				UI_SetActiveMenu( UIMENU_INGAME );
+			} else if ( state == CA_CINEMATIC ) {
+				CG_StopCinematic_f();
 			} else if ( state != CA_DISCONNECTED ) {
 				trap_Cmd_ExecuteText( EXEC_APPEND, "disconnect\n" );
 			}

@@ -242,22 +242,6 @@ qboolean EntityCarriesFlag(aas_entityinfo_t *entinfo) {
 
 /*
 ==================
-EntityIsInvisible
-==================
-*/
-qboolean EntityIsInvisible(aas_entityinfo_t *entinfo) {
-	// the flag is always visible
-	if (EntityCarriesFlag(entinfo)) {
-		return qfalse;
-	}
-	if (entinfo->powerups & (1 << PW_INVIS)) {
-		return qtrue;
-	}
-	return qfalse;
-}
-
-/*
-==================
 EntityIsShooting
 ==================
 */
@@ -321,7 +305,39 @@ qboolean EntityCarriesCubes(aas_entityinfo_t *entinfo) {
 		return qtrue;
 	return qfalse;
 }
-
+#endif
+/*
+==================
+EntityIsInvisible
+==================
+*/
+qboolean EntityIsInvisible(aas_entityinfo_t *entinfo) {
+	// if player is invisible
+	if (entinfo->powerups & (1 << PW_INVIS)) {
+		// a shooting player is always visible
+		if (EntityIsShooting(entinfo)) {
+			return qfalse;
+		}
+		// the flag is always visible
+		if (EntityCarriesFlag(entinfo)) {
+			return qfalse;
+		}
+#ifdef MISSIONPACK
+		// cubes are always visible
+		if (EntityCarriesCubes(entinfo)) {
+			return qfalse;
+		}
+		// kamikaze are always visible
+		if (EntityHasKamikaze(entinfo)) {
+			return qfalse;
+		}
+#endif
+		// invisible
+		return qtrue;
+	}
+	return qfalse;
+}
+#ifdef MISSIONPACK
 /*
 ==================
 Bot1FCTFCarryingFlag
@@ -2246,6 +2262,45 @@ int TeamPlayIsOn(void) {
 
 /*
 ==================
+BotCanCamp
+==================
+*/
+qboolean BotCanCamp(bot_state_t *bs) {
+	// if the bot's team does not lead
+	if (g_gametype.integer >= GT_TEAM && bs->ownteamscore < bs->enemyteamscore) return qfalse;
+	// if the enemy is located way higher than the bot
+	if (bs->inventory[ENEMY_HEIGHT] > 200) return qfalse;
+	// if the bot is very low on health
+	if (bs->inventory[INVENTORY_HEALTH] < 60) return qfalse;
+	// if the bot is low on health
+	if (bs->inventory[INVENTORY_HEALTH] < 80) {
+		// if the bot has insufficient armor
+		if (bs->inventory[INVENTORY_ARMOR] < 40) return qfalse;
+	}
+	// if the bot has the quad powerup
+	if (bs->inventory[INVENTORY_QUAD]) return qfalse;
+	// if the bot has the invisibility powerup
+	if (bs->inventory[INVENTORY_INVISIBILITY]) return qfalse;
+	// if the bot has the regen powerup
+	if (bs->inventory[INVENTORY_REGEN]) return qfalse;
+	// if the bot has the haste powerup
+	if (bs->inventory[INVENTORY_HASTE]) return qfalse;
+	// the bot should have at least have a good weapon with some ammo
+	if (!(bs->inventory[INVENTORY_ROCKETLAUNCHER] > 0 && bs->inventory[INVENTORY_ROCKETS] > 10)
+		&& !(bs->inventory[INVENTORY_RAILGUN] > 0 && bs->inventory[INVENTORY_SLUGS] > 10)
+		&& !(bs->inventory[INVENTORY_PLASMAGUN] > 0 && bs->inventory[INVENTORY_CELLS] > 80)
+#ifdef MISSIONPACK
+		&& !(bs->inventory[INVENTORY_CHAINGUN] > 0 && bs->inventory[INVENTORY_BELT] > 80)
+#endif
+		&& !(bs->inventory[INVENTORY_BFG10K] > 0 && bs->inventory[INVENTORY_BFGAMMO] > 10)) {
+		return qfalse;
+	}
+
+	return qtrue;
+}
+
+/*
+==================
 BotAggression
 ==================
 */
@@ -2567,13 +2622,7 @@ int BotWantsToCamp(bot_state_t *bs) {
 		return qfalse;
 	}
 	//if the bot isn't healthy enough
-	if (BotAggression(bs) < 50) return qfalse;
-	//the bot should have at least have the rocket launcher, the railgun or the bfg10k with some ammo
-	if ((bs->inventory[INVENTORY_ROCKETLAUNCHER] <= 0 || bs->inventory[INVENTORY_ROCKETS] < 10) &&
-		(bs->inventory[INVENTORY_RAILGUN] <= 0 || bs->inventory[INVENTORY_SLUGS] < 10) &&
-		(bs->inventory[INVENTORY_BFG10K] <= 0 || bs->inventory[INVENTORY_BFGAMMO] < 10)) {
-		return qfalse;
-	}
+	if (!BotCanCamp(bs)) return qfalse;
 	//find the closest camp spot
 	besttraveltime = 99999;
 	for (cs = BotGetNextCampSpotGoal(0, &goal); cs; cs = BotGetNextCampSpotGoal(cs, &goal)) {
@@ -2998,7 +3047,7 @@ int BotFindEnemy(bot_state_t *bs, int curenemy) {
 	int i, healthdecrease;
 	float f, alertness, easyfragger, vis;
 	float squaredist, cursquaredist;
-	aas_entityinfo_t entinfo, curenemyinfo;
+	aas_entityinfo_t entinfo, curenemyinfo, curbotinfo;
 	vec3_t dir, angles;
 
 	alertness = trap_Characteristic_BFloat(bs->character, CHARACTERISTIC_ALERTNESS, 0, 1);
@@ -3078,8 +3127,8 @@ int BotFindEnemy(bot_state_t *bs, int curenemy) {
 		if (!entinfo.valid) continue;
 		//if the enemy isn't dead and the enemy isn't the bot self
 		if (EntityIsDead(&entinfo) || entinfo.number == bs->entitynum) continue;
-		//if the enemy is invisible and not shooting
-		if (EntityIsInvisible(&entinfo) && !EntityIsShooting(&entinfo)) {
+		//if the enemy is invisible
+		if (EntityIsInvisible(&entinfo)) {
 			continue;
 		}
 		//if not an easy fragger don't shoot at chatting players
@@ -3108,13 +3157,21 @@ int BotFindEnemy(bot_state_t *bs, int curenemy) {
 		if (curenemy < 0 && (healthdecrease || EntityIsShooting(&entinfo)))
 			f = 360;
 		else
-			f = 90 + 90 - (90 - (squaredist > Square(810) ? Square(810) : squaredist) / (810 * 9));
+			f = 160;
 		//check if the enemy is visible
 		vis = BotEntityVisible(bs->entitynum, bs->eye, bs->viewangles, f, i);
 		if (vis <= 0) continue;
-		//if the enemy is quite far away, not shooting and the bot is not damaged
-		if (curenemy < 0 && squaredist > Square(100) && !healthdecrease && !EntityIsShooting(&entinfo))
-		{
+		// if the enemy is quite far away and doesn't have a flag or cubes and the bot is not damaged try to ignore this enemy
+		if (curenemy < 0 && squaredist > Square(100) && !healthdecrease && !EntityCarriesFlag(&entinfo)
+#ifdef MISSIONPACK
+			&& !EntityCarriesCubes(&entinfo)
+#endif
+			) {
+			BotEntityInfo(bs->client, &curbotinfo);
+			// if the bot is invisible and want to get the flag, ignore enemies
+			if (EntityIsInvisible(&curbotinfo) && bs->ltgtype == LTG_GETFLAG) {
+				continue;
+			}
 			//check if we can avoid this enemy
 			VectorSubtract(bs->origin, entinfo.origin, dir);
 			vectoangles(dir, angles);
@@ -5176,6 +5233,27 @@ void BotCheckSnapshot(bot_state_t *bs) {
 
 /*
 ==================
+BotCheckTeamScores
+==================
+*/
+void BotCheckTeamScores(bot_state_t *bs) {
+
+	switch (bs->cur_ps.persistant[PERS_TEAM]) {
+		case TEAM_RED:
+			bs->enemyteamscore = level.teamScores[TEAM_BLUE];
+			bs->ownteamscore = level.teamScores[TEAM_RED];
+			break;
+		case TEAM_BLUE:
+			bs->enemyteamscore = level.teamScores[TEAM_RED];
+			bs->ownteamscore = level.teamScores[TEAM_BLUE];
+			break;
+		default:
+			return;
+	}
+}
+
+/*
+==================
 BotCheckAir
 ==================
 */
@@ -5374,6 +5452,8 @@ void BotDeathmatchAI(bot_state_t *bs, float thinktime) {
 		BotCheckSnapshot(bs);
 		//check for air
 		BotCheckAir(bs);
+		//check the team scores
+		BotCheckTeamScores(bs);
 	}
 	//check the console messages
 	BotCheckConsoleMessages(bs);

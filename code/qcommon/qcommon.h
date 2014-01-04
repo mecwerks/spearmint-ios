@@ -264,7 +264,7 @@ PROTOCOL
 ==============================================================
 */
 
-#define	PROTOCOL_VERSION	1
+#define	PROTOCOL_VERSION	2
 #define PROTOCOL_LEGACY_VERSION	0
 
 // maintain a list of compatible protocols for demo playing
@@ -369,6 +369,8 @@ vm_t	*VM_Restart(vm_t *vm, qboolean unpure);
 
 intptr_t		QDECL VM_Call( vm_t *vm, int callNum, ... );
 intptr_t		QDECL VM_SafeCall( vm_t *vm, int callnum );
+
+void	VM_GetVersion( vm_t *vm, int nameCallNum, int versionCallNum, char *apiName, int apiNameSize, int *major, int *minor );
 
 void	VM_Debug( int level );
 
@@ -518,6 +520,9 @@ void	Cvar_Register( vmCvar_t *vmCvar, const char *varName, const char *defaultVa
 void	Cvar_Update( vmCvar_t *vmCvar );
 // updates an interpreted modules' version of a cvar
 
+cvar_t *Cvar_SetDefault( const char *var_name, const char *value );
+// if cvar exists, change the default value of the cvar. Otherwise, create using Cvar_Get.
+
 cvar_t *Cvar_Set2( const char *var_name, const char *value, int defaultFlags, qboolean force );
 //
 
@@ -603,9 +608,13 @@ issues.
 ==============================================================
 */
 
-// number of id paks that will never be autodownloaded from baseq3/missionpack
-#define NUM_ID_PAKS		9
-#define NUM_TA_PAKS		4
+typedef enum {
+	PAK_UNKNOWN,
+	PAK_FREE,
+	PAK_NO_DOWNLOAD,
+	PAK_COMMERCIAL,
+	PAK_MAX
+} pakType_t;
 
 #define IOS_PAKFILE_PREFIX	"q3ios_"
 
@@ -734,8 +743,7 @@ void FS_PureServerSetLoadedPaks( const char *pakSums, const char *pakNames );
 // sole exception of .cfg files.
 
 qboolean FS_CheckDirTraversal(const char *checkdir);
-qboolean FS_idPak(char *pak, char *base, int numPaks);
-qboolean FS_PakAllowDownload( char *pak );
+pakType_t FS_ReferencedPakType( int refpak );
 qboolean FS_ComparePaks( char *neededpaks, int len, qboolean dlstring );
 
 qboolean FS_Rename( const char *from, const char *to );
@@ -936,6 +944,8 @@ extern	int		com_frameTime;
 
 extern	qboolean	com_errorEntered;
 extern	qboolean	com_fullyInitialized;
+
+extern	int		com_playVideo;
 
 extern	fileHandle_t	com_journalFile;
 extern	fileHandle_t	com_journalDataFile;

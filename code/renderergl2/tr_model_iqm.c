@@ -828,7 +828,7 @@ Add all surfaces of this model
 void R_AddIQMSurfaces( trRefEntity_t *ent ) {
 	iqmData_t		*data;
 	srfIQModel_t		*surface;
-	int			i;
+	int			i, j;
 	qboolean		personalModel;
 	int			cull;
 	int			fogNum;
@@ -891,18 +891,25 @@ void R_AddIQMSurfaces( trRefEntity_t *ent ) {
 	for ( i = 0 ; i < data->num_surfaces ; i++ ) {
 		if(ent->e.customShader)
 			shader = R_GetShaderByHandle( ent->e.customShader );
-		else if(ent->e.customSkin > 0 && ent->e.customSkin < tr.numSkins)
+		else if(ent->e.customSkin > 0 && ent->e.customSkin <= tr.refdef.numSkins)
 		{
-			skin = R_GetSkinByHandle(ent->e.customSkin);
+			skin = &tr.refdef.skins[ent->e.customSkin - 1];
 			shader = tr.defaultShader;
 
-			for(skinSurf = skin->surfaces; skinSurf; skinSurf = skinSurf->next)
+			for(j = 0 ; j < skin->numSurfaces ; j++)
 			{
+				skinSurf = &tr.skinSurfaces[ skin->surfaces[ j ] ];
+
 				if (!strcmp(skinSurf->name, surface->name))
 				{
 					shader = skinSurf->shader;
 					break;
 				}
+			}
+
+			if (shader == tr.nodrawShader) {
+				surface++;
+				continue;
 			}
 		} else {
 			shader = surface->shader;
@@ -1016,7 +1023,10 @@ void RB_IQMSurfaceAnim( surfaceType_t *surface ) {
 	int		i;
 
 	vec4_t		*outXYZ;
-	vec4_t		*outNormal;
+	uint32_t	*outNormal;
+#ifdef USE_VERT_TANGENT_SPACE
+	uint32_t	*outTangent;
+#endif
 	vec2_t		(*outTexCoord)[2];
 	vec4_t	*outColor;
 
@@ -1032,6 +1042,9 @@ void RB_IQMSurfaceAnim( surfaceType_t *surface ) {
 
 	outXYZ = &tess.xyz[tess.numVertexes];
 	outNormal = &tess.normal[tess.numVertexes];
+#ifdef USE_VERT_TANGENT_SPACE
+	outTangent = &tess.tangent[tess.numVertexes];
+#endif
 	outTexCoord = &tess.texCoords[tess.numVertexes];
 	outColor = &tess.vertexColors[tess.numVertexes];
 
@@ -1108,19 +1121,25 @@ void RB_IQMSurfaceAnim( surfaceType_t *surface ) {
 			vtxMat[11];
 		(*outXYZ)[3] = 1.0f;
 
-		(*outNormal)[0] =
-			nrmMat[ 0] * data->normals[3*vtx+0] +
-			nrmMat[ 1] * data->normals[3*vtx+1] +
-			nrmMat[ 2] * data->normals[3*vtx+2];
-		(*outNormal)[1] =
-			nrmMat[ 3] * data->normals[3*vtx+0] +
-			nrmMat[ 4] * data->normals[3*vtx+1] +
-			nrmMat[ 5] * data->normals[3*vtx+2];
-		(*outNormal)[2] =
-			nrmMat[ 6] * data->normals[3*vtx+0] +
-			nrmMat[ 7] * data->normals[3*vtx+1] +
-			nrmMat[ 8] * data->normals[3*vtx+2];
-		(*outNormal)[3] = 0.0f;
+		{
+			vec3_t normal;
+			vec4_t tangent;
+
+			normal[0] = DotProduct(&nrmMat[0], &data->normals[3*vtx]);
+			normal[1] = DotProduct(&nrmMat[3], &data->normals[3*vtx]);
+			normal[2] = DotProduct(&nrmMat[6], &data->normals[3*vtx]);
+
+			*outNormal = R_VboPackNormal(normal);
+
+#ifdef USE_VERT_TANGENT_SPACE
+			tangent[0] = DotProduct(&nrmMat[0], &data->tangents[4*vtx]);
+			tangent[1] = DotProduct(&nrmMat[3], &data->tangents[4*vtx]);
+			tangent[2] = DotProduct(&nrmMat[6], &data->tangents[4*vtx]);
+			tangent[3] = data->tangents[4*vtx+3];
+
+			*outTangent++ = R_VboPackTangent(tangent);
+#endif
+		}
 
 		(*outColor)[0] = data->colors[4*vtx+0] / 255.0f;
 		(*outColor)[1] = data->colors[4*vtx+1] / 255.0f;

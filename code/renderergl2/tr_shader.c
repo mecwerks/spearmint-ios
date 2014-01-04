@@ -86,7 +86,7 @@ void R_RemapShader(const char *shaderName, const char *newShaderName, const char
 
 	sh = R_FindShaderByName( shaderName );
 	if (sh == NULL || sh == tr.defaultShader) {
-		h = RE_RegisterShaderLightMap(shaderName, 0);
+		h = RE_RegisterShaderEx(shaderName, 0, qtrue);
 		sh = R_GetShaderByHandle(h);
 	}
 	if (sh == NULL || sh == tr.defaultShader) {
@@ -96,7 +96,7 @@ void R_RemapShader(const char *shaderName, const char *newShaderName, const char
 
 	sh2 = R_FindShaderByName( newShaderName );
 	if (sh2 == NULL || sh2 == tr.defaultShader) {
-		h = RE_RegisterShaderLightMap(newShaderName, 0);
+		h = RE_RegisterShaderEx(newShaderName, 0, qtrue);
 		sh2 = R_GetShaderByHandle(h);
 	}
 
@@ -1546,6 +1546,10 @@ static qboolean ParseStage( shaderStage_t *stage, char **text, int *ifIndent )
 			{
 				stage->bundle[0].tcGen = TCGEN_ENVIRONMENT_MAPPED;
 			}
+			else if ( !Q_stricmp( token, "cel" ) )
+			{
+				stage->bundle[0].tcGen = TCGEN_ENVIRONMENT_CELSHADE_MAPPED;
+			}
 			else if ( !Q_stricmp( token, "lightmap" ) )
 			{
 				stage->bundle[0].tcGen = TCGEN_LIGHTMAP;
@@ -1616,6 +1620,14 @@ static qboolean ParseStage( shaderStage_t *stage, char **text, int *ifIndent )
 		}
 	}
 
+	// if shader stage references a lightmap, but no lightmap is present
+	// (vertex-approximated surfaces), then set cgen to vertex
+	if (stage->bundle[0].isLightmap && shader.lightmapIndex < 0 &&
+		stage->bundle[0].image[0] == tr.whiteImage)
+	{
+		stage->bundle[0].isLightmap = qfalse;
+		stage->rgbGen = CGEN_EXACT_VERTEX;
+	}
 
 	//
 	// implicitly assume that a GL_ONE GL_ZERO blend mask disables blending
@@ -2632,7 +2644,7 @@ static void ComputeVertexAttribs(void)
 #ifdef USE_VERT_TANGENT_SPACE
 			if ((pStage->glslShaderIndex & LIGHTDEF_LIGHTTYPE_MASK) && !(r_normalMapping->integer == 0 && r_specularMapping->integer == 0))
 			{
-				shader.vertexAttribs |= ATTR_BITANGENT | ATTR_TANGENT;
+				shader.vertexAttribs |= ATTR_TANGENT;
 			}
 #endif
 
@@ -2885,7 +2897,6 @@ static void CollapseStagesToLightall(shaderStage_t *diffuse,
 		//ri.Printf(PRINT_ALL, ", deluxemap");
 		diffuse->bundle[TB_DELUXEMAP] = lightmap->bundle[0];
 		diffuse->bundle[TB_DELUXEMAP].image[0] = tr.deluxemaps[shader.lightmapIndex];
-		defs |= LIGHTDEF_USE_DELUXEMAP;
 	}
 
 	if (r_normalMapping->integer)
@@ -3013,6 +3024,7 @@ static qboolean CollapseStagesToGLSL(void)
 				case TCGEN_TEXTURE:
 				case TCGEN_LIGHTMAP:
 				case TCGEN_ENVIRONMENT_MAPPED:
+				case TCGEN_ENVIRONMENT_CELSHADE_MAPPED:
 				case TCGEN_VECTOR:
 					break;
 				default:
@@ -3103,6 +3115,7 @@ static qboolean CollapseStagesToGLSL(void)
 
 			tcgen = qfalse;
 			if (diffuse->bundle[0].tcGen == TCGEN_ENVIRONMENT_MAPPED
+			    || diffuse->bundle[0].tcGen == TCGEN_ENVIRONMENT_CELSHADE_MAPPED
 			    || diffuse->bundle[0].tcGen == TCGEN_LIGHTMAP
 			    || diffuse->bundle[0].tcGen == TCGEN_VECTOR)
 			{
@@ -3202,8 +3215,6 @@ static qboolean CollapseStagesToGLSL(void)
 			{
 				pStage->glslShaderGroup = tr.lightallShader;
 				pStage->glslShaderIndex = LIGHTDEF_USE_LIGHTMAP;
-				if (r_deluxeMapping->integer && tr.worldDeluxeMapping)
-					pStage->glslShaderIndex |= LIGHTDEF_USE_DELUXEMAP;
 				pStage->bundle[TB_LIGHTMAP] = pStage->bundle[TB_DIFFUSEMAP];
 				pStage->bundle[TB_DIFFUSEMAP].image[0] = tr.whiteImage;
 				pStage->bundle[TB_DIFFUSEMAP].isLightmap = qfalse;
@@ -3236,7 +3247,7 @@ static qboolean CollapseStagesToGLSL(void)
 		}
 	}
 
-	// insert default normal and specular textures if necessary
+	// insert default material info if needed
 	for (i = 0; i < MAX_SHADER_STAGES; i++)
 	{
 		shaderStage_t *pStage = &stages[i];
@@ -3250,14 +3261,8 @@ static qboolean CollapseStagesToGLSL(void)
 		if ((pStage->glslShaderIndex & LIGHTDEF_LIGHTTYPE_MASK) == 0)
 			continue;
 
-		if (!pStage->bundle[TB_NORMALMAP].image[0] && r_normalMapping->integer)
-		{
-			pStage->bundle[TB_NORMALMAP].image[0] = tr.greyImage;
-		}
-
 		if (!pStage->bundle[TB_SPECULARMAP].image[0] && r_specularMapping->integer)
 		{
-			pStage->bundle[TB_SPECULARMAP].image[0] = tr.whiteImage;
 			if (!pStage->materialInfo[0])
 				pStage->materialInfo[0] = r_baseSpecular->value;
 			if (!pStage->materialInfo[1])
@@ -4215,16 +4220,13 @@ qhandle_t RE_RegisterShaderFromImage(const char *name, int lightmapIndex, image_
 
 /* 
 ====================
-RE_RegisterShader
+RE_RegisterShaderEx
 
 This is the exported shader entry point for the rest of the system
 It will always return an index that will be valid.
-
-This should really only be used for explicit shaders, because there is no
-way to ask for different implicit lighting modes (vertex, lightmap, etc)
 ====================
 */
-qhandle_t RE_RegisterShaderLightMap( const char *name, int lightmapIndex ) {
+qhandle_t RE_RegisterShaderEx( const char *name, int lightmapIndex, qboolean mipRawImage ) {
 	shader_t	*sh;
 
 	if ( strlen( name ) >= MAX_QPATH ) {
@@ -4232,7 +4234,7 @@ qhandle_t RE_RegisterShaderLightMap( const char *name, int lightmapIndex ) {
 		return 0;
 	}
 
-	sh = R_FindShader( name, lightmapIndex, qtrue );
+	sh = R_FindShader( name, lightmapIndex, mipRawImage );
 
 	// we want to return 0 if the shader failed to
 	// load for some reason, but R_FindShader should
@@ -4259,25 +4261,7 @@ way to ask for different implicit lighting modes (vertex, lightmap, etc)
 ====================
 */
 qhandle_t RE_RegisterShader( const char *name ) {
-	shader_t	*sh;
-
-	if ( strlen( name ) >= MAX_QPATH ) {
-		ri.Printf( PRINT_ALL, "Shader name exceeds MAX_QPATH\n" );
-		return 0;
-	}
-
-	sh = R_FindShader( name, LIGHTMAP_2D, qtrue );
-
-	// we want to return 0 if the shader failed to
-	// load for some reason, but R_FindShader should
-	// still keep a name allocated for it, so if
-	// something calls RE_RegisterShader again with
-	// the same name, we don't try looking for it again
-	if ( sh->defaultShader ) {
-		return 0;
-	}
-
-	return sh->index;
+	return RE_RegisterShaderEx( name, LIGHTMAP_2D, qtrue );
 }
 
 
@@ -4289,25 +4273,7 @@ For menu graphics that should never be picmiped
 ====================
 */
 qhandle_t RE_RegisterShaderNoMip( const char *name ) {
-	shader_t	*sh;
-
-	if ( strlen( name ) >= MAX_QPATH ) {
-		ri.Printf( PRINT_ALL, "Shader name exceeds MAX_QPATH\n" );
-		return 0;
-	}
-
-	sh = R_FindShader( name, LIGHTMAP_2D, qfalse );
-
-	// we want to return 0 if the shader failed to
-	// load for some reason, but R_FindShader should
-	// still keep a name allocated for it, so if
-	// something calls RE_RegisterShader again with
-	// the same name, we don't try looking for it again
-	if ( sh->defaultShader ) {
-		return 0;
-	}
-
-	return sh->index;
+	return RE_RegisterShaderEx( name, LIGHTMAP_2D, qfalse );
 }
 
 /*
@@ -4587,6 +4553,10 @@ static void CreateInternalShaders( void ) {
 	stages[0].active = qtrue;
 	stages[0].stateBits = GLS_DEFAULT;
 	tr.defaultShader = FinishShader();
+
+	// used for skins for disable surfaces
+	Q_strncpyz( shader.name, "nodraw", sizeof( shader.name ) );
+	tr.nodrawShader = FinishShader();
 
 	// shadow shader is just a marker
 	Q_strncpyz( shader.name, "<stencil shadow>", sizeof( shader.name ) );

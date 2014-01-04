@@ -96,7 +96,6 @@ cvar_t	*cl_allowDownload;
 cvar_t	*cl_inGameVideo;
 
 cvar_t	*cl_serverStatusResendTime;
-cvar_t	*cl_trn;
 
 cvar_t	*cl_lanForcePackets;
 
@@ -1591,7 +1590,6 @@ void CL_Disconnect( qboolean showMainMenu ) {
 		VM_Call( cgvm, CG_SET_ACTIVE_MENU, UIMENU_NONE );
 	}
 
-	SCR_StopCinematic ();
 	S_ClearSoundBuffer();
 
 	// send a disconnect message to the server
@@ -1765,9 +1763,8 @@ CL_Disconnect_f
 ==================
 */
 void CL_Disconnect_f( void ) {
-	SCR_StopCinematic();
 	Cvar_Set("ui_singlePlayerActive", "0");
-	if ( clc.state != CA_DISCONNECTED && clc.state != CA_CINEMATIC ) {
+	if ( clc.state != CA_DISCONNECTED ) {
 		Com_Error (ERR_DISCONNECT, "Disconnected from server");
 	}
 }
@@ -2973,13 +2970,13 @@ void CL_Frame ( int msec ) {
 	if ( CL_VideoRecording( ) && cl_aviFrameRate->integer && msec) {
 		// save the current screen
 		if ( !clc.demoplaying || clc.state == CA_ACTIVE || cl_forceavidemo->integer ) {
+			float fps = MIN(cl_aviFrameRate->value * com_timescale->value, 1000.0f);
+			float frameDuration = MAX(1000.0f / fps, 1.0f) + clc.aviVideoFrameRemainder;
+
 			CL_TakeVideoFrame( );
 
-			// fixed time for next frame'
-			msec = (int)ceil( (1000.0f / cl_aviFrameRate->value) * com_timescale->value );
-			if (msec == 0) {
-				msec = 1;
-			}
+			msec = (int)frameDuration;
+			clc.aviVideoFrameRemainder = frameDuration - msec;
 		}
 	}
 	
@@ -3062,9 +3059,6 @@ void CL_Frame ( int msec ) {
 #ifdef USE_MUMBLE
 	CL_UpdateMumble();
 #endif
-
-	// advance local effects for next frame
-	SCR_RunCinematic();
 
 	cls.framecount++;
 }
@@ -3531,7 +3525,6 @@ void CL_Init( void ) {
 	Cmd_AddCommand ("record", CL_Record_f);
 	Cmd_AddCommand ("demo", CL_PlayDemo_f);
 	Cmd_SetCommandCompletionFunc( "demo", CL_CompleteDemoName );
-	Cmd_AddCommand ("cinematic", CL_PlayCinematic_f);
 	Cmd_AddCommand ("stoprecord", CL_StopRecord_f);
 	Cmd_AddCommand ("connect", CL_Connect_f);
 	Cmd_AddCommand ("reconnect", CL_Reconnect_f);

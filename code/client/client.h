@@ -72,7 +72,7 @@ typedef struct {
 	int				messageNum;		// copied from netchan->incoming_sequence
 	int				deltaNum;		// messageNum the delta is from
 	int				ping;			// time from when cmdNum-1 was sent to time packet was reeceived
-	byte			areamask[MAX_MAP_AREA_BYTES];		// portalarea visibility bits
+	byte			areamask[MAX_SPLITVIEW][MAX_MAP_AREA_BYTES];		// portalarea visibility bits
 
 	int				cmdNum;			// the next cmdNum the server is expecting
 
@@ -252,6 +252,9 @@ typedef struct {
 	int			timeDemoMinDuration;	// minimum frame duration
 	int			timeDemoMaxDuration;	// maximum frame duration
 	unsigned char	timeDemoDurations[ MAX_TIMEDEMO_DURATIONS ];	// log of frame durations
+
+	float		aviVideoFrameRemainder;
+	float		aviSoundFrameRemainder;
 
 #ifdef USE_VOIP
 	qboolean voipEnabled;
@@ -549,10 +552,6 @@ void	SCR_AdjustFrom640( float *x, float *y, float *w, float *h );
 // cl_cin.c
 //
 
-void CL_PlayCinematic_f( void );
-void SCR_DrawCinematic (void);
-void SCR_RunCinematic (void);
-void SCR_StopCinematic (void);
 int CIN_PlayCinematic( const char *arg0, int xpos, int ypos, int width, int height, int bits);
 e_status CIN_StopCinematic(int handle);
 e_status CIN_RunCinematic (int handle);

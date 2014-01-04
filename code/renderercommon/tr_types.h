@@ -43,7 +43,7 @@ Suite 120, Rockville, Maryland 20850 USA.
 #define	REFENTITYNUM_WORLD	((1<<REFENTITYNUM_BITS) - 1)
 
 // renderfx flags
-#define	RF_MINLIGHT		0x0001		// allways have some light (viewmodel, some items)
+#define	RF_NO_DIRECTED_LIGHT	0x0001	// don't use directed light from world light grid or dlights
 #define	RF_ONLY_MIRROR		0x0002		// only draw in mirrors and portals
 #define	RF_NO_MIRROR		0x0004		// do not draw in mirrors or portals
 #define	RF_DEPTHHACK		0x0008		// for view weapon Z crunching
@@ -52,6 +52,8 @@ Suite 120, Rockville, Maryland 20850 USA.
 						// DEPTHHACK in stereo rendering mode, with the difference that the
 						// projection matrix won't be hacked to reduce the stereo separation as
 						// is done for the gun.
+
+#define	RF_CONST_AMBIENT	0x0020		// use refEntity->ambientLight instead of world light grid + refEntity->ambientLight
 
 #define	RF_NOSHADOW		0x0040		// don't add stencil shadows
 
@@ -71,17 +73,18 @@ Suite 120, Rockville, Maryland 20850 USA.
 #define RDF_UNDERWATER		0x0002		// underwater
 #define RDF_HYPERSPACE		0x0004		// teleportation effect
 
+// any change in the LIGHTMAP_* defines here MUST be reflected in
+// R_FindShader() in tr_bsp.c
+#define LIGHTMAP_2D         -4	// shader is for 2D rendering
+#define LIGHTMAP_BY_VERTEX  -3	// pre-lit triangle models
+#define LIGHTMAP_WHITEIMAGE -2
+#define LIGHTMAP_NONE       -1
+
 typedef struct {
 	vec3_t		xyz;
 	float		st[2];
 	byte		modulate[4];
 } polyVert_t;
-
-typedef struct poly_s {
-	qhandle_t			hShader;
-	int					numVerts;
-	polyVert_t			*verts;
-} poly_t;
 
 // =========================================
 // Gordon, these MUST NOT exceed the values for SHADER_MAX_VERTEXES/SHADER_MAX_INDEXES
@@ -143,6 +146,7 @@ typedef struct {
 	byte		shaderRGBA[4];		// colors used by rgbgen entity shaders
 	float		shaderTexCoord[2];	// texture coordinates used by tcMod entity modifiers
 	float		shaderTime;			// subtracted from refdef time to control effect start times
+	float		ambientLight[3];	// add to light grid ambient light or use instead of light grid (RF_CONST_AMBIENT)
 
 	// extra sprite information
 	float		radius;

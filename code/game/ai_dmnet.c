@@ -647,6 +647,13 @@ int BotGetLongTermGoal(bot_state_t *bs, int tfl, int retreat, bot_goal_t *goal) 
 			}
 			bs->ltgtype = 0;
 		}
+		// if the bot decided to camp
+		if (!bs->ordered) {
+			// if the bot should stop camping
+			if (!BotCanCamp(bs)) {
+				bs->ltgtype = 0;
+			}
+		}
 		//if really near the camp spot
 		VectorSubtract(goal->origin, bs->origin, dir);
 		if (VectorLengthSquared(dir) < Square(60))
@@ -2047,8 +2054,8 @@ int AINode_Battle_Fight(bot_state_t *bs) {
 			bs->enemydeath_time = FloatTime();
 		}
 	}
-	//if the enemy is invisible and not shooting the bot looses track easily
-	if (EntityIsInvisible(&entinfo) && !EntityIsShooting(&entinfo)) {
+	//if the enemy is invisible the bot looses track easily
+	if (EntityIsInvisible(&entinfo)) {
 		if (random() < 0.2) {
 			AIEnter_Seek_LTG(bs, "battle fight: invisible");
 			return qfalse;
