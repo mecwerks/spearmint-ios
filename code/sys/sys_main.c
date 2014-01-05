@@ -153,7 +153,7 @@ static char *Sys_PIDFileName( const char *gamedir )
 #ifndef IOS
 	const char *homePath = Sys_DefaultHomePath( );
 
-	if( *homePath != '\0' )6
+	if( *homePath != '\0' )
 		return va( "%s/%s/%s", homePath, gamedir, PID_FILENAME );
 #endif
 	return NULL;

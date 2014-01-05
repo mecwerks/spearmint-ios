@@ -983,7 +983,7 @@ void UI_SetMousePosition( int localClientNum, int x, int y )
 	uis.cursorx = ( x - ax ) / aw;
 	uis.cursory = ( y - ay ) / ah;
 
-	UI_MouseEvent(localClientNum, 0, 0);
+	UI_MouseEvent(localClientNum, 0, 0, qfalse);
 }
 
 /*
